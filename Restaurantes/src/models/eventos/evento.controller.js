@@ -56,3 +56,88 @@ export const getEventos = async (req, res) => {
         })
     }
 }
+
+export const getEventoById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const evento = await Evento.findById(id)
+            .populate('restaurante');
+            
+        if (!evento) {
+            return res.status(404).json({
+                success: false,
+                message: 'Evento no encontrado'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: evento
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al buscar el evento',
+            error: error.message
+        });
+    }
+};
+
+export const updateEvento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const eventoData = req.body;
+        
+        const evento = await Evento.findByIdAndUpdate(
+            id,
+            eventoData,
+            { new: true, runValidators: true }
+        );
+
+        if (!evento) {
+            return res.status(404).json({
+                success: false,
+                message: 'Evento no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Evento actualizado exitosamente',
+            data: evento
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al actualizar el evento',
+            error: error.message
+        });
+    }
+}
+
+export const deleteEvento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const evento = await Evento.findByIdAndDelete(id);
+
+        if (!evento) {
+            return res.status(404).json({
+                success: false,
+                message: 'Evento no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Evento eliminado exitosamente'
+        });
+        
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al eliminar el evento',
+            error: error.message
+        });
+    }
+}
