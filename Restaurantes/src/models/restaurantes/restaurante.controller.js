@@ -58,3 +58,91 @@ export const getRestaurantes = async (req, res) => {
         })
     }
 }
+
+
+export const getRestaurantesById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const restaurante = await Restaurante.findById(id);
+
+
+        if (!restaurante) {
+            return res.status(404).json({
+                success: false,
+                message: 'Restaurante no encontrado'
+            })
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Restaurante obtenido exitosamente',
+            data: restaurante
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener el restaurante',
+            error: error.message
+        });
+    }
+}
+
+export const updateRestaurante = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const restauranteData = req.body;
+
+        const restauranteEditado = await Restaurante.findByIdAndUpdate(
+            id,
+            restauranteData,
+            { new: true, runValidators: true }
+        )
+
+        if (!restauranteEditado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Restaurante no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Restaurante editado exitosamente',
+            data: restauranteEditado
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al editar el restaurante',
+            error: error.message
+        });
+    }
+}
+
+export const deleteRestaurante = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const restauranteEliminado = await Restaurante.findByIdAndDelete(id);
+
+        if (!restauranteEliminado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Restaurante no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Restaurante eliminado correctamente',
+            data: restauranteEliminado
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar el restaurante',
+            error: error.message
+        });
+    }
+};
