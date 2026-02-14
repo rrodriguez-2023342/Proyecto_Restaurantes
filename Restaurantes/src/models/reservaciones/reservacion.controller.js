@@ -58,3 +58,89 @@ export const getReservaciones = async (req, res) => {
         })
     }
 }
+
+export const getReservacionById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const reservacion = await Reservacion.findById(id).populate('restaurante');
+
+        if (!reservacion) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reservación no encontrada'
+            })
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Reservación obtenida exitosamente',
+            data: reservacion
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener la reservación',
+            error: error.message
+        });
+    }
+}
+
+export const updateReservacion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reservacionData = req.body;
+
+        const reservacionEditada = await Reservacion.findByIdAndUpdate(
+            id,
+            reservacionData,
+            { new: true, runValidators: true }
+        )
+
+        if (!reservacionEditada) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reservación no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reservación editada exitosamente',
+            data: reservacionEditada
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al editar la reservación',
+            error: error.message
+        });
+    }
+}
+
+export const deleteReservacion = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const reservacionEliminada = await Reservacion.findByIdAndDelete(id);
+
+        if (!reservacionEliminada) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reservación no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reservación eliminada correctamente',
+            data: reservacionEliminada
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar la reservación',
+            error: error.message
+        });
+    }
+};
