@@ -56,3 +56,89 @@ export const getPedidos = async (req, res) => {
         })
     }
 }
+
+export const getPedidoById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const pedido = await Pedido.findById(id).populate('restaurante');
+
+        if (!pedido) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pedido no encontrado'
+            })
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Pedido obtenido exitosamente',
+            data: pedido
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener el pedido',
+            error: error.message
+        });
+    }
+}
+
+export const editarPedido = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pedidoData = req.body;
+
+        const pedidoEditado = await Pedido.findByIdAndUpdate(
+            id,
+            pedidoData,
+            { new: true, runValidators: true }
+        )
+
+        if (!pedidoEditado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pedido no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Pedido editado exitosamente',
+            data: pedidoEditado
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al editar el pedido',
+            error: error.message
+        });
+    }
+}
+
+export const eliminarPedido = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const pedidoEliminado = await Pedido.findByIdAndDelete(id);
+
+        if (!pedidoEliminado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pedido no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Pedido eliminado correctamente',
+            data: pedidoEliminado
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar el pedido',
+            error: error.message
+        });
+    }
+};

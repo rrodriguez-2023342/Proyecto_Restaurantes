@@ -58,3 +58,93 @@ export const getMenus = async (req, res) => {
         })
     }
 }
+
+export const getMenuById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const menu = await Menu.findById(id).populate('restaurante');
+
+        if (!menu) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menú no encontrado'
+            })
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Menú obtenido exitosamente',
+            data: menu
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener el menú',
+            error: error.message
+        });
+    }
+}
+
+export const editarMenu = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const menuData = req.body;
+
+        const menuEditado = await Menu.findByIdAndUpdate(
+            id,
+            menuData,
+            { new: true, runValidators: true }
+        )
+
+        if (!menuEditado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menú no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Menú editado exitosamente',
+            data: menuEditado
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al editar el menú',
+            error: error.message
+        });
+    }
+}
+
+export const eliminarMenu = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const menuEliminado = await Menu.findByIdAndUpdate(
+            id,
+            { isActive: false },
+            { new: true }
+        )
+
+        if (!menuEliminado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menú no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Menú eliminado exitosamente',
+            data: menuEliminado
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar el menú',
+            error: error.message
+        });
+    }
+}
