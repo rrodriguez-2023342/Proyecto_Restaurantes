@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPlato, getPlatos } from './plato.controller.js';
+import { createPlato, getPlatos, getPlatoById, editarPlato, eliminarPlato } from './plato.controller.js';
 
 const router = Router();
 
@@ -13,4 +13,18 @@ router.get(
     getPlatos
 )
 
+router.get(
+    '/:id',
+    getPlatoById
+)
+
+router.put(
+    '/:id',
+    editarPlato
+)
+
+router.delete(
+    '/:id',
+    eliminarPlato
+)
 export default router;
