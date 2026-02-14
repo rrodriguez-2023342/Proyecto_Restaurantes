@@ -56,3 +56,90 @@ export const getReseñas = async (req, res) => {
         })
     }
 }
+
+
+export const getReseñaById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const reseña = await Reseña.findById(id).populate('restaurante');
+
+        if (!reseña) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reseña no encontrada'
+            })
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Reseña obtenida exitosamente',
+            data: reseña
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener la reseña',
+            error: error.message
+        });
+    }
+}
+
+export const updateReseña = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reseñaData = req.body;
+
+        const reseñaEditada = await Reseña.findByIdAndUpdate(
+            id,
+            reseñaData,
+            { new: true, runValidators: true }
+        )
+
+        if (!reseñaEditada) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reseña no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reseña editada exitosamente',
+            data: reseñaEditada
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al editar la reseña',
+            error: error.message
+        });
+    }
+}
+
+export const deleteReseña = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const reseñaEliminada = await Reseña.findByIdAndDelete(id);
+
+        if (!reseñaEliminada) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reseña no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reseña eliminada correctamente',
+            data: reseñaEliminada
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar la reseña',
+            error: error.message
+        });
+    }
+};
