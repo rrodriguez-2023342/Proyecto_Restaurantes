@@ -57,3 +57,88 @@ export const getFacturas = async (req, res) => {
         })
     }
 }
+
+export const getFacturaById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const factura = await Factura.findById(id)
+            .populate('pedido');
+            
+        if (!factura) {
+            return res.status(404).json({
+                success: false,
+                message: 'Factura no encontrada'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: factura
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al buscar la factura',
+            error: error.message
+        });
+    }
+};
+
+export const updateFactura = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const facturaData = req.body;
+        
+        const factura = await Factura.findByIdAndUpdate(
+            id,
+            facturaData,
+            { new: true, runValidators: true }
+        );
+
+        if (!factura) {
+            return res.status(404).json({
+                success: false,
+                message: 'Factura no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Factura actualizada exitosamente',
+            data: factura
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al actualizar la factura',
+            error: error.message
+        });
+    }
+}
+
+export const deleteFactura = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const factura = await Factura.findByIdAndDelete(id);
+
+        if (!factura) {
+            return res.status(404).json({
+                success: false,
+                message: 'Factura no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Factura eliminada exitosamente'
+        });
+        
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al eliminar la factura',
+            error: error.message
+        });
+    }
+}
