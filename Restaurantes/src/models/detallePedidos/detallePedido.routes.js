@@ -1,10 +1,12 @@
 import { Router } from 'express';
-import { createDetallePedido, getDetallesPedidos, getDetallePedidoById, updateDetallePedido, deleteDetallePedido } from './detallePedido.controller.js';
+import { createDetallePedido, getDetallesPedidos, getDetallePedidoById } from './detallePedido.controller.js';
+import { validateCreateDetallePedido } from '../../../middlewares/detallePedidos-validators.js';
 
 const router = Router();
 
 router.post(
     '/create',
+    validateCreateDetallePedido,
     createDetallePedido
 )
 
@@ -18,14 +20,5 @@ router.get(
     getDetallePedidoById
 )
 
-router.put(
-    '/:id',
-    updateDetallePedido
-)
-
-router.delete(
-    '/:id',
-    deleteDetallePedido
-)
-
 export default router;
+
