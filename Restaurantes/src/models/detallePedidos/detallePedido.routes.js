@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { createDetallePedido, getDetallesPedidos, getDetallePedidoById } from './detallePedido.controller.js';
-import { validateCreateDetallePedido } from '../../../middlewares/detallePedidos-validators.js';
+import { createDetallePedido, getDetallesPedidos, getDetallePedidoById, updateDetallePedido, deleteDetallePedido } from './detallePedido.controller.js';
+import { validateCreateDetallePedido, validateUpdateDetallePedido, validateDeleteDetallePedido } from '../../../middlewares/detallePedidos-validators.js';
 
 const router = Router();
 
@@ -20,5 +20,16 @@ router.get(
     getDetallePedidoById
 )
 
-export default router;
+router.put(
+    '/:id',
+    validateUpdateDetallePedido,
+    updateDetallePedido
+)
 
+router.delete(
+    '/:id',
+    validateDeleteDetallePedido,
+    deleteDetallePedido
+)
+
+export default router;

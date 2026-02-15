@@ -83,3 +83,62 @@ export const getDetallePedidoById = async (req, res) => {
         });
     }
 };
+
+export const updateDetallePedido = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const detallePedidoData = req.body;
+        
+        const detallePedido = await DetallePedido.findByIdAndUpdate(
+            id,
+            detallePedidoData,
+            { new: true, runValidators: true }
+        );
+
+        if (!detallePedido) {
+            return res.status(404).json({
+                success: false,
+                message: 'Detalle de pedido no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Detalle de pedido actualizado exitosamente',
+            data: detallePedido
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al actualizar el detalle de pedido',
+            error: error.message
+        });
+    }
+}
+
+export const deleteDetallePedido = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const detallePedido = await DetallePedido.findByIdAndDelete(id);
+
+        if (!detallePedido) {
+            return res.status(404).json({
+                success: false,
+                message: 'Detalle de pedido no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Detalle de pedido eliminado exitosamente'
+        });
+        
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al eliminar el detalle de pedido',
+            error: error.message
+        });
+    }
+}
