@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createRestaurante, getRestaurantes, getRestauranteById, updateRestaurante, deleteRestaurante } from './restaurante.controller.js';
+import { createRestaurante, getRestaurantes, getRestaurantesById, updateRestaurante, deleteRestaurante } from './restaurante.controller.js';
 
 const router = Router();
 
@@ -23,7 +23,7 @@ router.delete(
 )
 router.get(
     '/:id',
-    getRestauranteById
+    getRestaurantesById
 )
 
 export default router;
