@@ -27,7 +27,10 @@ public static class AuthenticationExtensions
                 ValidIssuer = jwtSettings["Issuer"],
                 ValidAudience = jwtSettings["Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
+                // Map token 'sub' to Name and 'role' to roles so Authorize(Roles=...) works
+                NameClaimType = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,
+                RoleClaimType = "role"
             };
         });
 

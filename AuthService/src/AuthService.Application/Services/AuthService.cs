@@ -434,6 +434,20 @@ public class AuthService(
 
         return MapToUserResponseDto(user);
     }
+
+    public async Task<bool> LogoutAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("ID de usuario inválido", nameof(userId));
+
+        // Con JWT, el logout es manejado en el cliente (elimina el token)
+        // Aquí solo verificamos que el usuario existe
+        var user = await userRepository.GetByIdAsync(userId);
+        
+        logger.LogInformation($"User {userId} ({user.Email}) has logged out successfully");
+        
+        return true;
+    }
 }
 
 

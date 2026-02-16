@@ -108,5 +108,26 @@ public class AuthController(IAuthService authService) : ControllerBase
         var result = await authService.ResetPasswordAsync(resetPasswordDto);
         return Ok(result);
     }
+
+    [HttpPost("logout")]
+    [Authorize]
+    [EnableRateLimiting("AuthPolicy")]
+    public async Task<ActionResult<object>> Logout()
+    {
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+        if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
+        {
+            return Unauthorized();
+        }
+
+        await authService.LogoutAsync(userIdClaim.Value);
+        
+        return Ok(new
+        {
+            success = true,
+            message = "Sesión cerrada exitosamente",
+            data = new { userId = userIdClaim.Value }
+        });
+    }
 }
 
