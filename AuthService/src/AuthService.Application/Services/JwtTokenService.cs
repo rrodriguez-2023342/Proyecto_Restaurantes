@@ -31,9 +31,8 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            // Include both role claim variants for maximum compatibility with different RoleClaimType mappings
-            new Claim(ClaimTypes.Role, role),
-            new Claim("role", role)
+            // Single role claim using standard ClaimTypes.Role for consistency with RoleClaimType configuration
+            new Claim(ClaimTypes.Role, role)
         };
 
         var token = new JwtSecurityToken(
