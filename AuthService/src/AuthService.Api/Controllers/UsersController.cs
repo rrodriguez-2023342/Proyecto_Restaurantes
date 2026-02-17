@@ -73,10 +73,6 @@ public class UsersController(IUserManagementService userManagementService) : Con
         return Ok(result);
     }
     
-    /// <summary>
-    /// Permanently delete user - ADMIN_ROLE only
-    /// Route: /api/v1/users/{userId}-delete
-    /// </summary>
     [HttpDelete("{userId}-delete")]
     [Authorize(Roles = RoleConstants.ADMIN_ROLE)]
     [EnableRateLimiting("ApiPolicy")]

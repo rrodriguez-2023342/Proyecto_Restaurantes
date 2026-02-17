@@ -4,23 +4,23 @@ namespace AuthService.Application.Interfaces;
 
 public interface IUserManagementService
 {
-    // Role management - ADMIN_ROLE only
+    // solo ADMIN_ROLE 
     Task<UserResponseDto> UpdateUserRoleAsync(string userId, string roleName);
     Task<IReadOnlyList<string>> GetUserRolesAsync(string userId);
     Task<IReadOnlyList<UserResponseDto>> GetUsersByRoleAsync(string roleName);
     
-    // User CRUD - USER_ROLE (own data), ADMIN_ROLE (any user)
+    // users CRUD - USER_ROLE (su info), ADMIN_ROLE (todo)
     Task<UserResponseDto> UpdateUserByIdAsync(string userId, UpdateUserDto updateUserDto);
     Task<UserResponseDto> GetUserDetailsByIdAsync(string userId);
     Task<IReadOnlyList<UserResponseDto>> GetAllUsersAsync();
     Task<UserResponseDto> DeactivateUserAsync(string userId);
     
-    // Profile picture upload
+    // cargar imagen
     Task<UserResponseDto> UploadProfilePictureAsync(string userId, IFileData profilePicture);
 
-    // Admin create user (distinct from public register)
+    // crear usuario
     Task<UserResponseDto> CreateUserAsync(CreateUserDto createUserDto);
     
-    // Permanent delete - ADMIN only
+    // delete permanente ADMIN_ROLE
     Task<bool> DeleteUserAsync(string userId);
 }

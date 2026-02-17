@@ -30,17 +30,14 @@ builder.Services.AddRateLimitingPolicies();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Add Serilog request logging
 app.UseSerilogRequestLogging();
 
-// Add Security Headers using NetEscapades package
 app.UseSecurityHeaders(policies => policies
     .AddDefaultSecurityHeaders()
     .RemoveServerHeader()
@@ -64,10 +61,9 @@ app.UseSecurityHeaders(policies => policies
     .AddCustomHeader("Cache-Control", "no-store, no-cache, must-revalidate, private")
 );
 
-//Global exception handLing
+app.UseMiddleware<UnauthorizedResponseMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-//Core middLewares
 app.UseHttpsRedirection();
 app.UseCors("DefaultCorsPolicy");
 app.UseRateLimiter();
@@ -89,7 +85,6 @@ app.MapGet("/health", () =>
     return Results.Ok(response);
 });
 
-// Startup log: addresses and health endpoint
 var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -118,7 +113,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
     }
 });
 
-// Initialize database and seed data
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -128,7 +122,6 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogInformation("Checking database connection...");
 
-        // Ensure database is created (similar to Sequelize sync in Node.js)
         await context.Database.EnsureCreatedAsync();
 
         logger.LogInformation("Database ready. Running seed data...");
@@ -139,7 +132,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred while initializing the database");
-        throw; // Re-throw to stop the application
+        throw; 
     }
 }
 

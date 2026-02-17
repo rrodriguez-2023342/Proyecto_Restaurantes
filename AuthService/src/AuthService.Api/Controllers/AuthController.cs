@@ -40,7 +40,6 @@ public class AuthController(IAuthService authService) : ControllerBase
     public async Task<ActionResult<RegisterResponseDto>> Register([FromForm] RegisterDto registerDto)
     {
         var result = await authService.RegisterAsync(registerDto);
-        // Devolver 201 Created para registro
         return StatusCode(201, result);
     }
 
@@ -66,7 +65,6 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.ResendVerificationEmailAsync(resendDto);
 
-        // Return appropriate status code based on result
         if (!result.Success)
         {
             if (result.Message.Contains("no encontrado", StringComparison.OrdinalIgnoreCase))
@@ -78,7 +76,6 @@ public class AuthController(IAuthService authService) : ControllerBase
             {
                 return BadRequest(result);
             }
-            // Email sending failed - Service Unavailable
             return StatusCode(503, result);
         }
 
@@ -91,8 +88,6 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.ForgotPasswordAsync(forgotPasswordDto);
 
-        // ForgotPassword always returns success for security (even if user not found)
-        // But if email sending fails, return 503
         if (!result.Success)
         {
             return StatusCode(503, result);

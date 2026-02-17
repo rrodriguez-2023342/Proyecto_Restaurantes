@@ -82,7 +82,7 @@ public class AuthService(
         var userEmailId = UuidGenerator.GenerateUserId();
         var userRoleId = UuidGenerator.GenerateUserId();
 
-        // Obtener el rol por defecto (USER_ROLE) ya seedado en DB
+        // Obtener el rol por defecto USER_ROLE
         var defaultRole = await roleRepository.GetByNameAsync(RoleConstants.USER_ROLE);
         if (defaultRole == null)
         {
@@ -150,7 +150,7 @@ public class AuthService(
             }
         });
 
-        // Crear respuesta sin JWT - solo confirmación de registro
+        // Crear respuesta 
         return new RegisterResponseDto
         {
             Success = true,
@@ -440,8 +440,7 @@ public class AuthService(
         if (string.IsNullOrWhiteSpace(userId))
             throw new ArgumentException("ID de usuario inválido", nameof(userId));
 
-        // Con JWT, el logout es manejado en el cliente (elimina el token)
-        // Aquí solo verificamos que el usuario existe
+        // VERIFICA que el usuario existe
         var user = await userRepository.GetByIdAsync(userId);
         
         logger.LogInformation($"User {userId} ({user.Email}) has logged out successfully");

@@ -20,18 +20,14 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        // Get user's role (assumes single role per user)
         var role = user.UserRoles?.FirstOrDefault()?.Role?.Name ?? "USER_ROLE";
 
         var claims = new[]
         {
-            // Standard subject
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            // Also include the standard .NET NameIdentifier claim for compatibility with code using ClaimTypes.NameIdentifier
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            // Single role claim using standard ClaimTypes.Role for consistency with RoleClaimType configuration
             new Claim(ClaimTypes.Role, role)
         };
 

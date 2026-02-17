@@ -11,7 +11,6 @@ public static class SecurityExtensions
     private static readonly string[] AdminAllowedHeaders = ["Content-Type", "Authorization"];
     public static IServiceCollection AddSecurityPolicies(this IServiceCollection services, IConfiguration configuration)
     {
-        // Configurar CORS
         services.AddCors(options =>
         {
             options.AddPolicy("DefaultCorsPolicy", builder =>
@@ -26,7 +25,6 @@ public static class SecurityExtensions
                        .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
             });
 
-            // Política restrictiva para endpoints administrativos
             options.AddPolicy("AdminCorsPolicy", builder =>
             {
                 var adminOrigins = configuration.GetSection("Security:AdminAllowedOrigins").Get<string[]>()
@@ -39,7 +37,6 @@ public static class SecurityExtensions
             });
         });
 
-        // Configurar Data Protection
         var keysDirectory = new DirectoryInfo("./keys");
         if (!keysDirectory.Exists)
         {
@@ -51,29 +48,22 @@ public static class SecurityExtensions
                 .SetApplicationName("AuthDotnetApi")
                 .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
-        // En producción, configurar encriptación con certificado
         var environment = services.BuildServiceProvider().GetRequiredService<IWebHostEnvironment>();
         if (environment.IsProduction())
         {
-            // En producción deberías usar un certificado real
-            // dataProtectionBuilder.ProtectKeysWithCertificate("thumbprint");
             if (OperatingSystem.IsWindows())
             {
                 dataProtectionBuilder.ProtectKeysWithDpapi();
             }
-            // En Linux/macOS en producción, usar certificados o Azure Key Vault
         }
         else
         {
-            // En desarrollo, usar DPAPI (solo Windows) o sin encriptación
             if (OperatingSystem.IsWindows())
             {
                 dataProtectionBuilder.ProtectKeysWithDpapi();
             }
-            // En Linux/macOS en desarrollo, las claves no se encriptan (solo para desarrollo)
         }
 
-        // Configurar Antiforgery (CSRF Protection)
         services.AddAntiforgery(options =>
         {
             options.HeaderName = "X-CSRF-TOKEN";

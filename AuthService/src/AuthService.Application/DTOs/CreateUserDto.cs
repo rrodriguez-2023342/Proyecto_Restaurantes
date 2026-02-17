@@ -22,6 +22,5 @@ public class CreateUserDto
 
     public string? Phone { get; set; }
 
-    // Optional role name (e.g., ADMIN_ROLE or USER_ROLE). Defaults to USER_ROLE.
     public string? Role { get; set; }
 }

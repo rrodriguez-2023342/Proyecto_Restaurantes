@@ -60,7 +60,6 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
 
         context.Response.StatusCode = response.StatusCode;
 
-        // Construir respuesta unificada para errores
         var unified = new
         {
             success = false,
