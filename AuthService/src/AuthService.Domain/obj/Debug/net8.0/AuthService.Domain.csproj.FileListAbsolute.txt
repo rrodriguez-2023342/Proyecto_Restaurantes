@@ -21,3 +21,15 @@ C:\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\Aut
 C:\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\refint\AuthService.Domain.dll
 C:\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.pdb
 C:\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\ref\AuthService.Domain.dll
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\bin\Debug\net8.0\AuthService.Domain.deps.json
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\bin\Debug\net8.0\AuthService.Domain.dll
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\bin\Debug\net8.0\AuthService.Domain.pdb
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.AssemblyInfoInputs.cache
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.AssemblyInfo.cs
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.csproj.CoreCompileInputs.cache
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.sourcelink.json
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.dll
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\refint\AuthService.Domain.dll
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\AuthService.Domain.pdb
+C:\SextoPerito\Proyecto_Restaurantes\AuthService\src\AuthService.Domain\obj\Debug\net8.0\ref\AuthService.Domain.dll

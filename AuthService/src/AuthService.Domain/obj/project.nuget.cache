@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qa6M4xXANhE=",
+  "dgSpecHash": "QQg8YWN8noI=",
   "success": true,
-  "projectFilePath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Domain\\AuthService.Domain.csproj",
+  "projectFilePath": "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Domain\\AuthService.Domain.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

@@ -28,9 +28,8 @@ const mesaSchema = new mongoose.Schema(
         timestamps: true,
         versionKey: false
     }
-)
+);
 
-mesaSchema.index({ restaurante: 1 });
-mesaSchema.index({ numeroMesa: 1 });
+mesaSchema.index({ restaurante: 1, numeroMesa: 1 }, { unique: true });
 
 export default mongoose.model('Mesa', mesaSchema);

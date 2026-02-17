@@ -16,9 +16,9 @@ export const validateJWT = (req, res, next) => {
         })
     }
 
-    const token = 
-        req.header('x-token') ||
-        req.header('Authorization')?.replace('Bearer ', '');
+    let token = 
+        req.header('x-token') || 
+        req.header('Authorization');
 
     if (!token) {
         return res.status(401).json({
@@ -28,12 +28,13 @@ export const validateJWT = (req, res, next) => {
         })
     }
 
-    try {
-        const verifyOptions = {};
-        if(jwtConfig.issuer) verifyOptions.issuer = jwtConfig.issuer;
-        if(jwtConfig.audience) verifyOptions.audience = jwtConfig.audience;
+    if (token.startsWith('Bearer ')) {
+        token = token.slice(7, token.length).trim();
+    }
+    token = token.trim();
 
-        const decoded = jwt.verify(token, jwtConfig.secret, verifyOptions);
+    try {
+        const decoded = jwt.verify(token, jwtConfig.secret);
 
         if(!decoded.role){
             console.warn(
@@ -42,12 +43,16 @@ export const validateJWT = (req, res, next) => {
             )
         }
 
+        // Mantenemos EXACTAMENTE lo que puso tu amigo
         req.user = {
-            id: decoded.sub, //userID del servicio de autenticación
-            jti: decoded.jti, //ID único del token
-            iat: decoded.iat, // Emitido en
+            id: decoded.sub,
+            jti: decoded.jti,
+            iat: decoded.iat,
             role: decoded.role || 'USER_ROLE'
         }
+
+        // AGREGAMOS esta línea para que tus mesas no fallen
+        req.usuario = req.user; 
 
         next();
 

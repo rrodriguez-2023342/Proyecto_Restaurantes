@@ -1,146 +1,140 @@
 import Reservacion from './reservacion.model.js';
 
+//Crear Reservaciones.
 export const createReservacion = async (req, res) => {
     try {
-        const reservacionData = req.body;
+        const data = req.body;
+        data.usuario = req.usuario.id || req.usuario._id;
 
-        const reservacion = new Reservacion(reservacionData);
+        const reservacion = new Reservacion(data);
         await reservacion.save();
 
         res.status(201).json({
             success: true,
             message: 'Reservación creada exitosamente',
             data: reservacion
-        })
+        });
     } catch (error) {
         res.status(400).json({
             success: false,
             message: 'Error al crear la reservación',
             error: error.message
-        })
+        });
     }
-}
+};
+
+//OBTENER RESERVACIONES
+//Regla Scrum: USER_ROLE solo ve las suyas. Admins ven todas o por restaurante.
 
 export const getReservaciones = async (req, res) => {
     try {
-        const { page = 1, limit = 10, isActive = true} = req.query;
+        const { page = 1, limit = 10 } = req.query;
+        let query = { estado: { $ne: 'CANCELADA' } };
 
-        const filter = { isActive };
-
-        const options = {
-            page: parseInt(page, 10),
-            limit: parseInt(limit),
-            sort: { createdAt: -1 }
+        if (req.usuario.role === 'USER_ROLE') {
+            query.usuario = req.usuario._id;
+        } 
+        else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            query.restaurante = req.usuario.restaurante;
         }
 
-        const reservaciones = await Reservacion.find(filter)
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .sort();
-
-        const total = await Reservacion.countDocuments(filter);
+        const [reservaciones, total] = await Promise.all([
+            Reservacion.find(query)
+                .populate('restaurante', 'nombre')
+                .populate('mesa', 'numeroMesa')
+                .populate('usuario', 'nombre apellido')
+                .limit(limit * 1)
+                .skip((page - 1) * limit)
+                .sort({ fecha: 1 }),
+            Reservacion.countDocuments(query)
+        ]);
 
         res.status(200).json({
             success: true,
-            data: reservaciones,
-            pagination: {
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
-                totalItems: total,
-                limit
-            }
-        })
+            total,
+            data: reservaciones
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error al obtener las reservaciones',
             error: error.message
-        })
+        });
     }
-}
+};
+
+//OBTENER POR ID (Con validación de propiedad)
 
 export const getReservacionById = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        const reservacion = await Reservacion.findById(id).populate('restaurante');
+        const reservacion = await Reservacion.findById(id)
+            .populate('restaurante mesa usuario');
 
-        if (!reservacion) {
-            return res.status(404).json({
-                success: false,
-                message: 'Reservación no encontrada'
-            })
+        if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
+
+        if (req.usuario.role === 'USER_ROLE' && reservacion.usuario._id.toString() !== req.usuario._id.toString()) {
+            return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
         }
-        res.status(200).json({
-            success: true,
-            message: 'Reservación obtenida exitosamente',
-            data: reservacion
-        })
+
+        res.status(200).json({ success: true, data: reservacion });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener la reservación',
-            error: error.message
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
-}
+};
+
+//ACTUALIZAR RESERVACIÓN
+//Regla Scrum: USER_ROLE solo si está "PENDIENTE".
 
 export const updateReservacion = async (req, res) => {
     try {
         const { id } = req.params;
-        const reservacionData = req.body;
+        const reservacionExistente = await Reservacion.findById(id);
 
-        const reservacionEditada = await Reservacion.findByIdAndUpdate(
-            id,
-            reservacionData,
-            { new: true, runValidators: true }
-        )
+        if (!reservacionExistente) return res.status(404).json({ message: 'Reservación no encontrada' });
 
-        if (!reservacionEditada) {
-            return res.status(404).json({
-                success: false,
-                message: 'Reservación no encontrada'
-            });
+        if (req.usuario.role === 'USER_ROLE') {
+            if (reservacionExistente.usuario.toString() !== req.usuario._id.toString()) {
+                return res.status(403).json({ message: 'No puedes editar una reservación ajena' });
+            }
+            if (reservacionExistente.estado !== 'PENDIENTE') {
+                return res.status(400).json({ message: 'Solo puedes editar reservaciones en estado PENDIENTE' });
+            }
         }
+
+        const reservacionEditada = await Reservacion.findByIdAndUpdate(id, req.body, { new: true });
 
         res.status(200).json({
             success: true,
-            message: 'Reservación editada exitosamente',
+            message: 'Reservación actualizada',
             data: reservacionEditada
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al editar la reservación',
-            error: error.message
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
-}
+};
+
+//CANCELAR/ELIMINAR RESERVACIÓN
+//Regla Scrum: USER_ROLE solo puede cancelar la propia.
 
 export const deleteReservacion = async (req, res) => {
     try {
         const { id } = req.params;
+        const reservacion = await Reservacion.findById(id);
 
-        const reservacionEliminada = await Reservacion.findByIdAndDelete(id);
+        if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
 
-        if (!reservacionEliminada) {
-            return res.status(404).json({
-                success: false,
-                message: 'Reservación no encontrada'
-            });
+        if (req.usuario.role === 'USER_ROLE' && reservacion.usuario.toString() !== req.usuario._id.toString()) {
+            return res.status(403).json({ message: 'No puedes cancelar una reservación ajena' });
         }
+
+        reservacion.estado = 'CANCELADA';
+        await reservacion.save();
 
         res.status(200).json({
             success: true,
-            message: 'Reservación eliminada correctamente',
-            data: reservacionEliminada
+            message: 'Reservación cancelada correctamente'
         });
-
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al eliminar la reservación',
-            error: error.message
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 };

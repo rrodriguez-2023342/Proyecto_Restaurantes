@@ -6586,19 +6586,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\joshu\\.nuget\\packages\\": {}
+    "C:\\Users\\User\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\AuthService.Persistence.csproj",
+      "projectUniqueName": "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\AuthService.Persistence.csproj",
       "projectName": "AuthService.Persistence",
-      "projectPath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\AuthService.Persistence.csproj",
-      "packagesPath": "C:\\Users\\joshu\\.nuget\\packages\\",
-      "outputPath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\obj\\",
+      "projectPath": "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\AuthService.Persistence.csproj",
+      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
+      "outputPath": "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\joshu\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -6610,11 +6610,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Application\\AuthService.Application.csproj": {
-              "projectPath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Application\\AuthService.Application.csproj"
+            "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Application\\AuthService.Application.csproj": {
+              "projectPath": "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Application\\AuthService.Application.csproj"
             },
-            "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Domain\\AuthService.Domain.csproj": {
-              "projectPath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Domain\\AuthService.Domain.csproj"
+            "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Domain\\AuthService.Domain.csproj": {
+              "projectPath": "C:\\SextoPerito\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Domain\\AuthService.Domain.csproj"
             }
           }
         }
