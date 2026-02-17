@@ -210,9 +210,6 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles,
         // Update user profile
         if (user.UserProfile != null)
         {
-            if (!string.IsNullOrWhiteSpace(updateUserDto.ProfilePicture))
-                user.UserProfile.ProfilePicture = updateUserDto.ProfilePicture;
-
             if (!string.IsNullOrWhiteSpace(updateUserDto.Phone))
                 user.UserProfile.Phone = updateUserDto.Phone;
         }

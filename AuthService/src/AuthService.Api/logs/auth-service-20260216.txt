@@ -1436,3 +1436,15 @@ AuthService.Application.Exceptions.BusinessException: Email already exists
 [2026-02-16 18:20:40 INF] Database ready. Running seed data... {"SourceContext":"Program"}
 [2026-02-16 18:20:41 INF] Database initialization completed successfully {"SourceContext":"Program"}
 [2026-02-16 18:20:41 INF] AuthService_Restaurant API is running at http://localhost:5026. Health endpoint: http://localhost:5026/health {"SourceContext":"Program"}
+[2026-02-16 18:43:08 INF] Checking database connection... {"SourceContext":"Program"}
+[2026-02-16 18:43:09 INF] Database ready. Running seed data... {"SourceContext":"Program"}
+[2026-02-16 18:43:09 INF] Database initialization completed successfully {"SourceContext":"Program"}
+[2026-02-16 18:43:09 INF] AuthService_Restaurant API is running at http://localhost:5026. Health endpoint: http://localhost:5026/health {"SourceContext":"Program"}
+[2026-02-16 18:43:18 WRN] Failed to determine the https port for redirect. {"EventId":{"Id":3,"Name":"FailedToDeterminePort"},"SourceContext":"Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware","RequestId":"0HNJDNM5I5R0S:00000001","RequestPath":"/api/v1/auth/login","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:43:19 INF] User login succeeded {"EventId":{"Id":1002,"Name":"LogUserLoggedIn"},"SourceContext":"AuthService.Application.Services.AuthService","ActionId":"bee08aeb-f1e6-4736-bb1d-52ff7071cf4a","ActionName":"AuthService.Api.Controllers.AuthController.Login (AuthServiceIN6BM.Api)","RequestId":"0HNJDNM5I5R0S:00000001","RequestPath":"/api/v1/auth/login","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:43:19 INF] HTTP POST /api/v1/auth/login responded 200 in 1271.6122 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware","RequestId":"0HNJDNM5I5R0S:00000001","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:43:47 INF] HTTP GET /api/v1/users responded 401 in 13.9106 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware","RequestId":"0HNJDNM5I5R0S:00000002","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:43:52 INF] HTTP GET /api/v1/users responded 200 in 176.6233 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware","RequestId":"0HNJDNM5I5R0S:00000003","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:44:10 INF] HTTP PUT /api/v1/users/usr_7Tuiu49NYmiQ responded 200 in 143.6335 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware","RequestId":"0HNJDNM5I5R0S:00000004","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:44:50 INF] HTTP POST /api/v1/users/usr_7Tuiu49NYmiQ/profile-picture responded 200 in 1782.6798 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware","RequestId":"0HNJDNM5I5R0S:00000005","ConnectionId":"0HNJDNM5I5R0S"}
+[2026-02-16 18:44:58 INF] HTTP GET /api/v1/users responded 200 in 16.3865 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware","RequestId":"0HNJDNM5I5R0S:00000006","ConnectionId":"0HNJDNM5I5R0S"}
