@@ -6586,7 +6586,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\joshu\\.nuget\\packages\\": {}
+    "C:\\Users\\Roberto\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -6594,11 +6594,11 @@
       "projectUniqueName": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\AuthService.Persistence.csproj",
       "projectName": "AuthService.Persistence",
       "projectPath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\AuthService.Persistence.csproj",
-      "packagesPath": "C:\\Users\\joshu\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\Roberto\\.nuget\\packages\\",
       "outputPath": "C:\\Proyecto_Restaurantes\\AuthService\\src\\AuthService.Persistence\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\joshu\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Roberto\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"

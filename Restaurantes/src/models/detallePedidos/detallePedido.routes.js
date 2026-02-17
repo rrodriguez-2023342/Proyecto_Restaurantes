@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { createDetallePedido, getDetallesPedidos, getDetallePedidoById, updateDetallePedido, deleteDetallePedido } from './detallePedido.controller.js';
+import { validateCreateDetallePedido, validateUpdateDetallePedido, validateDeleteDetallePedido } from '../../../middlewares/detallePedidos-validators.js';
 
 const router = Router();
 
 router.post(
     '/create',
+    validateCreateDetallePedido,
     createDetallePedido
 )
 
@@ -20,11 +22,13 @@ router.get(
 
 router.put(
     '/:id',
+    validateUpdateDetallePedido,
     updateDetallePedido
 )
 
 router.delete(
     '/:id',
+    validateDeleteDetallePedido,
     deleteDetallePedido
 )
 

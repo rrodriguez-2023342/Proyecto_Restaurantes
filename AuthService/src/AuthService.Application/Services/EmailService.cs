@@ -65,6 +65,25 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
         await SendEmailAsync(email, subject, body);
     }
 
+    public async Task SendCredentialsEmailAsync(string email, string username, string password)
+    {
+        var subject = "Tus credenciales de Kinal Eats App";
+
+        var body = $@"
+            <h2>Cuenta creada</h2>
+            <p>Hola {username},</p>
+            <p>Se ha creado una cuenta para ti en Kinal Eats App. A continuación están tus credenciales iniciales:</p>
+            <ul>
+                <li><strong>Email:</strong> {email}</li>
+                <li><strong>Contraseña:</strong> {password}</li>
+            </ul>
+            <p>Por seguridad, por favor cambia tu contraseña al iniciar sesión por primera vez.</p>
+            <p>Si no solicitaste esta cuenta, contacta al administrador.</p>
+        ";
+
+        await SendEmailAsync(email, subject, body);
+    }
+
     private async Task SendEmailAsync(string to, string subject, string body)
     {
         var smtpSettings = configuration.GetSection("SmtpSettings");
