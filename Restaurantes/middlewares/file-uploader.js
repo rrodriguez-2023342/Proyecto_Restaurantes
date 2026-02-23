@@ -1,8 +1,8 @@
 import multer from "multer";
 import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
-import { v4 as uuidv4} from 'uuid';
 import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 dotenv.config();
@@ -70,3 +70,6 @@ export const uploadEventImage = createCloudinaryUploader(baseFolder + 'eventos')
 export const uploadMenuImage = createCloudinaryUploader(baseFolder + 'menus');
 
 export { cloudinary }
+
+// Exportar uploader para platos
+export const uploadPlatoImage = createCloudinaryUploader(baseFolder + 'platos');

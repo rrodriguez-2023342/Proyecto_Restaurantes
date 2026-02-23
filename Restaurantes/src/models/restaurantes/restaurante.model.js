@@ -7,7 +7,8 @@ const restauranteSchema = new mongoose.Schema(
         nombre: {
             type: String,
             required: [true, 'El nombre del restaurante es obligatorio'],
-            maxlength: [100, 'El nombre del restaurante no puede exceder los 100 caracteres']
+            maxlength: [100, 'El nombre del restaurante no puede exceder los 100 caracteres'],
+            trim: true
         },
         descripcion: {
             type: String,
@@ -21,6 +22,7 @@ const restauranteSchema = new mongoose.Schema(
         },
         categoria: {
             type: String,
+            required: [true, 'La categoría del restaurante es obligatoria']
         },
         telefono: {
             type: String,
@@ -31,9 +33,8 @@ const restauranteSchema = new mongoose.Schema(
             default: null
         },
         dueño: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Usuario',
-            required: [true, 'El dueño del restaurante es obligatorio']
+        type: String, // Cambiamos ObjectId por String
+        required: true
         },
         isActive: {
             type: Boolean,
@@ -44,7 +45,7 @@ const restauranteSchema = new mongoose.Schema(
         timestamps: true,
         versionKey: false
     }
-)
+);
 
 restauranteSchema.index({ isActive: 1 });
 restauranteSchema.index({ nombre: 1 });
