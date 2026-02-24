@@ -56,3 +56,88 @@ export const getInventarios = async (req, res) => {
         })
     }
 }
+
+export const getInventarioById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const inventario = await Inventario.findById(id)
+            .populate('restaurante');
+            
+        if (!inventario) {
+            return res.status(404).json({
+                success: false,
+                message: 'Inventario no encontrado'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: inventario
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al buscar el inventario',
+            error: error.message
+        });
+    }
+};
+
+export const updateInventario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const inventarioData = req.body;
+        
+        const inventario = await Inventario.findByIdAndUpdate(
+            id,
+            inventarioData,
+            { new: true, runValidators: true }
+        );
+
+        if (!inventario) {
+            return res.status(404).json({
+                success: false,
+                message: 'Inventario no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Inventario actualizado exitosamente',
+            data: inventario
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al actualizar el inventario',
+            error: error.message
+        });
+    }
+}
+
+export const deleteInventario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const inventario = await Inventario.findByIdAndDelete(id);
+
+        if (!inventario) {
+            return res.status(404).json({
+                success: false,
+                message: 'Inventario no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Inventario eliminado exitosamente'
+        });
+        
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error al eliminar el inventario',
+            error: error.message
+        });
+    }
+}
