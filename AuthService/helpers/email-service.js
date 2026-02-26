@@ -154,6 +154,9 @@ export const sendUsernameChangeEmail = async (email, name, token, newUsername) =
     }
 
     try {
+        const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
+        const confirmUrl = `${frontendUrl}/confirm-username-change?token=${token}`;
+
         const mailOptions = {
             from: `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
             to: email,
@@ -162,9 +165,13 @@ export const sendUsernameChangeEmail = async (email, name, token, newUsername) =
                 <h2>Solicitud de cambio de nombre de usuario</h2>
                 <p>Hola ${name},</p>
                 <p>Solicitaste cambiar tu nombre de usuario a: <strong>${newUsername}</strong></p>
-                <p>Para confirmar el cambio, utiliza el siguiente token en la aplicación:</p>
-                <p style='background-color: #f4f4f4; padding: 10px; font-size: 18px; font-weight: bold; letter-spacing: 2px;'>${token}</p>
-                <p>Este token expirará en 1 hora.</p>
+                <p>Para confirmar el cambio, haz click en el botón de abajo:</p>
+                <a href='${confirmUrl}' style='background-color: #1e616d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                    Confirmar cambio de usuario
+                </a>
+                <p>Si no puedes hacer click en el enlace, copia y pega esta URL en tu navegador:</p>
+                <p>${confirmUrl}</p>
+                <p>Este enlace expirará en 1 hora.</p>
                 <p>Si no solicitaste este cambio, ignora este correo y tu nombre de usuario permanecerá sin cambios.</p>
                 <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
             `,
@@ -183,6 +190,9 @@ export const sendPhoneChangeEmail = async (email, name, token, newPhone) => {
     }
 
     try {
+        const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
+        const confirmUrl = `${frontendUrl}/confirm-phone-change?token=${token}`;
+
         const mailOptions = {
             from: `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
             to: email,
@@ -191,9 +201,13 @@ export const sendPhoneChangeEmail = async (email, name, token, newPhone) => {
                 <h2>Solicitud de cambio de número de teléfono</h2>
                 <p>Hola ${name},</p>
                 <p>Solicitaste cambiar tu número de teléfono a: <strong>${newPhone}</strong></p>
-                <p>Para confirmar el cambio, utiliza el siguiente token en la aplicación:</p>
-                <p style='background-color: #f4f4f4; padding: 10px; font-size: 18px; font-weight: bold; letter-spacing: 2px;'>${token}</p>
-                <p>Este token expirará en 1 hora.</p>
+                <p>Para confirmar el cambio, haz click en el botón de abajo:</p>
+                <a href='${confirmUrl}' style='background-color: #1e616d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                    Confirmar cambio de teléfono
+                </a>
+                <p>Si no puedes hacer click en el enlace, copia y pega esta URL en tu navegador:</p>
+                <p>${confirmUrl}</p>
+                <p>Este enlace expirará en 1 hora.</p>
                 <p>Si no solicitaste este cambio, ignora este correo y tu número de teléfono permanecerá sin cambios.</p>
                 <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
             `,
@@ -212,6 +226,9 @@ export const sendDeactivateAccountEmail = async (email, name, token) => {
     }
 
     try {
+        const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
+        const confirmUrl = `${frontendUrl}/confirm-deactivate-account?token=${token}`;
+
         const mailOptions = {
             from: `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
             to: email,
@@ -220,9 +237,13 @@ export const sendDeactivateAccountEmail = async (email, name, token) => {
                 <h2>Solicitud de desactivación de cuenta</h2>
                 <p>Hola ${name},</p>
                 <p>Recibimos una solicitud para desactivar tu cuenta.</p>
-                <p>Para confirmar, utiliza el siguiente token en la aplicación:</p>
-                <p style='background-color: #f4f4f4; padding: 10px; font-size: 18px; font-weight: bold; letter-spacing: 2px;'>${token}</p>
-                <p>Este token expirará en 1 hora.</p>
+                <p>Para confirmar, haz click en el botón de abajo:</p>
+                <a href='${confirmUrl}' style='background-color: #771c25; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                    Confirmar desactivación de cuenta
+                </a>
+                <p>Si no puedes hacer click en el enlace, copia y pega esta URL en tu navegador:</p>
+                <p>${confirmUrl}</p>
+                <p>Este enlace expirará en 1 hora.</p>
                 <p>Si no solicitaste esto, ignora este correo y tu cuenta permanecerá activa.</p>
                 <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
             `,
@@ -315,6 +336,9 @@ export const sendActivateAccountEmail = async (email, name, token) => {
     }
 
     try {
+        const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
+        const confirmUrl = `${frontendUrl}/confirm-activate-account?token=${token}`;
+
         const mailOptions = {
             from: `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
             to: email,
@@ -323,9 +347,13 @@ export const sendActivateAccountEmail = async (email, name, token) => {
                 <h2>Solicitud de activación de cuenta</h2>
                 <p>Hola ${name},</p>
                 <p>Recibimos una solicitud para activar tu cuenta.</p>
-                <p>Para confirmar, utiliza el siguiente token en la aplicación:</p>
-                <p style='background-color: #f4f4f4; padding: 10px; font-size: 18px; font-weight: bold; letter-spacing: 2px;'>${token}</p>
-                <p>Este token expirará en 1 hora.</p>
+                <p>Para confirmar, haz click en el botón de abajo:</p>
+                <a href='${confirmUrl}' style='background-color: #1e616d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                    Confirmar activación de cuenta
+                </a>
+                <p>Si no puedes hacer click en el enlace, copia y pega esta URL en tu navegador:</p>
+                <p>${confirmUrl}</p>
+                <p>Este enlace expirará en 1 hora.</p>
                 <p>Si no solicitaste esto, ignora este correo.</p>
                 <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
             `,
