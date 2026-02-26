@@ -1,9 +1,16 @@
 import Plato from './plato.model.js';
 
+
+//CREAR PLATO
+//Solo accesible por ADMIN_ROLE y ADMIN_RESTAURANT_ROLE.
+
 export const createPlato = async (req, res) => {
     try {
         const platoData = req.body;
-
+        // Si se subió una imagen, guardar la URL en fotosPlato
+        if (req.file && req.file.path) {
+            platoData.fotosPlato = req.file.path;
+        }
         const plato = new Plato(platoData);
         await plato.save();
 
@@ -11,65 +18,63 @@ export const createPlato = async (req, res) => {
             success: true,
             message: 'Plato creado exitosamente',
             data: plato
-        })
+        });
     } catch (error) {
         res.status(400).json({
             success: false,
             message: 'Error al crear el plato',
             error: error.message
-        })
+        });
     }
-}
+};
+
+
+//OBTENER PLATOS
+//Regla: Solo se muestran platos con "disponible".
 
 export const getPlatos = async (req, res) => {
     try {
-        const { page = 1, limit = 10, disponible = true} = req.query;
+        const { page = 1, limit = 10 } = req.query;
+        const filter = { disponible: true };
 
-        const filter = { disponible };
-
-        const options = {
-            page: parseInt(page, 10),
-            limit: parseInt(limit),
-            sort: { createdAt: -1 }
-        }
-
-        const platos = await Plato.find(filter)
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .sort();
-
-        const total = await Plato.countDocuments(filter);
+        const [platos, total] = await Promise.all([
+            Plato.find(filter)
+                .populate('menu', 'nombreMenu')
+                .limit(limit * 1)
+                .skip((page - 1) * limit)
+                .sort({ createdAt: -1 }),
+            Plato.countDocuments(filter)
+        ]);
 
         res.status(200).json({
             success: true,
             data: platos,
             pagination: {
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
                 totalItems: total,
-                limit
+                totalPages: Math.ceil(total / limit),
+                currentPage: parseInt(page),
+                limit: parseInt(limit)
             }
-        })
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
             message: 'Error al obtener los platos',
             error: error.message
-        })
+        });
     }
-}
+};
 
+//Obtener plato por ID
 export const getPlatoById = async (req, res) => {
     try {
         const { id } = req.params;
+        const plato = await Plato.findById(id).populate('menu');
 
-        const plato = await Plato.findById(id)
-            .populate('menu');
-
-        if (!plato) {
+        if (!plato || !plato.disponible) {
             return res.status(404).json({
                 success: false,
-                message: 'Plato no encontrado'
+                message: 'Plato no encontrado o no disponible'
             });
         }
 
@@ -77,7 +82,6 @@ export const getPlatoById = async (req, res) => {
             success: true,
             data: plato
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -86,6 +90,8 @@ export const getPlatoById = async (req, res) => {
         });
     }
 };
+
+//Editar plato
 
 export const editarPlato = async (req, res) => {
     try {
@@ -110,7 +116,6 @@ export const editarPlato = async (req, res) => {
             message: 'Plato actualizado correctamente',
             data: platoUpdated
         });
-
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -119,6 +124,10 @@ export const editarPlato = async (req, res) => {
         });
     }
 };
+
+
+//ELIMINAR PLATO
+//Regla: Cambia el estado "disponible" a false.
 
 export const eliminarPlato = async (req, res) => {
     try {
@@ -139,10 +148,8 @@ export const eliminarPlato = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Plato eliminado correctamente',
-            data: platoEliminado
+            message: 'Plato desactivado (eliminado) correctamente'
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,

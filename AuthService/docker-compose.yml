@@ -1,20 +1,18 @@
-﻿version: "3.9"
+version: "3.9"
 
 services:
     postgres:
       image: postgres:16
-      container_name: authService
+      container_name: AuthService-Restaurantes
       restart: always
-      environment: 
+      environment:
         POSTGRES_DB: restaurantesdb
         POSTGRES_USER: admin
         POSTGRES_PASSWORD: admin
-      ports: 
+      ports:
         - "5436:5432"
       volumes:
         - postgres_data:/var/lib/postgressql/data
 
-volumes: 
+volumes:
   postgres_data:
-
-

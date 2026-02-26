@@ -20,6 +20,7 @@ export const validateJWT = (req, res, next) => {
         req.header('x-token') ||
         req.header('Authorization')?.replace('Bearer ', '');
 
+
     if (!token) {
         return res.status(401).json({
             success: false,
@@ -48,6 +49,17 @@ export const validateJWT = (req, res, next) => {
             iat: decoded.iat, // Emitido en
             role: decoded.role || 'USER_ROLE'
         }
+
+        // Mantenemos EXACTAMENTE lo que puso tu amigo
+        req.user = {
+            id: decoded.sub,
+            jti: decoded.jti,
+            iat: decoded.iat,
+            role: decoded.role || 'USER_ROLE'
+        }
+
+        // AGREGAMOS esta línea para que tus mesas no fallen
+        req.usuario = req.user; 
 
         next();
 

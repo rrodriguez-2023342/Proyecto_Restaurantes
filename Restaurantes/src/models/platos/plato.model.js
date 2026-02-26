@@ -12,7 +12,8 @@ const platoSchema = new mongoose.Schema(
         nombrePlato: {
             type: String,
             required: [true, 'El nombre del plato es obligatorio'],
-            maxlength: [100, 'El nombre del plato no puede exceder los 100 caracteres']
+            maxlength: [100, 'El nombre del plato no puede exceder los 100 caracteres'],
+            trim: true
         },
         descripcionPlato: {
             type: String,
@@ -42,10 +43,11 @@ const platoSchema = new mongoose.Schema(
         timestamps: true,
         versionKey: false
     }
-)
+);
 
 platoSchema.index({ menu: 1 });
 platoSchema.index({ nombrePlato: 1 });
 platoSchema.index({ tipoPlato: 1 });
+platoSchema.index({ disponible: 1 });
 
 export default mongoose.model('Plato', platoSchema);
