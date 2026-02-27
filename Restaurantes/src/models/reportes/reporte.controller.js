@@ -1,17 +1,20 @@
 import Reporte from './reporte.model.js';
-import { generateReportePdf } from '../../helpers/reporte.helper.js';
+import { generateReportePdf } from '../../helpers/reporte-helper.js';
 import { sendReportePdfEmail } from '../../helpers/email-service.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
+import Pedido from '../pedidos/pedido.model.js';
+import Factura from '../facturas/factura.model.js';
+import DetallePedido from '../detallePedidos/detallePedido.model.js';
+import Inventario from '../inventario/inventario.model.js';
+import Plato from '../platos/plato.model.js';
+import Reservacion from '../reservaciones/reservacion.model.js';
+import Mesa from '../mesas/mesa.model.js';
+import Reseña from '../reseñas/reseña.model.js';
 
 // ─── Helpers internos ────────────────────────────────────────────────────────
 
-/**
- * Verifica que el usuario ADMIN_RESTAURANT_ROLE sea dueño del restaurante
- * asociado al reporte. Devuelve true si tiene permiso, false si no.
- */
 const puedeAccederReporte = async (usuario, reporteRestauranteId) => {
     if (usuario.role !== 'ADMIN_RESTAURANT_ROLE') return true;
-
     const restaurante = await Restaurante.findOne({ dueño: usuario.id }).lean();
     return restaurante && reporteRestauranteId.toString() === restaurante._id.toString();
 };
@@ -19,12 +22,234 @@ const puedeAccederReporte = async (usuario, reporteRestauranteId) => {
 const buildFilename = (reporte) =>
     `reporte-${reporte.tipoReporte.toLowerCase()}-${reporte._id}.pdf`;
 
+// ─── Generadores de data por tipo ────────────────────────────────────────────
+
+/**
+ * VENTAS
+ * Fuentes: Pedido, Factura, DetallePedido
+ * - totalIngresos: métrica principal, suma de lo facturado
+ * - totalPedidos: volumen de operaciones del periodo
+ * - pedidosEntregados / pedidosCancelados: salud operativa
+ * - ticketPromedio: KPI estándar de restaurantes
+ * - pedidosPorTipo: saber qué canal genera más (domicilio, llevar, local)
+ * - totalImpuestos: útil para contabilidad
+ */
+const generarDataVentas = async (restauranteId, fechaInicio, fechaFin) => {
+    const [pedidos, facturas] = await Promise.all([
+        Pedido.find({
+            restaurante: restauranteId,
+            createdAt: { $gte: fechaInicio, $lte: fechaFin },
+        }).lean(),
+        Factura.find({
+            createdAt: { $gte: fechaInicio, $lte: fechaFin },
+        }).populate({ path: 'pedido', match: { restaurante: restauranteId } }).lean(),
+    ]);
+
+    const facturasDelRestaurante = facturas.filter((f) => f.pedido !== null);
+
+    const totalIngresos     = facturasDelRestaurante.reduce((s, f) => s + (f.total ?? 0), 0);
+    const totalImpuestos    = facturasDelRestaurante.reduce((s, f) => s + (f.impuesto ?? 0), 0);
+    const totalPedidos      = pedidos.length;
+    const pedidosEntregados = pedidos.filter((p) => p.estadoPedido === 'Entregado').length;
+    const pedidosCancelados = pedidos.filter((p) => p.estadoPedido === 'Cancelado').length;
+    const ticketPromedio    = totalPedidos > 0 ? (totalIngresos / totalPedidos).toFixed(2) : '0.00';
+
+    const porTipo = pedidos.reduce((acc, p) => {
+        acc[p.tipoPedido] = (acc[p.tipoPedido] ?? 0) + 1;
+        return acc;
+    }, {});
+
+    return {
+        totalIngresos:       totalIngresos.toFixed(2),
+        totalPedidos,
+        pedidosEntregados,
+        pedidosCancelados,
+        ticketPromedio,
+        totalImpuestos:      totalImpuestos.toFixed(2),
+        pedidosDomicilio:    porTipo['Domicilio']            ?? 0,
+        pedidosParaLlevar:   porTipo['Para llevar']          ?? 0,
+        pedidosEnRestaurante: porTipo['En el restaurante']   ?? 0,
+    };
+};
+
+/**
+ * RESERVACIONES
+ * Fuentes: Reservacion, Mesa
+ * - totalReservaciones: volumen general
+ * - porEstado: tasa de cancelación y cumplimiento
+ * - promedioPersonas: para planificar capacidad
+ * - totalMesas / mesasDisponibles: ocupación actual del restaurante
+ */
+const generarDataReservaciones = async (restauranteId, fechaInicio, fechaFin) => {
+    const [reservaciones, mesas] = await Promise.all([
+        Reservacion.find({
+            restaurante: restauranteId,
+            fecha: { $gte: fechaInicio, $lte: fechaFin },
+        }).lean(),
+        Mesa.find({ restaurante: restauranteId }).lean(),
+    ]);
+
+    const total        = reservaciones.length;
+    const confirmadas  = reservaciones.filter((r) => r.estado === 'CONFIRMADA').length;
+    const canceladas   = reservaciones.filter((r) => r.estado === 'CANCELADA').length;
+    const completadas  = reservaciones.filter((r) => r.estado === 'COMPLETADA').length;
+    const pendientes   = reservaciones.filter((r) => r.estado === 'PENDIENTE').length;
+
+    const sumaPersonas   = reservaciones.reduce((s, r) => s + (r.cantidadPersonas ?? 0), 0);
+    const promedioPersonas = total > 0 ? (sumaPersonas / total).toFixed(1) : '0';
+    const tasaCancelacion  = total > 0 ? ((canceladas / total) * 100).toFixed(1) + '%' : '0%';
+
+    const totalMesas      = mesas.length;
+    const mesasDisponibles = mesas.filter((m) => m.disponibilidad).length;
+    const mesasOcupadas   = totalMesas - mesasDisponibles;
+
+    return {
+        totalReservaciones: total,
+        reservacionesConfirmadas: confirmadas,
+        reservacionesCanceladas:  canceladas,
+        reservacionesCompletadas: completadas,
+        reservacionesPendientes:  pendientes,
+        tasaCancelacion,
+        promedioPersonasPorReservacion: promedioPersonas,
+        totalMesas,
+        mesasDisponibles,
+        mesasOcupadas,
+    };
+};
+
+/**
+ * INVENTARIO
+ * Fuente: Inventario
+ * - totalItems: tamaño del inventario
+ * - itemsBajoStock: los más críticos, donde cantidad <= minStock
+ * - itemsSinStock: alertas inmediatas, donde cantidad === 0
+ * - itemCritico: el item con menor cantidad relativa a su minStock
+ */
+const generarDataInventario = async (restauranteId) => {
+    const items = await Inventario.find({ restaurante: restauranteId }).lean();
+
+    const total         = items.length;
+    const sinStock      = items.filter((i) => i.cantidad === 0);
+    const bajoStock     = items.filter((i) => i.cantidad > 0 && i.cantidad <= i.minStock);
+    const stockNormal   = items.filter((i) => i.cantidad > i.minStock);
+
+    // El item más crítico: menor ratio cantidad/minStock (excluyendo los en 0 que ya son críticos)
+    const itemCritico = bajoStock.sort(
+        (a, b) => (a.cantidad / a.minStock) - (b.cantidad / b.minStock)
+    )[0];
+
+    return {
+        totalItems:          total,
+        itemsStockNormal:    stockNormal.length,
+        itemsBajoStock:      bajoStock.length,
+        itemsSinStock:       sinStock.length,
+        alertasCriticas:     sinStock.length + bajoStock.length,
+        itemMasCritico:      itemCritico?.nombreItem ?? 'Ninguno',
+        cantidadItemCritico: itemCritico?.cantidad   ?? 0,
+        minStockItemCritico: itemCritico?.minStock   ?? 0,
+    };
+};
+
+/**
+ * PLATOS_POPULARES
+ * Fuentes: DetallePedido, Plato, Reseña
+ * - platosVendidos por nombre: ranking real basado en DetallePedido
+ * - ingresosPorPlato: qué plato genera más dinero (cantidad * precio)
+ * - porTipoPlato: qué categoría domina (ENTRADA, PLATO_FUERTE, etc.)
+ * - calificacionPromedio: satisfacción general del restaurante
+ */
+const generarDataPlatosPopulares = async (restauranteId, fechaInicio, fechaFin) => {
+    // Pedidos del restaurante en el periodo
+    const pedidosIds = await Pedido.find({
+        restaurante: restauranteId,
+        createdAt: { $gte: fechaInicio, $lte: fechaFin },
+        estadoPedido: { $ne: 'Cancelado' },
+    }).distinct('_id');
+
+    const [detalles, reseñas] = await Promise.all([
+        DetallePedido.find({ pedido: { $in: pedidosIds } })
+            .populate('plato', 'nombrePlato tipoPlato')
+            .lean(),
+        Reseña.find({ restaurante: restauranteId, estado: true }).lean(),
+    ]);
+
+    // Agrupar por plato
+    const mapaPlatos = {};
+    for (const d of detalles) {
+        if (!d.plato) continue;
+        const id = d.plato._id.toString();
+        if (!mapaPlatos[id]) {
+            mapaPlatos[id] = {
+                nombre:    d.plato.nombrePlato,
+                tipo:      d.plato.tipoPlato,
+                cantidad:  0,
+                ingresos:  0,
+            };
+        }
+        mapaPlatos[id].cantidad += d.cantidad;
+        mapaPlatos[id].ingresos += d.cantidad * d.precio;
+    }
+
+    const ranking = Object.values(mapaPlatos).sort((a, b) => b.cantidad - a.cantidad);
+
+    // Top 3
+    const top3 = ranking.slice(0, 3).map((p, i) => ({
+        [`top${i + 1}Plato`]:    p.nombre,
+        [`top${i + 1}Vendidos`]: p.cantidad,
+        [`top${i + 1}Ingresos`]: p.ingresos.toFixed(2),
+    }));
+
+    // Por tipo de plato
+    const porTipo = {};
+    for (const p of ranking) {
+        porTipo[p.tipo] = (porTipo[p.tipo] ?? 0) + p.cantidad;
+    }
+
+    // Calificación promedio
+    const calificacionPromedio = reseñas.length > 0
+        ? (reseñas.reduce((s, r) => s + r.calificacion, 0) / reseñas.length).toFixed(1)
+        : 'Sin reseñas';
+
+    const totalVendidos = ranking.reduce((s, p) => s + p.cantidad, 0);
+    const platoMenosVendido = ranking[ranking.length - 1]?.nombre ?? 'N/A';
+
+    return {
+        totalPlatosVendidos:  totalVendidos,
+        platoMenosVendido,
+        ...Object.assign({}, ...top3),
+        entradasVendidas:     porTipo['ENTRADA']       ?? 0,
+        platosFuertesVendidos: porTipo['PLATO_FUERTE'] ?? 0,
+        postresVendidos:      porTipo['POSTRE']         ?? 0,
+        bebidasVendidas:      porTipo['BEBIDA']         ?? 0,
+        calificacionPromedio,
+        totalReseñas:         reseñas.length,
+    };
+};
+
+// ─── Dispatcher ──────────────────────────────────────────────────────────────
+
+const generarData = async (tipoReporte, restauranteId, fechaInicio, fechaFin) => {
+    switch (tipoReporte) {
+        case 'VENTAS':
+            return generarDataVentas(restauranteId, fechaInicio, fechaFin);
+        case 'RESERVACIONES':
+            return generarDataReservaciones(restauranteId, fechaInicio, fechaFin);
+        case 'INVENTARIO':
+            return generarDataInventario(restauranteId);
+        case 'PLATOS_POPULARES':
+            return generarDataPlatosPopulares(restauranteId, fechaInicio, fechaFin);
+        default:
+            return {};
+    }
+};
+
 // ─── Controllers ─────────────────────────────────────────────────────────────
 
 export const createReporte = async (req, res) => {
     try {
         const data = { ...req.body };
         delete data.generadoPor;
+        delete data.data; // El data siempre se genera automáticamente
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
@@ -39,8 +264,17 @@ export const createReporte = async (req, res) => {
 
         data.generadoPor = {
             userId: String(req.usuario.id),
-            role: req.usuario.role,
+            role:   req.usuario.role,
+            name:   `${req.usuario.name ?? ''} ${req.usuario.surname ?? ''}`.trim(),
         };
+
+        // Generar data automáticamente según el tipo de reporte
+        data.data = await generarData(
+            data.tipoReporte,
+            data.restaurante,
+            new Date(data.fechaInicio),
+            new Date(data.fechaFin)
+        );
 
         const reporte = await new Reporte(data).save();
 
@@ -60,12 +294,13 @@ export const createReporte = async (req, res) => {
 
 export const getReportes = async (req, res) => {
     try {
-        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const page  = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
         const query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            query.restaurante = req.usuario.restaurante;
+            const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
+            if (restaurante) query.restaurante = restaurante._id;
         }
 
         const [reportes, total] = await Promise.all([
@@ -81,8 +316,8 @@ export const getReportes = async (req, res) => {
             success: true,
             data: reportes,
             pagination: {
-                totalItems: total,
-                totalPages: Math.ceil(total / limit),
+                totalItems:  total,
+                totalPages:  Math.ceil(total / limit),
                 currentPage: page,
                 limit,
             },
@@ -135,7 +370,7 @@ export const updateReporte = async (req, res) => {
         }
 
         const updateData = { ...req.body };
-        delete updateData.generadoPor; // Campo inmutable, nunca se sobreescribe
+        delete updateData.generadoPor;
 
         const reporteEditado = await Reporte.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -175,10 +410,6 @@ export const deleteReporte = async (req, res) => {
     }
 };
 
-/**
- * Genera el PDF del reporte, lo descarga y lo envía por correo.
- * Si el correo falla, el PDF se entrega igual — el error se registra en logs.
- */
 export const generarReporte = async (req, res) => {
     try {
         const reporte = await Reporte.findById(req.params.id).populate('restaurante', 'nombre');
@@ -200,7 +431,6 @@ export const generarReporte = async (req, res) => {
 
         const pdfBuffer = generateReportePdf(reporte);
 
-        // Envío de correo: fallo no bloquea la descarga
         sendReportePdfEmail(req.usuario.email, req.usuario.name, pdfBuffer, reporte)
             .catch((err) =>
                 console.error(`[generarReporte] Error al enviar email para reporte ${reporte._id}:`, err.message)

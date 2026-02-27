@@ -58,6 +58,7 @@ export const validateJWT = (req, res, next) => {
             role: decoded.role || 'USER_ROLE',
             email: decoded.email || null,
             name: decoded.name || null,
+            surname: decoded.surname || null,
         }
 
         // AGREGAMOS esta línea para que tus mesas no fallen

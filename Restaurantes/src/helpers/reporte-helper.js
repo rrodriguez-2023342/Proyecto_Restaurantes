@@ -93,7 +93,6 @@ const buildPages = (commands) => {
                 ops.push(...opRect(0, PAGE_H - MARGIN_Y - blockH - 3, PAGE_W, 3, ...GOLD));
                 ops.push(...opColorText(centerX(cmd.title, 20),       PAGE_H - MARGIN_Y - 36, 'F2', 20, cmd.title,       ...WHITE));
                 ops.push(...opColorText(centerX(cmd.restaurante, 11), PAGE_H - MARGIN_Y - 60, 'F1', 11, cmd.restaurante, ...GOLD));
-                ops.push(...opColorText(rightX(cmd.generadoPor, 8),   PAGE_H - MARGIN_Y - 80, 'F1',  8, cmd.generadoPor, 0.7, 0.9, 0.7));
                 drop(blockH + 14);
                 break;
             }
@@ -251,25 +250,30 @@ const generatePdfFromCommands = (commands) => {
  */
 export const generateReportePdf = (reporte) => {
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-GT') : '—';
-    const titulo  = TIPO_LABEL[reporte.tipoReporte] ?? reporte.tipoReporte;
+    const titulo  = normalizeText(TIPO_LABEL[reporte.tipoReporte] ?? reporte.tipoReporte);
     const entries = Object.entries(reporte.data ?? {});
+
+    // Normalizar campos que pueden tener tildes o caracteres especiales
+    const restauranteNombre = normalizeText(reporte.restaurante?.nombre ?? 'Restaurante');
+    const generadoPorName   = normalizeText(reporte.generadoPor?.name ?? reporte.generadoPor?.userId ?? '—');
+    const generadoPorId     = reporte.generadoPor?.userId ?? '—';
 
     const commands = [
         {
             type:        'coverHeader',
             title:       titulo,
-            restaurante: reporte.restaurante?.nombre ?? 'Restaurante',
-            generadoPor: `Generado por: ${reporte.generadoPor?.userId ?? '—'}`,
+            restaurante: restauranteNombre,
         },
         { type: 'spacer', h: 14 },
 
-        { type: 'sectionHeader', text: normalizeText('Información del reporte') },
-        { type: 'keyvalue', key: 'Restaurante',     value: reporte.restaurante?.nombre ?? '—', zebra: false },
-        { type: 'keyvalue', key: 'Tipo de reporte', value: titulo,                             zebra: true  },
-        { type: 'keyvalue', key: 'Fecha de inicio', value: fmtDate(reporte.fechaInicio),       zebra: false },
-        { type: 'keyvalue', key: 'Fecha de fin',    value: fmtDate(reporte.fechaFin),          zebra: true  },
-        { type: 'keyvalue', key: 'Generado por',    value: reporte.generadoPor?.userId ?? '—', zebra: false },
-        { type: 'keyvalue', key: 'Fecha generación', value: fmtDate(reporte.createdAt),        zebra: true  },
+        { type: 'sectionHeader', text: 'Informacion del reporte' },
+        { type: 'keyvalue', key: 'Restaurante',      value: restauranteNombre,          zebra: false },
+        { type: 'keyvalue', key: 'Tipo de reporte',  value: titulo,                     zebra: true  },
+        { type: 'keyvalue', key: 'Fecha de inicio',  value: fmtDate(reporte.fechaInicio), zebra: false },
+        { type: 'keyvalue', key: 'Fecha de fin',     value: fmtDate(reporte.fechaFin),    zebra: true  },
+        { type: 'keyvalue', key: 'Generado por ID',  value: generadoPorId,              zebra: false },
+        { type: 'keyvalue', key: 'Generado por',     value: generadoPorName,            zebra: true  },
+        { type: 'keyvalue', key: 'Fecha generacion', value: fmtDate(reporte.createdAt), zebra: false },
         { type: 'spacer', h: 14 },
 
         { type: 'sectionHeader', text: 'Datos del reporte' },
@@ -278,15 +282,15 @@ export const generateReportePdf = (reporte) => {
         ...(entries.length > 0
             ? entries.map(([key, value], i) => ({
                 type:  'dataRow',
-                key:   key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
-                value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+                key:   normalizeText(key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())),
+                value: normalizeText(typeof value === 'object' ? JSON.stringify(value) : String(value)),
                 index: i,
             }))
             : [{ type: 'text', text: 'Sin datos registrados para este periodo.' }]
         ),
 
         { type: 'spacer', h: 14 },
-        { type: 'footer', text: 'Documento generado electrónicamente. No requiere firma ni sello.' },
+        { type: 'footer', text: 'Documento generado electronicamente. No requiere firma ni sello.' },
     ];
 
     return generatePdfFromCommands(commands);

@@ -37,6 +37,11 @@ const reporteSchema = new mongoose.Schema(
                 enum: ['ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'],
                 immutable: true,
             },
+            name: {
+                type: String,
+                immutable: true,
+                trim: true,
+            },
         },
     },
     {
