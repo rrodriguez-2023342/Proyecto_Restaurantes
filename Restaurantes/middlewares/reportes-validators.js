@@ -10,6 +10,10 @@ import { requireRoles } from './validate-role.js';
 export const validateGenerateReport = [
     validateJWT,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    body('generadoPor')
+        .not()
+        .exists()
+        .withMessage('No debes enviar generadoPor; se toma automaticamente del token'),
     body('tipoReporte')
         .notEmpty()
         .withMessage('El tipo de reporte es obligatorio')
@@ -38,5 +42,18 @@ export const validateViewReport = [
         .optional()
         .isInt({ min: 1 })
         .withMessage('El límite debe ser un número positivo'),
+    checkValidators
+];
+
+export const validateUpdateReport = [
+    validateJWT,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    param('id')
+        .isMongoId()
+        .withMessage('ID de reporte no válido'),
+    body('generadoPor')
+        .not()
+        .exists()
+        .withMessage('No puedes modificar generadoPor'),
     checkValidators
 ];

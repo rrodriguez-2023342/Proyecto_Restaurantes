@@ -8,7 +8,7 @@ export const validateJWT = (req, res, next) => {
         audience: process.env.JWT_AUDIENCE
     }
 
-    if (!jwtConfig.secret){
+    if (!jwtConfig.secret) {
         console.error('Error de validación JWT: JWT_SECRET no está definido');
         return res.status(500).json({
             success: false,
@@ -16,7 +16,7 @@ export const validateJWT = (req, res, next) => {
         })
     }
 
-    const token = 
+    const token =
         req.header('x-token') ||
         req.header('Authorization')?.replace('Bearer ', '');
 
@@ -31,12 +31,12 @@ export const validateJWT = (req, res, next) => {
 
     try {
         const verifyOptions = {};
-        if(jwtConfig.issuer) verifyOptions.issuer = jwtConfig.issuer;
-        if(jwtConfig.audience) verifyOptions.audience = jwtConfig.audience;
+        if (jwtConfig.issuer) verifyOptions.issuer = jwtConfig.issuer;
+        if (jwtConfig.audience) verifyOptions.audience = jwtConfig.audience;
 
         const decoded = jwt.verify(token, jwtConfig.secret, verifyOptions);
 
-        if(!decoded.role){
+        if (!decoded.role) {
             console.warn(
                 `Token sin campo 'role' para usuario ${decoded.sub}. Payload:`,
                 JSON.stringify(decoded, null, 2)
@@ -55,18 +55,20 @@ export const validateJWT = (req, res, next) => {
             id: decoded.sub,
             jti: decoded.jti,
             iat: decoded.iat,
-            role: decoded.role || 'USER_ROLE'
+            role: decoded.role || 'USER_ROLE',
+            email: decoded.email || null,
+            name: decoded.name || null,
         }
 
         // AGREGAMOS esta línea para que tus mesas no fallen
-        req.usuario = req.user; 
+        req.usuario = req.user;
 
         next();
 
     } catch (error) {
         console.error(`Error validando JWT: ${error.message}`);
-        
-        if(error.name === 'TokenExpiredError'){
+
+        if (error.name === 'TokenExpiredError') {
             return res.status(401).json({
                 success: false,
                 message: 'Token expirado',
@@ -74,7 +76,7 @@ export const validateJWT = (req, res, next) => {
             })
         }
 
-        if(error.name === 'JsonWebTokenError'){
+        if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({
                 success: false,
                 message: 'Token inválido',

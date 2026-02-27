@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { config } from '../configs/config.js';
 
-// Configurar el transportador de email (aligned with .NET SmtpSettings)
+// Configurar el transportador de email 
 const createTransporter = () => {
     if (!config.smtp.username || !config.smtp.password) {
         console.warn(

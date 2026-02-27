@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { createReporte, getReportes, getReporteById, updateReporte, deleteReporte } from './reporte.controller.js';
+import { createReporte, getReportes, getReporteById, updateReporte, deleteReporte, generarReporte  } from './reporte.controller.js';
 import { 
     validateGenerateReport, 
-    validateViewReport 
+    validateViewReport,
+    validateUpdateReport
 } from '../../../middlewares/reportes-validators.js';
 
 const router = Router();
@@ -31,22 +32,15 @@ router.get(
 // Actualizar un reporte
 router.put(
     '/:id',
-    validateViewReport,
+    validateUpdateReport,
     updateReporte
 );
-
-router.put(
-    '/:id',
-    updateReporte
-)
 
 router.delete(
     '/:id',
     deleteReporte
 )
-router.get(
-    '/:id',
-    getReporteById
-)
+
+router.get('/:id/pdf', validateViewReport, generarReporte);
 
 export default router;

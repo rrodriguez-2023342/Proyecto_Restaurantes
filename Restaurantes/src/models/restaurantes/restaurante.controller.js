@@ -85,9 +85,17 @@ export const getRestaurantesById = async (req, res) => {
 export const updateRestaurante = async (req, res) => {
     try {
         const { id } = req.params;
+        const OWNER_FIELD = 'due\u00F1o';
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && id !== req.usuario.restaurante.toString()) {
             return res.status(403).json({ message: 'Solo puedes actualizar tu propio restaurante' });
+        }
+
+        if (
+            req.usuario.role !== 'ADMIN_ROLE' &&
+            Object.prototype.hasOwnProperty.call(req.body, OWNER_FIELD)
+        ) {
+            return res.status(403).json({ message: 'Solo ADMIN_ROLE puede reasignar el dueno' });
         }
 
         const restauranteEditado = await Restaurante.findByIdAndUpdate(id, req.body, { new: true });

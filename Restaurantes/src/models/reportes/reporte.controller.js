@@ -1,41 +1,68 @@
 import Reporte from './reporte.model.js';
+import { generateReportePdf } from '../../helpers/reporte.helper.js';
+import { sendReportePdfEmail } from '../../helpers/email-service.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
 
+// ─── Helpers internos ────────────────────────────────────────────────────────
 
-//GENERAR REPORTE
-//Regla: Los admins pueden crear reportes. 
-//Si es Admin de Restaurante, se fuerza su restauranteId.
+/**
+ * Verifica que el usuario ADMIN_RESTAURANT_ROLE sea dueño del restaurante
+ * asociado al reporte. Devuelve true si tiene permiso, false si no.
+ */
+const puedeAccederReporte = async (usuario, reporteRestauranteId) => {
+    if (usuario.role !== 'ADMIN_RESTAURANT_ROLE') return true;
+
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).lean();
+    return restaurante && reporteRestauranteId.toString() === restaurante._id.toString();
+};
+
+const buildFilename = (reporte) =>
+    `reporte-${reporte.tipoReporte.toLowerCase()}-${reporte._id}.pdf`;
+
+// ─── Controllers ─────────────────────────────────────────────────────────────
+
 export const createReporte = async (req, res) => {
     try {
-        const data = req.body;
+        const data = { ...req.body };
+        delete data.generadoPor;
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            data.restaurante = req.usuario.restaurante;
+            const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
+            if (!restaurante) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado',
+                });
+            }
+            data.restaurante = restaurante._id;
         }
 
-        const reporte = new Reporte(data);
-        await reporte.save();
+        data.generadoPor = {
+            userId: String(req.usuario.id),
+            role: req.usuario.role,
+        };
 
-        res.status(201).json({
+        const reporte = await new Reporte(data).save();
+
+        return res.status(201).json({
             success: true,
             message: 'Reporte generado exitosamente',
-            data: reporte
+            data: reporte,
         });
     } catch (error) {
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: 'Error al generar el reporte',
-            error: error.message
+            error: error.message,
         });
     }
 };
 
-//OBTENER REPORTES
-//Regla: El Admin de restaurante solo ve sus propios reportes.
-
 export const getReportes = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        let query = {};
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+        const query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             query.restaurante = req.usuario.restaurante;
@@ -44,118 +71,151 @@ export const getReportes = async (req, res) => {
         const [reportes, total] = await Promise.all([
             Reporte.find(query)
                 .populate('restaurante', 'nombre')
-                .limit(limit * 1)
+                .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
-                .sort({ createdAt: -1 }),
-            Reporte.countDocuments(query)
+                .limit(limit),
+            Reporte.countDocuments(query),
         ]);
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             data: reportes,
             pagination: {
                 totalItems: total,
                 totalPages: Math.ceil(total / limit),
-                currentPage: parseInt(page),
-                limit: parseInt(limit)
-            }
+                currentPage: page,
+                limit,
+            },
         });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: 'Error al obtener los reportes',
-            error: error.message
+            error: error.message,
         });
     }
-}
-
-
-
-//OBTENER REPORTE POR ID
+};
 
 export const getReporteById = async (req, res) => {
     try {
-        const { id } = req.params;
-        
-        const reporte = await Reporte.findById(id).populate('restaurante');
+        const reporte = await Reporte.findById(req.params.id).populate('restaurante');
 
         if (!reporte) {
-            return res.status(404).json({
-                success: false,
-                message: 'Reporte no encontrado'
-            })
+            return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
         }
-        res.status(200).json({
+
+        return res.status(200).json({
             success: true,
             message: 'Reporte obtenido exitosamente',
-            data: reporte
-        })
+            data: reporte,
+        });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: 'Error al obtener el reporte',
-            error: error.message
+            error: error.message,
         });
     }
-}
-
-//EDITAR REPORTE
+};
 
 export const updateReporte = async (req, res) => {
     try {
         const { id } = req.params;
         const reporteExistente = await Reporte.findById(id);
 
-        if (!reporteExistente) return res.status(404).json({ message: 'Reporte no encontrado' });
-
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && 
-            reporteExistente.restaurante.toString() !== req.usuario.restaurante.toString()) {
-            return res.status(403).json({ message: 'No tienes permiso para editar este reporte' });
+        if (!reporteExistente) {
+            return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
         }
 
-        const reporteEditado = await Reporte.findByIdAndUpdate(id, req.body, { new: true });
-
-        res.status(200).json({
-            success: true,
-            message: 'Reporte actualizado',
-            data: reporteEditado
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al editar el reporte',
-            error: error.message
-        });
-    }
-}
-
-export const deleteReporte = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const reporteEliminado = await Reporte.findByIdAndDelete(id);
-
-        if (!reporteEliminado) {
-            return res.status(404).json({
+        if (!(await puedeAccederReporte(req.usuario, reporteExistente.restaurante))) {
+            return res.status(403).json({
                 success: false,
-                message: 'Reporte no encontrado'
+                message: 'No tienes permiso para editar este reporte',
             });
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Reporte eliminado correctamente',
-            data: reporteEliminado
-        });
+        const updateData = { ...req.body };
+        delete updateData.generadoPor; // Campo inmutable, nunca se sobreescribe
 
+        const reporteEditado = await Reporte.findByIdAndUpdate(id, updateData, { new: true });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Reporte actualizado',
+            data: reporteEditado,
+        });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: 'Error al eliminar el reporte',
-            error: error.message
+            message: 'Error al editar el reporte',
+            error: error.message,
         });
     }
 };
 
+export const deleteReporte = async (req, res) => {
+    try {
+        const reporteEliminado = await Reporte.findByIdAndDelete(req.params.id);
 
-// NOTA: La función deleteReporte ha sido eliminada por orden del Scrum Master (X en la tabla).
+        if (!reporteEliminado) {
+            return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Reporte eliminado correctamente',
+            data: reporteEliminado,
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: 'Error al eliminar el reporte',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Genera el PDF del reporte, lo descarga y lo envía por correo.
+ * Si el correo falla, el PDF se entrega igual — el error se registra en logs.
+ */
+export const generarReporte = async (req, res) => {
+    try {
+        const reporte = await Reporte.findById(req.params.id).populate('restaurante', 'nombre');
+
+        if (!reporte) {
+            return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
+        }
+
+        if (!reporte.restaurante) {
+            return res.status(404).json({ success: false, message: 'Restaurante del reporte no encontrado' });
+        }
+
+        if (!(await puedeAccederReporte(req.usuario, reporte.restaurante._id))) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permiso para descargar este reporte',
+            });
+        }
+
+        const pdfBuffer = generateReportePdf(reporte);
+
+        // Envío de correo: fallo no bloquea la descarga
+        sendReportePdfEmail(req.usuario.email, req.usuario.name, pdfBuffer, reporte)
+            .catch((err) =>
+                console.error(`[generarReporte] Error al enviar email para reporte ${reporte._id}:`, err.message)
+            );
+
+        const filename = buildFilename(reporte);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(pdfBuffer);
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error al generar el PDF del reporte',
+            error: error.message,
+        });
+    }
+};
