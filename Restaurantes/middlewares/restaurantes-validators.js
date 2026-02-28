@@ -3,6 +3,7 @@ import { checkValidators } from './checkValidators.js';
 import { validateJWT } from './validate-JWT.js';
 import { requireRoles } from './validate-role.js';
 import { validateRestaurantOwnerUser } from '../src/helpers/auth-user.helper.js';
+import { attachRestaurant } from './attach-restaurante.js';
 
 const OWNER_FIELD = 'due\u00F1o';
 
@@ -10,6 +11,9 @@ const getRequestToken = (req) =>
     req.header('x-token') || req.header('Authorization')?.replace('Bearer ', '');
 
 const normalizeOwnerField = (req, _, next) => {
+    if (!req.body || typeof req.body !== 'object') {
+        req.body = {};
+    }
     const rawOwner = req.body[OWNER_FIELD] ?? req.body.dueno;
     if (Array.isArray(rawOwner)) {
         req.body[OWNER_FIELD] = String(rawOwner[0]).trim();
@@ -79,7 +83,8 @@ export const validateCreateRestaurante = [
 // Validaciones para VER restaurantes
 export const validateViewRestaurante = [
     validateJWT,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    attachRestaurant,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     param('id').optional().isMongoId().withMessage('ID de restaurante no valido'),
     checkValidators,
 ];
@@ -87,6 +92,7 @@ export const validateViewRestaurante = [
 // Validaciones para ACTUALIZAR restaurante
 export const validateUpdateRestaurante = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     normalizeOwnerField,
     param('id')

@@ -33,9 +33,15 @@ export const createRestaurante = async (req, res) => {
 export const getRestaurantes = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
-        let filter = { status: true };
+        let filter = { isActive: true };
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!req.usuario.restaurante) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado'
+                });
+            }
             filter._id = req.usuario.restaurante;
         }
 
@@ -66,7 +72,10 @@ export const getRestaurantesById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && id !== req.usuario.restaurante.toString()) {
+        if (
+            req.usuario.role === 'ADMIN_RESTAURANT_ROLE' &&
+            (!req.usuario.restaurante || id !== req.usuario.restaurante.toString())
+        ) {
             return res.status(403).json({ message: 'No tienes permiso para ver otros restaurantes' });
         }
 
@@ -86,19 +95,27 @@ export const updateRestaurante = async (req, res) => {
     try {
         const { id } = req.params;
         const OWNER_FIELD = 'due\u00F1o';
+        const restauranteData = { ...req.body };
 
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && id !== req.usuario.restaurante.toString()) {
+        if (
+            req.usuario.role === 'ADMIN_RESTAURANT_ROLE' &&
+            (!req.usuario.restaurante || id !== req.usuario.restaurante.toString())
+        ) {
             return res.status(403).json({ message: 'Solo puedes actualizar tu propio restaurante' });
         }
 
         if (
             req.usuario.role !== 'ADMIN_ROLE' &&
-            Object.prototype.hasOwnProperty.call(req.body, OWNER_FIELD)
+            Object.prototype.hasOwnProperty.call(restauranteData, OWNER_FIELD)
         ) {
             return res.status(403).json({ message: 'Solo ADMIN_ROLE puede reasignar el dueno' });
         }
 
-        const restauranteEditado = await Restaurante.findByIdAndUpdate(id, req.body, { new: true });
+        if (req.file && req.file.path) {
+            restauranteData.fotos = req.file.path;
+        }
+
+        const restauranteEditado = await Restaurante.findByIdAndUpdate(id, restauranteData, { new: true });
         if (!restauranteEditado) return res.status(404).json({ message: 'Restaurante no encontrado' });
 
         res.status(200).json({

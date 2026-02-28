@@ -32,6 +32,7 @@ router.get(
 // Actualizar
 router.put(
     '/:id',
+    uploadMenuImage.single('fotos'),
     validateUpdateRestaurante,
     updateRestaurante
 );
@@ -41,23 +42,6 @@ router.delete(
     '/:id',
     validateDeleteRestaurante,
     deleteRestaurante
-)
-router.get(
-    '/:id',
-    getRestaurantesById
-)
-router.put(
-    '/:id',
-    updateRestaurante
-)
-
-router.delete(
-    '/:id',
-    deleteRestaurante
-)
-router.get(
-    '/:id',
-    getRestaurantesById
 )
 
 export default router;

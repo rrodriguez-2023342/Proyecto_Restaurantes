@@ -2,28 +2,34 @@ import { body, param } from 'express-validator';
 import { checkValidators } from './checkValidators.js';
 import { validateJWT } from './validate-JWT.js';
 import { requireRoles } from './validate-role.js';
+import { attachRestaurant } from './attach-restaurante.js';
 
-// Validadores para crear menus
 export const validateCreateMenu = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     body('restaurante')
-        .notEmpty()
-        .withMessage('El ID del restaurante es requerido')
+        .custom((value, { req }) => {
+            if (req.user?.role === 'ADMIN_RESTAURANT_ROLE') return true;
+            if (!value) throw new Error('El ID del restaurante es requerido');
+            return true;
+        })
+        .bail()
+        .optional()
         .isMongoId()
-        .withMessage('El ID del restaurante debe ser válido'),
+        .withMessage('El ID del restaurante debe ser valido'),
     body('nombreMenu')
         .trim()
         .notEmpty()
-        .withMessage('El nombre del menú es requerido')
+        .withMessage('El nombre del menu es requerido')
         .isLength({ min: 2, max: 100 })
         .withMessage('El nombre debe tener entre 2 y 100 caracteres'),
     body('descripcionMenu')
         .trim()
         .notEmpty()
-        .withMessage('La descripción del menú es requerida')
+        .withMessage('La descripcion del menu es requerida')
         .isLength({ min: 10, max: 500 })
-        .withMessage('La descripción debe tener entre 10 y 500 caracteres'),
+        .withMessage('La descripcion debe tener entre 10 y 500 caracteres'),
     body('isActive')
         .optional()
         .isBoolean()
@@ -33,16 +39,17 @@ export const validateCreateMenu = [
 
 export const validateUpdateMenu = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .notEmpty()
-        .withMessage('El ID del menú es requerido')
+        .withMessage('El ID del menu es requerido')
         .isMongoId()
-        .withMessage('El ID del menú debe ser válido'),
+        .withMessage('El ID del menu debe ser valido'),
     body('restaurante')
         .optional()
         .isMongoId()
-        .withMessage('El ID del restaurante debe ser válido'),
+        .withMessage('El ID del restaurante debe ser valido'),
     body('nombreMenu')
         .optional()
         .trim()
@@ -52,7 +59,7 @@ export const validateUpdateMenu = [
         .optional()
         .trim()
         .isLength({ min: 10, max: 500 })
-        .withMessage('La descripción debe tener entre 10 y 500 caracteres'),
+        .withMessage('La descripcion debe tener entre 10 y 500 caracteres'),
     body('isActive')
         .optional()
         .isBoolean()
@@ -62,11 +69,23 @@ export const validateUpdateMenu = [
 
 export const validateDeleteMenu = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .notEmpty()
-        .withMessage('El ID del menú es requerido')
+        .withMessage('El ID del menu es requerido')
         .isMongoId()
-        .withMessage('El ID del menú debe ser válido'),
+        .withMessage('El ID del menu debe ser valido'),
+    checkValidators,
+];
+
+export const validateViewMenu = [
+    validateJWT,
+    attachRestaurant,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    param('id')
+        .optional()
+        .isMongoId()
+        .withMessage('El ID del menu debe ser valido'),
     checkValidators,
 ];

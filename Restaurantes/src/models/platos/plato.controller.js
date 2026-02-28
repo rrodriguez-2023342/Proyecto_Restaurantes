@@ -1,16 +1,51 @@
 import Plato from './plato.model.js';
+import Menu from '../menus/menu.model.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
 
+const getRestauranteFromUser = async (usuario) => {
+    if (!usuario || usuario.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario.restaurante) return usuario.restaurante;
 
-//CREAR PLATO
-//Solo accesible por ADMIN_ROLE y ADMIN_RESTAURANT_ROLE.
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return restaurante?._id || null;
+};
+
+const validateMenuOwnership = async (menuId, usuario) => {
+    if (usuario.role !== 'ADMIN_RESTAURANT_ROLE') return { valid: true };
+
+    const restauranteId = await getRestauranteFromUser(usuario);
+    if (!restauranteId) {
+        return { valid: false, status: 403, message: 'No tienes un restaurante asignado' };
+    }
+
+    const menu = await Menu.findById(menuId).select('restaurante').lean();
+    if (!menu) {
+        return { valid: false, status: 404, message: 'Menu no encontrado' };
+    }
+
+    if (menu.restaurante.toString() !== restauranteId.toString()) {
+        return { valid: false, status: 403, message: 'Solo puedes operar platos de menus de tu restaurante' };
+    }
+
+    return { valid: true, restauranteId };
+};
 
 export const createPlato = async (req, res) => {
     try {
-        const platoData = req.body;
-        // Si se subió una imagen, guardar la URL en fotosPlato
+        const platoData = { ...req.body };
+
+        const ownership = await validateMenuOwnership(platoData.menu, req.usuario);
+        if (!ownership.valid) {
+            return res.status(ownership.status).json({
+                success: false,
+                message: ownership.message
+            });
+        }
+
         if (req.file && req.file.path) {
             platoData.fotosPlato = req.file.path;
         }
+
         const plato = new Plato(platoData);
         await plato.save();
 
@@ -28,20 +63,26 @@ export const createPlato = async (req, res) => {
     }
 };
 
-
-//OBTENER PLATOS
-//Regla: Solo se muestran platos con "disponible".
-
 export const getPlatos = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        const filter = { disponible: true };
+        const { menu, page = 1, limit = 10 } = req.query;
+        const numericPage = parseInt(page, 10);
+        const numericLimit = parseInt(limit, 10);
+        const filter = { disponible: true, menu };
+
+        const ownership = await validateMenuOwnership(menu, req.usuario);
+        if (!ownership.valid) {
+            return res.status(ownership.status).json({
+                success: false,
+                message: ownership.message
+            });
+        }
 
         const [platos, total] = await Promise.all([
             Plato.find(filter)
                 .populate('menu', 'nombreMenu')
-                .limit(limit * 1)
-                .skip((page - 1) * limit)
+                .limit(numericLimit)
+                .skip((numericPage - 1) * numericLimit)
                 .sort({ createdAt: -1 }),
             Plato.countDocuments(filter)
         ]);
@@ -51,9 +92,9 @@ export const getPlatos = async (req, res) => {
             data: platos,
             pagination: {
                 totalItems: total,
-                totalPages: Math.ceil(total / limit),
-                currentPage: parseInt(page),
-                limit: parseInt(limit)
+                totalPages: Math.ceil(total / numericLimit),
+                currentPage: numericPage,
+                limit: numericLimit
             }
         });
     } catch (error) {
@@ -65,7 +106,6 @@ export const getPlatos = async (req, res) => {
     }
 };
 
-//Obtener plato por ID
 export const getPlatoById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -75,6 +115,14 @@ export const getPlatoById = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Plato no encontrado o no disponible'
+            });
+        }
+
+        const ownership = await validateMenuOwnership(plato.menu._id, req.usuario);
+        if (!ownership.valid && req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            return res.status(ownership.status).json({
+                success: false,
+                message: ownership.message
             });
         }
 
@@ -91,25 +139,42 @@ export const getPlatoById = async (req, res) => {
     }
 };
 
-//Editar plato
-
 export const editarPlato = async (req, res) => {
     try {
         const { id } = req.params;
-        const platoData = req.body;
+        const platoData = { ...req.body };
+
+        const platoExistente = await Plato.findById(id).populate('menu', 'restaurante');
+        if (!platoExistente) {
+            return res.status(404).json({
+                success: false,
+                message: 'Plato no encontrado'
+            });
+        }
+
+        const ownershipActual = await validateMenuOwnership(platoExistente.menu._id, req.usuario);
+        if (!ownershipActual.valid) {
+            return res.status(ownershipActual.status).json({
+                success: false,
+                message: ownershipActual.message
+            });
+        }
+
+        if (platoData.menu) {
+            const ownershipNuevoMenu = await validateMenuOwnership(platoData.menu, req.usuario);
+            if (!ownershipNuevoMenu.valid) {
+                return res.status(ownershipNuevoMenu.status).json({
+                    success: false,
+                    message: ownershipNuevoMenu.message
+                });
+            }
+        }
 
         const platoUpdated = await Plato.findByIdAndUpdate(
             id,
             platoData,
             { new: true, runValidators: true }
         );
-
-        if (!platoUpdated) {
-            return res.status(404).json({
-                success: false,
-                message: 'Plato no encontrado'
-            });
-        }
 
         res.status(200).json({
             success: true,
@@ -125,26 +190,31 @@ export const editarPlato = async (req, res) => {
     }
 };
 
-
-//ELIMINAR PLATO
-//Regla: Cambia el estado "disponible" a false.
-
 export const eliminarPlato = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const platoEliminado = await Plato.findByIdAndUpdate(
-            id,
-            { disponible: false },
-            { new: true }
-        );
-
-        if (!platoEliminado) {
+        const platoExistente = await Plato.findById(id).populate('menu', 'restaurante');
+        if (!platoExistente) {
             return res.status(404).json({
                 success: false,
                 message: 'Plato no encontrado'
             });
         }
+
+        const ownership = await validateMenuOwnership(platoExistente.menu._id, req.usuario);
+        if (!ownership.valid) {
+            return res.status(ownership.status).json({
+                success: false,
+                message: ownership.message
+            });
+        }
+
+        await Plato.findByIdAndUpdate(
+            id,
+            { disponible: false },
+            { new: true }
+        );
 
         res.status(200).json({
             success: true,

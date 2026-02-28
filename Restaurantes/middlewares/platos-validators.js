@@ -1,13 +1,15 @@
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { checkValidators } from './checkValidators.js';
 import { validateJWT } from './validate-JWT.js';
 import { requireRoles } from './validate-role.js';
+import { attachRestaurant } from './attach-restaurante.js';
 
 //Aca el USER_ROLE puede ver los platos activos.
 
 // Validaciones para CREAR platos (Solo Admins)
 export const validateCreatePlato = [
     validateJWT, 
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     body('menu')
         .notEmpty()
@@ -38,6 +40,7 @@ export const validateCreatePlato = [
 // Validaciones para ACTUALIZAR platos (Solo Admins)
 export const validateUpdatePlato = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .isMongoId()
@@ -51,7 +54,15 @@ export const validateUpdatePlato = [
 // Validaciones para VER platos (Admins y Clientes)
 export const validateViewPlato = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
+    query('menu')
+        .if((value, { req }) => !req.params.id)
+        .notEmpty()
+        .withMessage('El ID del menu es obligatorio para listar platos')
+        .bail()
+        .isMongoId()
+        .withMessage('ID de menu no valido'),
     param('id')
         .optional()
         .isMongoId()
@@ -62,6 +73,7 @@ export const validateViewPlato = [
 // Validaciones para ELIMINAR platos (Solo Admins)
 export const validateDeletePlato = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .isMongoId()
