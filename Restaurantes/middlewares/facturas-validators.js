@@ -12,20 +12,12 @@ export const validateCreateFactura = [
         .withMessage('El ID del pedido es requerido')
         .isMongoId()
         .withMessage('El ID del pedido debe ser válido'),
-    body('subtotal')
-        .notEmpty()
-        .withMessage('El subtotal es requerido')
-        .isFloat({ min: 0 })
-        .withMessage('El subtotal debe ser válido y mayor o igual a 0'),
     body('impuesto')
         .optional()
         .isFloat({ min: 0 })
         .withMessage('El impuesto debe ser válido y mayor o igual a 0'),
-    body('total')
-        .notEmpty()
-        .withMessage('El total es requerido')
-        .isFloat({ min: 0 })
-        .withMessage('El total debe ser válido y mayor o igual a 0'),
+    // subtotal → se calcula desde los DetallePedido en el controller
+    // total    → se calcula en el pre-save hook del modelo
     checkValidators,
 ];
 

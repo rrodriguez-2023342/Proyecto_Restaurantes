@@ -44,14 +44,6 @@ export const validateJWT = (req, res, next) => {
         }
 
         req.user = {
-            id: decoded.sub, //userID del servicio de autenticación
-            jti: decoded.jti, //ID único del token
-            iat: decoded.iat, // Emitido en
-            role: decoded.role || 'USER_ROLE'
-        }
-
-        // Mantenemos EXACTAMENTE lo que puso tu amigo
-        req.user = {
             id: decoded.sub,
             jti: decoded.jti,
             iat: decoded.iat,
@@ -61,8 +53,8 @@ export const validateJWT = (req, res, next) => {
             surname: decoded.surname || null,
         }
 
-        // AGREGAMOS esta línea para que tus mesas no fallen
         req.usuario = req.user;
+        
 
         next();
 

@@ -6,9 +6,24 @@ import { sendFacturaPdfEmail } from '../../helpers/email-service.js';
 
 export const createFactura = async (req, res) => {
     try {
-        const facturaData = req.body;
+        const { pedido, impuesto = 0 } = req.body;
 
-        const factura = new Factura(facturaData);
+        // Calcular subtotal sumando los subtotales de cada detalle del pedido
+        const detalles = await DetallePedido.find({ pedido });
+
+        if (!detalles.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'El pedido no tiene productos asociados, no se puede generar la factura',
+            });
+        }
+
+        const subtotal = parseFloat(
+            detalles.reduce((acc, d) => acc + (d.precio * d.cantidad), 0).toFixed(2)
+        );
+
+        // total se calcula en el pre-save del modelo
+        const factura = new Factura({ pedido, subtotal, impuesto });
         await factura.save();
 
         res.status(201).json({
@@ -87,18 +102,27 @@ export const updateFactura = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const factura = await Factura.findByIdAndUpdate(
-            id,
-            req.body,
-            { new: true, runValidators: true }
-        );
+        // Evitar que total se actualice manualmente desde el body
+        const { total: _ignorado, ...updateData } = req.body;
 
-        if (!factura) {
+        // Si se está actualizando subtotal o impuesto, recalcular total
+        const facturaActual = await Factura.findById(id);
+        if (!facturaActual) {
             return res.status(404).json({
                 success: false,
                 message: 'Factura no encontrada',
             });
         }
+
+        const subtotal = updateData.subtotal ?? facturaActual.subtotal;
+        const impuesto = updateData.impuesto ?? facturaActual.impuesto;
+        updateData.total = parseFloat((subtotal + impuesto).toFixed(2));
+
+        const factura = await Factura.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
 
         res.status(200).json({
             success: true,
@@ -139,10 +163,8 @@ export const deleteFactura = async (req, res) => {
     }
 };
 
-/**
- * Descarga el PDF de una factura.
- * GET /:id/pdf
- */
+// Descarga el PDF de una factura
+
 export const descargarFacturaPdf = async (req, res) => {
     try {
         const { id } = req.params;

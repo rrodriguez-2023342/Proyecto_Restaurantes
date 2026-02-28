@@ -136,12 +136,7 @@ export const loginUserHelper = async (emailOrUsername, password) => {
             throw new Error('Credenciales inválidas');
         }
 
-        console.log("PASSWORD INGRESADO:", password);
-        console.log("HASH EN BD:", user.Password);
-
         const isValidPassword = await verifyPassword(user.Password, password);
-
-        console.log("¿PASSWORD VÁLIDO?:", isValidPassword);
 
         if (!isValidPassword) {
             throw new Error('Credenciales inválidas');

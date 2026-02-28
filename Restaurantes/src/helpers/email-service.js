@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-// ─── Transporter ─────────────────────────────────────────────────────────────
+// Transporter 
 
 const createTransporter = () => {
     const { SMTP_USERNAME, SMTP_PASSWORD } = process.env;
@@ -24,7 +24,7 @@ const createTransporter = () => {
 
 const transporter = createTransporter();
 
-// ─── Helpers compartidos ──────────────────────────────────────────────────────
+// Helpers compartidos
 
 const TIPO_LABEL = {
     VENTAS:           'Reporte de Ventas',
@@ -39,7 +39,21 @@ const fmtDate = (d) =>
 const fmtMoney = (n) =>
     `Q ${Number(n ?? 0).toFixed(2)}`;
 
-// ─── HTML builders ────────────────────────────────────────────────────────────
+// Bloque de soporte reutilizable 
+
+const supportBlock = `
+<div style="margin-top: 20px; padding: 16px; background-color: #E6F4E9; border-left: 4px solid #104523; border-radius: 4px;">
+    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">¿Tuviste algún problema?</p>
+    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">Comunícate con nuestro equipo de soporte:</p>
+    <p style="margin: 0 0 4px; color: #333; font-size: 13px;">
+        📧 <a href="mailto:restaurantein6bm@gmail.com" style="color: #104523; text-decoration: none;">restaurantein6bm@gmail.com</a>
+    </p>
+    <p style="margin: 0; color: #333; font-size: 13px;">
+        📞 <a href="tel:+50211110000" style="color: #104523; text-decoration: none;">+502 1111-0000</a>
+    </p>
+</div>`;
+
+// HTML builders
 
 const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) => `
 <!DOCTYPE html>
@@ -84,6 +98,8 @@ const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) => `
         <p style="color: #666; font-size: 13px;">
             Este es un correo automático, por favor no respondas a este mensaje.
         </p>
+
+        ${supportBlock}
     </div>
 
     <div style="background-color: #104523; padding: 12px; text-align: center;">
@@ -152,6 +168,8 @@ const buildFacturaHtml = ({ name, factura, pedido, restaurante }) => `
         <p style="color: #666; font-size: 13px;">
             Este es un correo automático, por favor no respondas a este mensaje.
         </p>
+
+        ${supportBlock}
     </div>
 
     <div style="background-color: #104523; padding: 12px; text-align: center;">
@@ -164,11 +182,9 @@ const buildFacturaHtml = ({ name, factura, pedido, restaurante }) => `
 </body>
 </html>`;
 
-// ─── Exports ──────────────────────────────────────────────────────────────────
+// Exports
 
-/**
- * Envía el PDF de un reporte por correo al usuario que lo generó.
- */
+// Envia el PDF de un reporte por correo al usuario que lo generó
 export const sendReportePdfEmail = async (email, name, pdfBuffer, reporte) => {
     if (!transporter) {
         throw new Error('[email-service] Transportador SMTP no configurado');
@@ -190,14 +206,7 @@ export const sendReportePdfEmail = async (email, name, pdfBuffer, reporte) => {
     });
 };
 
-/**
- * Envía el PDF de una factura por correo.
- * @param {string} email     - Correo del destinatario
- * @param {string} name      - Nombre del destinatario
- * @param {Buffer} pdfBuffer - Contenido del PDF
- * @param {Object} factura   - Documento Mongoose de la factura
- * @param {Object} pedido    - Documento Mongoose del pedido (populado con restaurante)
- */
+//Envia el PDF de una factura por correo
 export const sendFacturaPdfEmail = async (email, name, pdfBuffer, factura, pedido) => {
     if (!transporter) {
         throw new Error('[email-service] Transportador SMTP no configurado');
