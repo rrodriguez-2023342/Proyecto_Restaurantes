@@ -2,10 +2,12 @@ import { body, param } from 'express-validator';
 import { checkValidators } from './checkValidators.js';
 import { validateJWT } from './validate-JWT.js';
 import { requireRoles } from './validate-role.js';
+import { attachRestaurant } from './attach-restaurante.js';
 
 // Validadores para crear inventario
 export const validateCreateInventario = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     body('restaurante')
         .notEmpty()
@@ -33,6 +35,7 @@ export const validateCreateInventario = [
 
 export const validateUpdateInventario = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .notEmpty()
@@ -61,11 +64,20 @@ export const validateUpdateInventario = [
 
 export const validateDeleteInventario = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .notEmpty()
         .withMessage('El ID del inventario es requerido')
         .isMongoId()
         .withMessage('El ID del inventario debe ser válido'),
+    checkValidators,
+];
+
+// validator para listar inventarios
+export const validateListInventarios = [
+    validateJWT,
+    attachRestaurant,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     checkValidators,
 ];

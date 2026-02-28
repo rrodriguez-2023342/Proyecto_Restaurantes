@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createInventario, getInventarios, getInventarioById, updateInventario, deleteInventario } from './inventario.controller.js';
-import { validateCreateInventario, validateUpdateInventario, validateDeleteInventario } from '../../../middlewares/inventario-validators.js';
+import { validateCreateInventario, validateUpdateInventario, validateDeleteInventario, validateListInventarios } from '../../../middlewares/inventario-validators.js';
 
 const router = Router();
 
@@ -12,11 +12,13 @@ router.post(
 
 router.get(
     '/',
+    validateListInventarios,
     getInventarios
 )
 
 router.get(
     '/:id',
+    validateDeleteInventario, // same structure as delete
     getInventarioById
 )
 

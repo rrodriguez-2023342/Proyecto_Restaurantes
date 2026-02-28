@@ -9,7 +9,9 @@ import {
 import { 
     validateCreateMesa, 
     validateUpdateMesa, 
-    validateDeleteMesa 
+    validateDeleteMesa,
+    validateViewMesa,
+    validateListMesas
 } from '../../../middlewares/mesas-validators.js';
 
 const router = Router();
@@ -24,14 +26,14 @@ router.post(
 // Obtener todas las mesas
 router.get(
     '/',
-    validateDeleteMesa,
+    validateListMesas,
     getMesas
 );
 
 // Obtener una mesa específica por ID
 router.get(
     '/:id',
-    validateDeleteMesa,
+    validateViewMesa,
     getMesaById
 );
 

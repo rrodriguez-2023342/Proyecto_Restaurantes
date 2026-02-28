@@ -9,6 +9,20 @@ const pedidoSchema = new mongoose.Schema(
             ref: 'Restaurante',
             required: true
         },
+        plato: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Plato',
+            required: true
+        },
+        cantidad: {
+            type: Number,
+            required: true,
+            min: 1
+        },
+        usuario: {
+            type: String, // almacenamos el id tal como viene del token
+            required: true
+        },
         tipoPedido: {
             type: String,
             enum: ['Domicilio', 'Para llevar', 'En el restaurante'],
@@ -31,6 +45,8 @@ const pedidoSchema = new mongoose.Schema(
 )
 
 pedidoSchema.index({ restaurante: 1 });
+pedidoSchema.index({ plato: 1 });
+pedidoSchema.index({ usuario: 1 });
 pedidoSchema.index({ tipoPedido: 1 });
 pedidoSchema.index({ estadoPedido: 1 });
 

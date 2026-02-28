@@ -82,12 +82,19 @@ export const getMesaById = async (req, res) => {
         }
 
         // Validar que el Admin de Restaurante no vea mesas ajenas
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && 
-            mesa.restaurante._id.toString() !== req.usuario.restaurante.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'Acceso denegado a esta mesa'
-            });
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!mesa.restaurante || !req.usuario.restaurante) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Acceso denegado a esta mesa'
+                });
+            }
+            if (mesa.restaurante._id.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Acceso denegado a esta mesa'
+                });
+            }
         }
 
         res.status(200).json({ success: true, mesa });
@@ -109,9 +116,19 @@ export const editarMesa = async (req, res) => {
         const mesaExistente = await Mesa.findById(id);
         if (!mesaExistente) return res.status(404).json({ message: 'Mesa no encontrada' });
 
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && 
-            mesaExistente.restaurante.toString() !== req.usuario.restaurante.toString()) {
-            return res.status(403).json({ message: 'No tienes permiso para editar esta mesa' });
+        // control de permisos sobre la mesa
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!mesaExistente.restaurante || !req.usuario.restaurante) {
+                return res.status(403).json({ message: 'No tienes permiso para editar esta mesa' });
+            }
+            if (mesaExistente.restaurante.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({ message: 'No tienes permiso para editar esta mesa' });
+            }
+        }
+
+        // Si el usuario es ADMIN_RESTAURANT_ROLE, forzamos que la mesa siga perteneciendo a su restaurante
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            data.restaurante = req.usuario.restaurante;
         }
 
         const mesaEditada = await Mesa.findByIdAndUpdate(id, data, { new: true, runValidators: true });
@@ -139,9 +156,13 @@ export const eliminarMesa = async (req, res) => {
         const mesa = await Mesa.findById(id);
         if (!mesa) return res.status(404).json({ message: 'Mesa no encontrada' });
 
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' && 
-            mesa.restaurante.toString() !== req.usuario.restaurante.toString()) {
-            return res.status(403).json({ message: 'No tienes permiso para eliminar esta mesa' });
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!mesa.restaurante || !req.usuario.restaurante) {
+                return res.status(403).json({ message: 'No tienes permiso para eliminar esta mesa' });
+            }
+            if (mesa.restaurante.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({ message: 'No tienes permiso para eliminar esta mesa' });
+            }
         }
 
         await Mesa.findByIdAndUpdate(id, { disponibilidad: false });

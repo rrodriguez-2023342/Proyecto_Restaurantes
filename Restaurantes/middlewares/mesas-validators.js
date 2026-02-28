@@ -2,6 +2,7 @@ import { body, param } from 'express-validator';
 import { checkValidators } from './checkValidators.js';
 import { validateJWT } from './validate-JWT.js';
 import { requireRoles } from './validate-role.js';
+import { attachRestaurant } from './attach-restaurante.js';
 
 // USER_ROLE queda excluido no puede modificar nada como decia en la tabla solo 
 // ADMIN_ROLE y ADMIN_RESTAURANT_ROLE pueden crear, actualizar o eliminar mesas.
@@ -9,6 +10,7 @@ import { requireRoles } from './validate-role.js';
 // Validaciones para crear una mesa
 export const validateCreateMesa = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     body('numeroMesa')
         .notEmpty()
@@ -31,6 +33,7 @@ export const validateCreateMesa = [
 // Validaciones para actualizar una mesa
 export const validateUpdateMesa = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .isMongoId()
@@ -51,6 +54,7 @@ export const validateUpdateMesa = [
 // Validaciones para eliminar o ver por ID
 export const validateDeleteMesa = [
     validateJWT,
+    attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .isMongoId()
@@ -58,5 +62,13 @@ export const validateDeleteMesa = [
     checkValidators
 ];
 
-// Para ver por Id
+// Validator para ver/consultar una mesa por ID (mismo que eliminar)
 export const validateViewMesa = validateDeleteMesa;
+
+// Validator para listar mesas (no necesita parámetro)
+export const validateListMesas = [
+    validateJWT,
+    attachRestaurant,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    checkValidators
+];
