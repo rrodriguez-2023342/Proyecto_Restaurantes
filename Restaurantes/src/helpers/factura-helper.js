@@ -89,8 +89,6 @@ const buildPages = (commands) => {
                 ops.push(...opRect(0, PAGE_H - MARGIN_Y - blockH - 3, PAGE_W, 3, ...GOLD));
                 ops.push(...opColorText(centerX('FACTURA', 28), PAGE_H - MARGIN_Y - 38, 'F2', 28, 'FACTURA', ...WHITE));
                 ops.push(...opColorText(centerX(cmd.restaurante, 12), PAGE_H - MARGIN_Y - 62, 'F1', 12, cmd.restaurante, ...GOLD));
-                ops.push(...opColorText(rightX(`No. ${cmd.facturaId}`, 8), PAGE_H - MARGIN_Y - 82, 'F1', 8, `No. ${cmd.facturaId}`, 0.7, 0.9, 0.7));
-                ops.push(...opColorText(rightX(cmd.fecha, 8), PAGE_H - MARGIN_Y - 93, 'F1', 8, cmd.fecha, 0.7, 0.9, 0.7));
                 drop(blockH + 14);
                 break;
             }
@@ -272,7 +270,7 @@ const generatePdfFromCommands = (commands) => {
     return Buffer.from(parts.join(''), 'utf8');
 };
 
-// Export público 
+// Esportar público 
 
 /**
  * Genera el PDF de una factura.

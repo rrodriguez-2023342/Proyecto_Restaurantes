@@ -19,7 +19,7 @@ const itemSchema = new mongoose.Schema(
             min: 0
         }
     },
-    { _id: false } // no necesita id propio cada item
+    { _id: false }
 );
 
 const detallePedidoSchema = new mongoose.Schema(

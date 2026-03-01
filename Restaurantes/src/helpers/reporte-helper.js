@@ -1,4 +1,3 @@
-// ─── PDF primitives ──────────────────────────────────────────────────────────
 const normalizeText = (text) =>
     String(text)
         .replace(/á/g, 'a').replace(/Á/g, 'A')
@@ -50,16 +49,16 @@ const opLine = (x1, y1, x2, y2, width = 0.5, r = 0.78, g = 0.78, b = 0.78) => [
     `0 0 0 RG`,
 ];
 
-// ─── Paleta de colores ───────────────────────────────────────────────────────
+// Paleta de colores
 
-const GREEN_D = [0.063, 0.275, 0.133];  // #104523
-const GREEN_M = [0.118, 0.467, 0.235];  // #1E773C
-const GREEN_L = [0.902, 0.957, 0.914];  // #E6F4E9
-const GOLD    = [0.824, 0.647, 0.173];  // #D2A52C
+const GREEN_D = [0.063, 0.275, 0.133];
+const GREEN_M = [0.118, 0.467, 0.235];
+const GREEN_L = [0.902, 0.957, 0.914];
+const GOLD    = [0.824, 0.647, 0.173];
 const GREY_L  = [0.965, 0.965, 0.965];
 const WHITE   = [1, 1, 1];
 
-// ─── Constantes de dominio ───────────────────────────────────────────────────
+// Constantes de dominio
 
 const TIPO_LABEL = {
     VENTAS:           'Reporte de Ventas',
@@ -68,12 +67,127 @@ const TIPO_LABEL = {
     PLATOS_POPULARES: 'Reporte de Platos Populares',
 };
 
-// ─── Motor de paginación ─────────────────────────────────────────────────────
+const SECCIONES_REPORTE = {
 
-/**
- * Convierte un array de comandos de alto nivel en páginas con operaciones PDF.
- * Cada vez que el contenido no cabe, se crea una nueva página automáticamente.
- */
+    VENTAS: [
+        {
+            titulo: 'a. Demanda y volumen de pedidos',
+            campos: [
+                { key: 'Total de pedidos',           field: 'totalPedidos'          },
+                { key: 'Pedidos entregados',          field: 'pedidosEntregados'     },
+                { key: 'Pedidos cancelados',          field: 'pedidosCancelados'     },
+                { key: 'Pedidos a domicilio',         field: 'pedidosDomicilio'      },
+                { key: 'Pedidos para llevar',         field: 'pedidosParaLlevar'     },
+                { key: 'Pedidos en restaurante',      field: 'pedidosEnRestaurante'  },
+            ],
+        },
+        {
+            titulo: 'b. Desempeno financiero',
+            campos: [
+                { key: 'Ingresos totales (Q)',        field: 'totalIngresos'         },
+                { key: 'Ticket promedio (Q)',         field: 'ticketPromedio'        },
+                { key: 'Total propinas (Q)',          field: 'totalImpuestos'        },
+            ],
+        },
+        {
+            titulo: 'c. Exportacion',
+            campos: [],
+            nota: 'Reporte exportado en formato PDF. Para Excel utilice el endpoint /excel.',
+        },
+    ],
+
+    RESERVACIONES: [
+        {
+            titulo: 'a. Demanda y numero de reservaciones',
+            campos: [
+                { key: 'Total reservaciones',        field: 'totalReservaciones'              },
+                { key: 'Confirmadas',                field: 'reservacionesConfirmadas'        },
+                { key: 'Completadas',                field: 'reservacionesCompletadas'        },
+                { key: 'Pendientes',                 field: 'reservacionesPendientes'         },
+                { key: 'Canceladas',                 field: 'reservacionesCanceladas'         },
+                { key: 'Tasa de cancelacion',        field: 'tasaCancelacion'                 },
+            ],
+        },
+        {
+            titulo: 'b. Desempeno y ocupacion',
+            campos: [
+                { key: 'Promedio personas/reserv.',  field: 'promedioPersonasPorReservacion'  },
+                { key: 'Total mesas',                field: 'totalMesas'                      },
+                { key: 'Mesas disponibles',          field: 'mesasDisponibles'                },
+                { key: 'Mesas ocupadas',             field: 'mesasOcupadas'                   },
+            ],
+        },
+        {
+            titulo: 'c. Exportacion',
+            campos: [],
+            nota: 'Reporte exportado en formato PDF. Para Excel utilice el endpoint /excel.',
+        },
+    ],
+
+    INVENTARIO: [
+        {
+            titulo: 'a. Estado general del inventario',
+            campos: [
+                { key: 'Total items registrados',    field: 'totalItems'           },
+                { key: 'Items con stock normal',     field: 'itemsStockNormal'     },
+                { key: 'Items bajo stock minimo',    field: 'itemsBajoStock'       },
+                { key: 'Items sin stock',            field: 'itemsSinStock'        },
+                { key: 'Alertas criticas totales',   field: 'alertasCriticas'      },
+            ],
+        },
+        {
+            titulo: 'b. Item mas critico',
+            campos: [
+                { key: 'Nombre del item',            field: 'itemMasCritico'       },
+                { key: 'Cantidad actual',            field: 'cantidadItemCritico'  },
+                { key: 'Stock minimo requerido',     field: 'minStockItemCritico'  },
+            ],
+        },
+        {
+            titulo: 'c. Exportacion',
+            campos: [],
+            nota: 'Reporte exportado en formato PDF. Para Excel utilice el endpoint /excel.',
+        },
+    ],
+
+    PLATOS_POPULARES: [
+        {
+            titulo: 'a. Platos mas vendidos y demanda',
+            campos: [
+                { key: 'Total platos vendidos',      field: 'totalPlatosVendidos'   },
+                { key: '1er lugar',                  field: 'top1Plato'             },
+                { key: '1er lugar - unidades',       field: 'top1Vendidos'          },
+                { key: '1er lugar - ingresos (Q)',   field: 'top1Ingresos'          },
+                { key: '2do lugar',                  field: 'top2Plato'             },
+                { key: '2do lugar - unidades',       field: 'top2Vendidos'          },
+                { key: '2do lugar - ingresos (Q)',   field: 'top2Ingresos'          },
+                { key: '3er lugar',                  field: 'top3Plato'             },
+                { key: '3er lugar - unidades',       field: 'top3Vendidos'          },
+                { key: '3er lugar - ingresos (Q)',   field: 'top3Ingresos'          },
+                { key: 'Plato menos vendido',        field: 'platoMenosVendido'     },
+            ],
+        },
+        {
+            titulo: 'b. Desempeno por categoria y satisfaccion',
+            campos: [
+                { key: 'Entradas vendidas',          field: 'entradasVendidas'      },
+                { key: 'Platos fuertes vendidos',    field: 'platosFuertesVendidos' },
+                { key: 'Postres vendidos',           field: 'postresVendidos'       },
+                { key: 'Bebidas vendidas',           field: 'bebidasVendidas'       },
+                { key: 'Calificacion promedio',      field: 'calificacionPromedio'  },
+                { key: 'Total resenas',              field: 'totalResenas'          },
+            ],
+        },
+        {
+            titulo: 'c. Exportacion',
+            campos: [],
+            nota: 'Reporte exportado en formato PDF. Para Excel utilice el endpoint /excel.',
+        },
+    ],
+};
+
+// Motor de paginación
+
 const buildPages = (commands) => {
     const pages = [];
     let ops = [];
@@ -173,12 +287,8 @@ const buildPages = (commands) => {
     return pages;
 };
 
-// ─── Ensamblador de PDF raw ───────────────────────────────────────────────────
+// Ensamblador de PDF raw
 
-/**
- * Toma páginas con operaciones PDF y construye un archivo PDF/1.4 válido.
- * Usa un array de partes para evitar concatenaciones de strings costosas.
- */
 const generatePdfFromCommands = (commands) => {
     const pages = buildPages(commands);
     const N     = pages.length;
@@ -201,7 +311,6 @@ const generatePdfFromCommands = (commands) => {
         parts.push(str);
     };
 
-    // Header PDF
     parts.push('%PDF-1.4\n');
 
     pushObj(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
@@ -228,7 +337,6 @@ const generatePdfFromCommands = (commands) => {
     pushObj(`${fontF1Id} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n`);
     pushObj(`${fontF2Id} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>\nendobj\n`);
 
-    // Cross-reference table
     const xrefOffset = parts.reduce((acc, p) => acc + Buffer.byteLength(p, 'utf8'), 0);
     parts.push(`xref\n0 ${totalObjs + 1}\n`);
     parts.push('0000000000 65535 f \n');
@@ -241,24 +349,71 @@ const generatePdfFromCommands = (commands) => {
     return Buffer.from(parts.join(''), 'utf8');
 };
 
-// ─── Export público ───────────────────────────────────────────────────────────
+const buildDataCommands = (tipoReporte, data) => {
+    const secciones = SECCIONES_REPORTE[tipoReporte];
+    const commands  = [];
 
-/**
- * Genera el PDF de un reporte de restaurante.
- * @param {Object} reporte  - Documento Mongoose del reporte (populado con restaurante.nombre)
- * @returns {Buffer}        - Buffer con el contenido PDF
- */
+    if (!secciones) {
+        // Modo genérico (fallback)
+        const entries = Object.entries(data ?? {});
+        commands.push({ type: 'sectionHeader', text: 'Datos del reporte' });
+        commands.push({ type: 'spacer', h: 4 });
+        if (entries.length === 0) {
+            commands.push({ type: 'text', text: 'Sin datos registrados para este periodo.' });
+        } else {
+            entries.forEach(([key, value], i) => {
+                commands.push({
+                    type:  'dataRow',
+                    key:   normalizeText(key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())),
+                    value: normalizeText(typeof value === 'object' ? JSON.stringify(value) : String(value)),
+                    index: i,
+                });
+            });
+        }
+        return commands;
+    }
+
+    secciones.forEach((seccion) => {
+        commands.push({ type: 'spacer', h: 8 });
+        commands.push({ type: 'sectionHeader', text: normalizeText(seccion.titulo) });
+        commands.push({ type: 'spacer', h: 4 });
+
+        if (seccion.nota) {
+            // Sección c: solo nota de exportación
+            commands.push({ type: 'text', text: normalizeText(seccion.nota) });
+        } else if (seccion.campos.length === 0) {
+            commands.push({ type: 'text', text: 'Sin datos.' });
+        } else {
+            seccion.campos.forEach((campo, i) => {
+                const rawValue = data?.[campo.field];
+                const value    = rawValue !== undefined && rawValue !== null
+                    ? normalizeText(String(rawValue))
+                    : '—';
+                commands.push({
+                    type:  'dataRow',
+                    key:   normalizeText(campo.key),
+                    value,
+                    index: i,
+                });
+            });
+        }
+    });
+
+    return commands;
+};
+
+// Export público 
+
 export const generateReportePdf = (reporte) => {
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-GT') : '—';
     const titulo  = normalizeText(TIPO_LABEL[reporte.tipoReporte] ?? reporte.tipoReporte);
-    const entries = Object.entries(reporte.data ?? {});
 
-    // Normalizar campos que pueden tener tildes o caracteres especiales
     const restauranteNombre = normalizeText(reporte.restaurante?.nombre ?? 'Restaurante');
     const generadoPorName   = normalizeText(reporte.generadoPor?.name ?? reporte.generadoPor?.userId ?? '—');
     const generadoPorId     = reporte.generadoPor?.userId ?? '—';
 
     const commands = [
+        // Encabezado 
         {
             type:        'coverHeader',
             title:       titulo,
@@ -266,30 +421,22 @@ export const generateReportePdf = (reporte) => {
         },
         { type: 'spacer', h: 14 },
 
+        // Información del reporte
         { type: 'sectionHeader', text: 'Informacion del reporte' },
-        { type: 'keyvalue', key: 'Restaurante',      value: restauranteNombre,          zebra: false },
-        { type: 'keyvalue', key: 'Tipo de reporte',  value: titulo,                     zebra: true  },
-        { type: 'keyvalue', key: 'Fecha de inicio',  value: fmtDate(reporte.fechaInicio), zebra: false },
-        { type: 'keyvalue', key: 'Fecha de fin',     value: fmtDate(reporte.fechaFin),    zebra: true  },
-        { type: 'keyvalue', key: 'Generado por ID',  value: generadoPorId,              zebra: false },
-        { type: 'keyvalue', key: 'Generado por',     value: generadoPorName,            zebra: true  },
-        { type: 'keyvalue', key: 'Fecha generacion', value: fmtDate(reporte.createdAt), zebra: false },
-        { type: 'spacer', h: 14 },
+        { type: 'keyvalue', key: 'Restaurante',      value: restauranteNombre,              zebra: false },
+        { type: 'keyvalue', key: 'Tipo de reporte',  value: titulo,                         zebra: true  },
+        { type: 'keyvalue', key: 'Fecha de inicio',  value: fmtDate(reporte.fechaInicio),   zebra: false },
+        { type: 'keyvalue', key: 'Fecha de fin',     value: fmtDate(reporte.fechaFin),      zebra: true  },
+        { type: 'keyvalue', key: 'Generado por ID',  value: generadoPorId,                  zebra: false },
+        { type: 'keyvalue', key: 'Generado por',     value: generadoPorName,                zebra: true  },
+        { type: 'keyvalue', key: 'Fecha generacion', value: fmtDate(reporte.createdAt),     zebra: false },
+        { type: 'spacer', h: 6 },
 
-        { type: 'sectionHeader', text: 'Datos del reporte' },
-        { type: 'spacer', h: 4 },
+        // Datos del reporte (secciones a, b, c)
+        ...buildDataCommands(reporte.tipoReporte, reporte.data ?? {}),
 
-        ...(entries.length > 0
-            ? entries.map(([key, value], i) => ({
-                type:  'dataRow',
-                key:   normalizeText(key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())),
-                value: normalizeText(typeof value === 'object' ? JSON.stringify(value) : String(value)),
-                index: i,
-            }))
-            : [{ type: 'text', text: 'Sin datos registrados para este periodo.' }]
-        ),
-
-        { type: 'spacer', h: 14 },
+        // Pie de página 
+        { type: 'spacer', h: 18 },
         { type: 'footer', text: 'Documento generado electronicamente. No requiere firma ni sello.' },
     ];
 

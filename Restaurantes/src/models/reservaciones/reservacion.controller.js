@@ -1,15 +1,20 @@
 import Reservacion from './reservacion.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
 import { validarMesaParaReservacion } from '../../helpers/reservacion.helper.js';
+import { sendReservacionEmail } from '../../helpers/email-service.js';
 
-/** Para ADMIN_RESTAURANT_ROLE obtiene el ID de su restaurante (req.usuario.restaurante o desde BD). */
 const getRestauranteId = async (usuario) => {
     if (usuario.restaurante) return usuario.restaurante;
     const r = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
     return r?._id ?? null;
 };
 
-//Crear Reservaciones.
+// Dispara el correo sin bloquear la respuesta
+const notificar = (email, name, accion, reservacion, restaurante) => {
+    sendReservacionEmail(email, name, accion, reservacion, restaurante)
+        .catch(err => console.error(`[reservacion] Error al enviar correo (${accion}):`, err.message));
+};
+
 export const createReservacion = async (req, res) => {
     try {
         const data = req.body;
@@ -24,11 +29,13 @@ export const createReservacion = async (req, res) => {
             return res.status(validacionMesa.status).json(validacionMesa.payload);
         }
 
-        // Forzar que usuario sea siempre string
         data.usuario = String(req.usuario.id || req.usuario._id);
 
         const reservacion = new Reservacion(data);
         await reservacion.save();
+
+        const restaurante = await Restaurante.findById(data.restaurante).select('nombre').lean();
+        notificar(req.usuario.email, req.usuario.name, 'creada', reservacion, restaurante?.nombre ?? 'Restaurante');
 
         res.status(201).json({
             success: true,
@@ -36,16 +43,9 @@ export const createReservacion = async (req, res) => {
             data: reservacion
         });
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'Error al crear la reservación',
-            error: error.message
-        });
+        res.status(400).json({ success: false, message: 'Error al crear la reservación', error: error.message });
     }
 };
-
-//OBTENER RESERVACIONES
-//Regla Scrum: USER_ROLE solo ve las suyas. Admins ven todas o por restaurante.
 
 export const getReservaciones = async (req, res) => {
     try {
@@ -54,8 +54,7 @@ export const getReservaciones = async (req, res) => {
 
         if (req.usuario.role === 'USER_ROLE') {
             query.usuario = req.usuario._id;
-        } 
-        else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+        } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restauranteId = await getRestauranteId(req.usuario);
             if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
             query.restaurante = restauranteId;
@@ -72,31 +71,21 @@ export const getReservaciones = async (req, res) => {
             Reservacion.countDocuments(query)
         ]);
 
-        res.status(200).json({
-            success: true,
-            total,
-            data: reservaciones
-        });
+        res.status(200).json({ success: true, total, data: reservaciones });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
-
-//OBTENER POR ID (Con validación de propiedad)
 
 export const getReservacionById = async (req, res) => {
     try {
         const { id } = req.params;
-        const reservacion = await Reservacion.findById(id)
-            .populate('restaurante mesa usuario');
+        const reservacion = await Reservacion.findById(id).populate('restaurante mesa usuario');
 
         if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
 
         if (req.usuario.role === 'USER_ROLE') {
-            const usuarioId = (reservacion.usuario?._id ?? reservacion.usuario)?.toString?.() ?? '';
+            const usuarioId    = (reservacion.usuario?._id ?? reservacion.usuario)?.toString?.() ?? '';
             const currentUserId = (req.usuario._id ?? req.usuario.id)?.toString?.() ?? '';
             if (usuarioId !== currentUserId) {
                 return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
@@ -116,9 +105,6 @@ export const getReservacionById = async (req, res) => {
     }
 };
 
-//ACTUALIZAR RESERVACIÓN
-//Regla Scrum: USER_ROLE solo si está "PENDIENTE".
-
 export const updateReservacion = async (req, res) => {
     try {
         const { id } = req.params;
@@ -127,7 +113,7 @@ export const updateReservacion = async (req, res) => {
         if (!reservacionExistente) return res.status(404).json({ message: 'Reservación no encontrada' });
 
         if (req.usuario.role === 'USER_ROLE') {
-            const autorId = (reservacionExistente.usuario?._id ?? reservacionExistente.usuario)?.toString?.() ?? '';
+            const autorId       = (reservacionExistente.usuario?._id ?? reservacionExistente.usuario)?.toString?.() ?? '';
             const currentUserId = (req.usuario._id ?? req.usuario.id)?.toString?.() ?? '';
             if (autorId !== currentUserId) {
                 return res.status(403).json({ message: 'No puedes editar una reservación ajena' });
@@ -144,28 +130,20 @@ export const updateReservacion = async (req, res) => {
             }
         }
 
-        // USER_ROLE no puede cambiar estado a CONFIRMADA ni COMPLETADA (solo el restaurante)
         if (req.usuario.role === 'USER_ROLE' && req.body.estado != null) {
             if (['CONFIRMADA', 'COMPLETADA'].includes(req.body.estado)) {
-                return res.status(403).json({
-                    message: 'Solo el restaurante puede confirmar o marcar como completada la reservación'
-                });
+                return res.status(403).json({ message: 'Solo el restaurante puede confirmar o marcar como completada la reservación' });
             }
         }
 
-        // Revalidar mesa si se cambia fecha, mesa o cantidadPersonas
-        const mesaId = req.body.mesa ?? reservacionExistente.mesa;
-        const restauranteId = reservacionExistente.restaurante;
-        const fecha = req.body.fecha ? new Date(req.body.fecha) : reservacionExistente.fecha;
+        const mesaId          = req.body.mesa ?? reservacionExistente.mesa;
+        const restauranteId   = reservacionExistente.restaurante;
+        const fecha           = req.body.fecha ? new Date(req.body.fecha) : reservacionExistente.fecha;
         const cantidadPersonas = req.body.cantidadPersonas ?? reservacionExistente.cantidadPersonas;
-        const debeRevalidar = req.body.mesa != null || req.body.fecha != null || req.body.cantidadPersonas != null;
+        const debeRevalidar   = req.body.mesa != null || req.body.fecha != null || req.body.cantidadPersonas != null;
+
         if (debeRevalidar) {
-            const validacionMesa = await validarMesaParaReservacion({
-                mesaId,
-                restauranteId,
-                fecha,
-                cantidadPersonas
-            });
+            const validacionMesa = await validarMesaParaReservacion({ mesaId, restauranteId, fecha, cantidadPersonas });
             if (!validacionMesa.ok) {
                 return res.status(validacionMesa.status).json(validacionMesa.payload);
             }
@@ -173,18 +151,14 @@ export const updateReservacion = async (req, res) => {
 
         const reservacionEditada = await Reservacion.findByIdAndUpdate(id, req.body, { new: true });
 
-        res.status(200).json({
-            success: true,
-            message: 'Reservación actualizada',
-            data: reservacionEditada
-        });
+        const restaurante = await Restaurante.findById(reservacionEditada.restaurante).select('nombre').lean();
+        notificar(req.usuario.email, req.usuario.name, 'actualizada', reservacionEditada, restaurante?.nombre ?? 'Restaurante');
+
+        res.status(200).json({ success: true, message: 'Reservación actualizada', data: reservacionEditada });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 };
-
-//CANCELAR/ELIMINAR RESERVACIÓN
-//Regla Scrum: USER_ROLE solo puede cancelar la propia.
 
 export const deleteReservacion = async (req, res) => {
     try {
@@ -194,7 +168,7 @@ export const deleteReservacion = async (req, res) => {
         if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
 
         if (req.usuario.role === 'USER_ROLE') {
-            const autorId = (reservacion.usuario?._id ?? reservacion.usuario)?.toString?.() ?? '';
+            const autorId       = (reservacion.usuario?._id ?? reservacion.usuario)?.toString?.() ?? '';
             const currentUserId = (req.usuario._id ?? req.usuario.id)?.toString?.() ?? '';
             if (autorId !== currentUserId) {
                 return res.status(403).json({ message: 'No puedes cancelar una reservación ajena' });
@@ -211,10 +185,10 @@ export const deleteReservacion = async (req, res) => {
         reservacion.estado = 'CANCELADA';
         await reservacion.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'Reservación cancelada correctamente'
-        });
+        const restaurante = await Restaurante.findById(reservacion.restaurante).select('nombre').lean();
+        notificar(req.usuario.email, req.usuario.name, 'cancelada', reservacion, restaurante?.nombre ?? 'Restaurante');
+
+        res.status(200).json({ success: true, message: 'Reservación cancelada correctamente' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

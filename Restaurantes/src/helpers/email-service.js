@@ -1,15 +1,12 @@
 import nodemailer from 'nodemailer';
 
 // Transporter 
-
 const createTransporter = () => {
     const { SMTP_USERNAME, SMTP_PASSWORD } = process.env;
-
     if (!SMTP_USERNAME || !SMTP_PASSWORD) {
         console.warn('[email-service] Credenciales SMTP no configuradas. El envío de correos no funcionará.');
         return null;
     }
-
     return nodemailer.createTransport({
         host:    process.env.SMTP_HOST ?? 'smtp.gmail.com',
         port:    parseInt(process.env.SMTP_PORT ?? '587'),
@@ -31,13 +28,9 @@ const TIPO_LABEL = {
     PLATOS_POPULARES: 'Reporte de Platos Populares',
 };
 
-const fmtDate = (d) =>
-    d ? new Date(d).toLocaleDateString('es-GT') : '—';
-
-const fmtMoney = (n) =>
-    `Q ${Number(n ?? 0).toFixed(2)}`;
-
-// Bloque de soporte reutilizable 
+const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('es-GT') : '—';
+const fmtTime  = (d) => d ? new Date(d).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }) : '—';
+const fmtMoney = (n) => `Q ${Number(n ?? 0).toFixed(2)}`;
 
 const supportBlock = `
 <div style="margin-top: 20px; padding: 16px; background-color: #E6F4E9; border-left: 4px solid #104523; border-radius: 4px;">
@@ -51,9 +44,18 @@ const supportBlock = `
     </p>
 </div>`;
 
-// HTML builders
+const tableRow = (label, value, zebra = false) => `
+<tr ${zebra ? 'style="background-color: #E6F4E9;"' : ''}>
+    <td style="padding: 8px 12px; font-weight: bold; color: #104523;">${label}</td>
+    <td style="padding: 8px 12px;">${value}</td>
+</tr>`;
 
-const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) => `
+const table = (rows) => `
+<table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+    ${rows}
+</table>`;
+
+const baseLayout = (headerTitle, headerSub, bodyContent) => `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -62,163 +64,199 @@ const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) => `
 </head>
 <body>
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-
     <div style="background-color: #104523; padding: 24px; text-align: center;">
-        <h1 style="color: #D2A52C; margin: 0; font-size: 22px;">${tipoLabel}</h1>
-        <p style="color: #ffffff; margin: 8px 0 0;">${restaurante}</p>
+        <h1 style="color: #D2A52C; margin: 0; font-size: 22px;">${headerTitle}</h1>
+        ${headerSub ? `<p style="color: #ffffff; margin: 8px 0 0; font-size: 14px;">${headerSub}</p>` : ''}
     </div>
-
     <div style="padding: 24px; background-color: #f9f9f9;">
+        ${bodyContent}
+        <p style="color: #666; font-size: 13px; margin-top: 16px;">
+            Este es un correo automático, por favor no respondas a este mensaje.
+        </p>
+        ${supportBlock}
+    </div>
+    <div style="background-color: #104523; padding: 12px; text-align: center;">
+        <p style="color: #D2A52C; margin: 0; font-size: 12px;">
+            Documento generado electrónicamente. No requiere firma ni sello.
+        </p>
+    </div>
+</div>
+</body>
+</html>`;
+
+// HTML Builders 
+
+// Reporte
+const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) =>
+    baseLayout(tipoLabel, restaurante, `
         <p>Estimado <strong>${name}</strong>,</p>
         <p>Tu reporte ha sido generado exitosamente. Encontrarás el PDF adjunto a este correo.</p>
+        ${table(
+            tableRow('Restaurante', restaurante, true) +
+            tableRow('Tipo de reporte', tipoLabel) +
+            tableRow('Periodo', `${fmtDate(reporte.fechaInicio)} — ${fmtDate(reporte.fechaFin)}`, true) +
+            tableRow('Generado el', fmtDate(reporte.createdAt))
+        )}
+    `);
 
-        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-            <tr style="background-color: #E6F4E9;">
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Restaurante</td>
-                <td style="padding: 8px 12px;">${restaurante}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Tipo de reporte</td>
-                <td style="padding: 8px 12px;">${tipoLabel}</td>
-            </tr>
-            <tr style="background-color: #E6F4E9;">
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Periodo</td>
-                <td style="padding: 8px 12px;">
-                    ${fmtDate(reporte.fechaInicio)} — ${fmtDate(reporte.fechaFin)}
-                </td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Generado el</td>
-                <td style="padding: 8px 12px;">${fmtDate(reporte.createdAt)}</td>
-            </tr>
-        </table>
-
-        <p style="color: #666; font-size: 13px;">
-            Este es un correo automático, por favor no respondas a este mensaje.
-        </p>
-
-        ${supportBlock}
-    </div>
-
-    <div style="background-color: #104523; padding: 12px; text-align: center;">
-        <p style="color: #D2A52C; margin: 0; font-size: 12px;">
-            Documento generado electrónicamente. No requiere firma ni sello.
-        </p>
-    </div>
-
-</div>
-</body>
-</html>`;
-
-const buildFacturaHtml = ({ name, factura, pedido, restaurante }) => `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-</head>
-<body>
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-
-    <div style="background-color: #104523; padding: 24px; text-align: center;">
-        <h1 style="color: #D2A52C; margin: 0; font-size: 22px;">Factura</h1>
-        <p style="color: #ffffff; margin: 8px 0 0;">${restaurante}</p>
-        <p style="color: #a8d5b5; margin: 4px 0 0; font-size: 13px;">
-            No. ${factura._id.toString().slice(-8).toUpperCase()}
-        </p>
-    </div>
-
-    <div style="padding: 24px; background-color: #f9f9f9;">
+// Factura
+const buildFacturaHtml = ({ name, factura, pedido, restaurante }) =>
+    baseLayout('Factura', `${restaurante} · No. ${factura._id.toString().slice(-8).toUpperCase()}`, `
         <p>Estimado <strong>${name}</strong>,</p>
         <p>Tu factura ha sido generada exitosamente. Encontrarás el PDF adjunto a este correo.</p>
-
-        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-            <tr style="background-color: #E6F4E9;">
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">No. Factura</td>
-                <td style="padding: 8px 12px;">${factura._id.toString().slice(-8).toUpperCase()}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Restaurante</td>
-                <td style="padding: 8px 12px;">${restaurante}</td>
-            </tr>
-            <tr style="background-color: #E6F4E9;">
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Tipo de pedido</td>
-                <td style="padding: 8px 12px;">${pedido?.tipoPedido ?? '—'}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Fecha</td>
-                <td style="padding: 8px 12px;">${fmtDate(factura.createdAt)}</td>
-            </tr>
-            <tr style="background-color: #E6F4E9;">
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Subtotal</td>
-                <td style="padding: 8px 12px;">${fmtMoney(factura.subtotal)}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Propina</td>
-                <td style="padding: 8px 12px;">${fmtMoney(factura.propina)}</td>
-            </tr>
-            <tr style="background-color: #104523;">
+        ${table(
+            tableRow('No. Factura', factura._id.toString().slice(-8).toUpperCase(), true) +
+            tableRow('Restaurante', restaurante) +
+            tableRow('Tipo de pedido', pedido?.tipoPedido ?? '—', true) +
+            tableRow('Fecha', fmtDate(factura.createdAt)) +
+            tableRow('Subtotal', fmtMoney(factura.subtotal), true) +
+            tableRow('Propina', fmtMoney(factura.propina)) +
+            `<tr style="background-color: #104523;">
                 <td style="padding: 10px 12px; font-weight: bold; color: #D2A52C; font-size: 15px;">TOTAL</td>
                 <td style="padding: 10px 12px; font-weight: bold; color: #ffffff; font-size: 15px;">${fmtMoney(factura.total)}</td>
-            </tr>
-        </table>
+            </tr>`
+        )}
+    `);
 
-        <p style="color: #666; font-size: 13px;">
-            Este es un correo automático, por favor no respondas a este mensaje.
-        </p>
+// Reservación
+const RESERVACION_TITULO = {
+    creada:     '✓ Reservación Creada',
+    actualizada:'◴ Reservación Actualizada',
+    cancelada:  '✕ Reservación Cancelada',
+};
 
-        ${supportBlock}
-    </div>
+const RESERVACION_MSG = {
+    creada:     'Tu reservación ha sido creada exitosamente.',
+    actualizada:'Tu reservación ha sido actualizada.',
+    cancelada:  'Tu reservación ha sido cancelada.',
+};
 
-    <div style="background-color: #104523; padding: 12px; text-align: center;">
-        <p style="color: #D2A52C; margin: 0; font-size: 12px;">
-            Documento generado electrónicamente. No requiere firma ni sello.
-        </p>
-    </div>
+const buildReservacionHtml = ({ name, accion, reservacion, restaurante }) =>
+    baseLayout(RESERVACION_TITULO[accion] ?? 'Reservación', restaurante, `
+        <p>Estimado <strong>${name}</strong>,</p>
+        <p>${RESERVACION_MSG[accion] ?? ''}</p>
+        ${table(
+            tableRow('Restaurante', restaurante, true) +
+            tableRow('Fecha', fmtDate(reservacion.fecha)) +
+            tableRow('Hora', fmtTime(reservacion.fecha), true) +
+            tableRow('Personas', reservacion.cantidadPersonas ?? '—') +
+            tableRow('Estado', reservacion.estado ?? '—', true)
+        )}
+    `);
 
-</div>
-</body>
-</html>`;
+// Pedido
+const PEDIDO_TITULO = {
+    creado:     '✓ Pedido Recibido',
+    actualizado:'◴ Estado de tu Pedido',
+    eliminado:  '✕ Pedido Eliminado',
+};
 
-// Exports
+const PEDIDO_ESTADO_MSG = {
+    'Pendiente':          'Tu pedido está pendiente de confirmación.',
+    'En preparación':     'Tu pedido está siendo preparado, ¡ya casi está listo!',
+    'Listo para entrega': 'Tu pedido está listo para entrega.',
+    'Entregado':          'Tu pedido ha sido entregado. ¡Buen provecho!',
+    'Cancelado':          'Tu pedido ha sido cancelado.',
+};
+
+const buildPedidoHtml = ({ name, accion, pedido, restaurante }) =>
+    baseLayout(PEDIDO_TITULO[accion] ?? 'Pedido', restaurante, `
+        <p>Estimado <strong>${name}</strong>,</p>
+        <p>${accion === 'creado' ? 'Tu pedido ha sido recibido exitosamente.' : (PEDIDO_ESTADO_MSG[pedido.estadoPedido] ?? 'Tu pedido ha sido actualizado.')}</p>
+        ${table(
+            tableRow('Restaurante', restaurante, true) +
+            tableRow('Tipo de pedido', pedido.tipoPedido ?? '—') +
+            tableRow('Estado', pedido.estadoPedido ?? '—', true) +
+            tableRow('Total', fmtMoney(pedido.totalPedido)) +
+            tableRow('Fecha', fmtDate(pedido.createdAt), true)
+        )}
+    `);
+
+// Evento
+const EVENTO_TITULO = {
+    creado:     '✓ Nuevo Evento Agendado',
+    actualizado:'◴ Evento Actualizado',
+    eliminado:  '✕ Evento Eliminado',
+};
+
+const EVENTO_MSG = {
+    creado:     (r) => `Se ha agendado un nuevo evento en ${r}.`,
+    actualizado:()  => `La información del evento ha sido actualizada.`,
+    eliminado:  ()  => `El evento ha sido eliminado.`,
+};
+
+const buildEventoHtml = ({ name, accion, evento, restaurante }) =>
+    baseLayout(EVENTO_TITULO[accion] ?? 'Evento', restaurante, `
+        <p>Estimado <strong>${name}</strong>,</p>
+        <p>${(EVENTO_MSG[accion] ?? (() => ''))(restaurante)}</p>
+        ${table(
+            tableRow('Restaurante', restaurante, true) +
+            tableRow('Evento', evento.titulo ?? '—') +
+            (evento.descripcion ? tableRow('Descripción', evento.descripcion, true) : '') +
+            tableRow('Fecha del evento', fmtDate(evento.fechaEvento), !evento.descripcion) +
+            tableRow('Hora', fmtTime(evento.fechaEvento), !!evento.descripcion)
+        )}
+    `);
+
+// Envío base
+
+const sendMail = async ({ to, subject, html, attachments }) => {
+    if (!transporter) throw new Error('[email-service] Transportador SMTP no configurado');
+    await transporter.sendMail({
+        from:     `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
+        to,
+        subject,
+        html,
+        encoding: 'utf-8',
+        ...(attachments ? { attachments } : {}),
+    });
+};
+
+// Exports 
 
 export const sendReportePdfEmail = async (email, name, pdfBuffer, reporte) => {
-    if (!transporter) {
-        throw new Error('[email-service] Transportador SMTP no configurado');
-    }
-
     const tipoLabel   = TIPO_LABEL[reporte.tipoReporte] ?? reporte.tipoReporte;
     const restaurante = reporte.restaurante?.nombre ?? 'Restaurante';
     const filename    = `reporte-${reporte.tipoReporte.toLowerCase()}-${reporte._id}.pdf`;
-
-    await transporter.sendMail({
-        from:     `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
-        to:       email,
-        subject:  `${tipoLabel} - ${restaurante}`,
-        html:     buildReporteHtml({ name, tipoLabel, restaurante, reporte }),
-        encoding: 'utf-8',
-        attachments: [
-            { filename, content: pdfBuffer, contentType: 'application/pdf' },
-        ],
+    await sendMail({
+        to:      email,
+        subject: `${tipoLabel} - ${restaurante}`,
+        html:    buildReporteHtml({ name, tipoLabel, restaurante, reporte }),
+        attachments: [{ filename, content: pdfBuffer, contentType: 'application/pdf' }],
     });
 };
 
 export const sendFacturaPdfEmail = async (email, name, pdfBuffer, factura, pedido) => {
-    if (!transporter) {
-        throw new Error('[email-service] Transportador SMTP no configurado');
-    }
-
     const restaurante = pedido?.restaurante?.nombre ?? 'Restaurante';
     const filename    = `factura-${factura._id.toString().slice(-8).toUpperCase()}.pdf`;
+    await sendMail({
+        to:      email,
+        subject: `Factura ${factura._id.toString().slice(-8).toUpperCase()} - ${restaurante}`,
+        html:    buildFacturaHtml({ name, factura, pedido, restaurante }),
+        attachments: [{ filename, content: pdfBuffer, contentType: 'application/pdf' }],
+    });
+};
 
-    await transporter.sendMail({
-        from:     `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
-        to:       email,
-        subject:  `Factura ${factura._id.toString().slice(-8).toUpperCase()} - ${restaurante}`,
-        html:     buildFacturaHtml({ name, factura, pedido, restaurante }),
-        encoding: 'utf-8',
-        attachments: [
-            { filename, content: pdfBuffer, contentType: 'application/pdf' },
-        ],
+export const sendReservacionEmail = async (email, name, accion, reservacion, restaurante) => {
+    await sendMail({
+        to:      email,
+        subject: `${RESERVACION_TITULO[accion] ?? 'Reservación'} - ${restaurante}`,
+        html:    buildReservacionHtml({ name, accion, reservacion, restaurante }),
+    });
+};
+
+export const sendPedidoEmail = async (email, name, accion, pedido, restaurante) => {
+    await sendMail({
+        to:      email,
+        subject: `${PEDIDO_TITULO[accion] ?? 'Pedido'} - ${restaurante}`,
+        html:    buildPedidoHtml({ name, accion, pedido, restaurante }),
+    });
+};
+
+export const sendEventoEmail = async (email, name, accion, evento, restaurante) => {
+    await sendMail({
+        to:      email,
+        subject: `${EVENTO_TITULO[accion] ?? 'Evento'} - ${restaurante}`,
+        html:    buildEventoHtml({ name, accion, evento, restaurante }),
     });
 };

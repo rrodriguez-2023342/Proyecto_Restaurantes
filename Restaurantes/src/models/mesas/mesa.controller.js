@@ -1,17 +1,15 @@
 import Mesa from './mesa.model.js';
 
+// Auxiliar para detectar error de duplicado de MongoDB
+const isDuplicateKeyError = (error) => error.code === 11000;
 
 //CREAR MESA
-//Regla: ADMIN_ROLE puede crear en cualquier restaurante. 
-//ADMIN_RESTAURANT_ROLE solo en el suyo.
-
 export const createMesa = async (req, res) => {
     try {
         const data = req.body;
 
-        // Si es Admin de Restaurante, se forza que la mesa se asigne a SU restaurante
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            data.restaurante = req.usuario.restaurante; 
+            data.restaurante = req.usuario.restaurante;
         }
 
         const mesa = new Mesa(data);
@@ -23,6 +21,12 @@ export const createMesa = async (req, res) => {
             mesa
         });
     } catch (error) {
+        if (isDuplicateKeyError(error)) {
+            return res.status(400).json({
+                success: false,
+                message: `Ya existe una mesa con el número ${req.body.numeroMesa} en este restaurante`
+            });
+        }
         res.status(400).json({
             success: false,
             message: 'Error al crear la mesa',
@@ -32,12 +36,10 @@ export const createMesa = async (req, res) => {
 };
 
 //OBTENER TODAS LAS MESAS
-//Regla: El Admin de restaurante solo ve mesas de su restaurante.
-
 export const getMesas = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
-        let query = { disponibilidad: true }; // Solo mostrar mesas activas
+        let query = { disponibilidad: true };
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             query.restaurante = req.usuario.restaurante;
@@ -68,7 +70,7 @@ export const getMesas = async (req, res) => {
     }
 };
 
-//Obtener mesa
+//OBTENER MESA POR ID
 export const getMesaById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -81,19 +83,12 @@ export const getMesaById = async (req, res) => {
             });
         }
 
-        // Validar que el Admin de Restaurante no vea mesas ajenas
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             if (!mesa.restaurante || !req.usuario.restaurante) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Acceso denegado a esta mesa'
-                });
+                return res.status(403).json({ success: false, message: 'Acceso denegado a esta mesa' });
             }
             if (mesa.restaurante._id.toString() !== req.usuario.restaurante.toString()) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Acceso denegado a esta mesa'
-                });
+                return res.status(403).json({ success: false, message: 'Acceso denegado a esta mesa' });
             }
         }
 
@@ -107,7 +102,7 @@ export const getMesaById = async (req, res) => {
     }
 };
 
-//Editar Mesa
+//EDITAR MESA
 export const editarMesa = async (req, res) => {
     try {
         const { id } = req.params;
@@ -116,7 +111,6 @@ export const editarMesa = async (req, res) => {
         const mesaExistente = await Mesa.findById(id);
         if (!mesaExistente) return res.status(404).json({ message: 'Mesa no encontrada' });
 
-        // control de permisos sobre la mesa
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             if (!mesaExistente.restaurante || !req.usuario.restaurante) {
                 return res.status(403).json({ message: 'No tienes permiso para editar esta mesa' });
@@ -124,10 +118,6 @@ export const editarMesa = async (req, res) => {
             if (mesaExistente.restaurante.toString() !== req.usuario.restaurante.toString()) {
                 return res.status(403).json({ message: 'No tienes permiso para editar esta mesa' });
             }
-        }
-
-        // Si el usuario es ADMIN_RESTAURANT_ROLE, forzamos que la mesa siga perteneciendo a su restaurante
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             data.restaurante = req.usuario.restaurante;
         }
 
@@ -139,6 +129,12 @@ export const editarMesa = async (req, res) => {
             mesa: mesaEditada
         });
     } catch (error) {
+        if (isDuplicateKeyError(error)) {
+            return res.status(400).json({
+                success: false,
+                message: `Ya existe una mesa con el número ${req.body.numeroMesa} en este restaurante`
+            });
+        }
         res.status(400).json({
             success: false,
             message: 'Error al actualizar la mesa',
@@ -147,8 +143,7 @@ export const editarMesa = async (req, res) => {
     }
 };
 
-//Eliminar Mesa
-//Regla: Se cambia disponibilidad a false en lugar de borrar el registro.
+//ELIMINAR MESA (Soft Delete)
 export const eliminarMesa = async (req, res) => {
     try {
         const { id } = req.params;

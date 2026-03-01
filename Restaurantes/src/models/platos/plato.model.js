@@ -1,5 +1,4 @@
 'use strict';
-
 import mongoose from "mongoose";
 
 const platoSchema = new mongoose.Schema(
@@ -19,6 +18,11 @@ const platoSchema = new mongoose.Schema(
             type: String,
             required: [true, 'La descripción del plato es obligatoria'],
             maxlength: [500, 'La descripción del plato no puede exceder los 500 caracteres']
+        },
+        ingredientes: {
+            type: String,
+            maxlength: [500, 'Los ingredientes no pueden exceder los 500 caracteres'],
+            default: null
         },
         precio: {
             type: Number,

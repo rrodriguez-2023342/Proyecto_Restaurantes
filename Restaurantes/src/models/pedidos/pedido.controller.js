@@ -1,27 +1,27 @@
 import Pedido from './pedido.model.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
+import { sendPedidoEmail } from '../../helpers/email-service.js';
+
+const notificar = (email, name, accion, pedido, restaurante) => {
+    sendPedidoEmail(email, name, accion, pedido, restaurante)
+        .catch(err => console.error(`[pedido] Error al enviar correo (${accion}):`, err.message));
+};
 
 export const createPedido = async (req, res) => {
     try {
         const data = req.body;
-        // usuario siempre viene del token, nunca del body
-        data.usuario = String(req.usuario.id || req.usuario._id);
-        // el total arranca en 0, se actualiza cuando se crean los detalles
+        data.usuario     = String(req.usuario.id || req.usuario._id);
         data.totalPedido = 0;
 
         const pedido = new Pedido(data);
         await pedido.save();
 
-        res.status(201).json({
-            success: true,
-            message: 'Pedido creado exitosamente',
-            data: pedido
-        });
+        const restaurante = await Restaurante.findById(data.restaurante).select('nombre').lean();
+        notificar(req.usuario.email, req.usuario.name, 'creado', pedido, restaurante?.nombre ?? 'Restaurante');
+
+        res.status(201).json({ success: true, message: 'Pedido creado exitosamente', data: pedido });
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'Error al crear el pedido',
-            error: error.message
-        });
+        res.status(400).json({ success: false, message: 'Error al crear el pedido', error: error.message });
     }
 };
 
@@ -49,19 +49,10 @@ export const getPedidos = async (req, res) => {
         res.status(200).json({
             success: true,
             data: pedidos,
-            pagination: {
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
-                totalItems: total,
-                limit
-            }
+            pagination: { currentPage: page, totalPages: Math.ceil(total / limit), totalItems: total, limit }
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener los pedidos',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error al obtener los pedidos', error: error.message });
     }
 };
 
@@ -73,30 +64,16 @@ export const getPedidoById = async (req, res) => {
             .populate('usuario', 'nombre apellido');
 
         if (!pedido) {
-            return res.status(404).json({
-                success: false,
-                message: 'Pedido no encontrado'
-            });
+            return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
         if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'No tienes permiso para ver este pedido'
-            });
+            return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Pedido obtenido exitosamente',
-            data: pedido
-        });
+        res.status(200).json({ success: true, message: 'Pedido obtenido exitosamente', data: pedido });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener el pedido',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error al obtener el pedido', error: error.message });
     }
 };
 
@@ -107,39 +84,23 @@ export const editarPedido = async (req, res) => {
 
         const pedidoExistente = await Pedido.findById(id);
         if (!pedidoExistente) {
-            return res.status(404).json({
-                success: false,
-                message: 'Pedido no encontrado'
-            });
+            return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
         if (req.usuario.role === 'USER_ROLE' && pedidoExistente.usuario.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'No puedes editar un pedido ajeno'
-            });
+            return res.status(403).json({ success: false, message: 'No puedes editar un pedido ajeno' });
         }
 
-        // no permitir que el usuario sobreescriba el total manualmente
         delete pedidoData.totalPedido;
 
-        const pedidoEditado = await Pedido.findByIdAndUpdate(
-            id,
-            pedidoData,
-            { new: true, runValidators: true }
-        );
+        const pedidoEditado = await Pedido.findByIdAndUpdate(id, pedidoData, { new: true, runValidators: true });
 
-        res.status(200).json({
-            success: true,
-            message: 'Pedido editado exitosamente',
-            data: pedidoEditado
-        });
+        const restaurante = await Restaurante.findById(pedidoEditado.restaurante).select('nombre').lean();
+        notificar(req.usuario.email, req.usuario.name, 'actualizado', pedidoEditado, restaurante?.nombre ?? 'Restaurante');
+
+        res.status(200).json({ success: true, message: 'Pedido editado exitosamente', data: pedidoEditado });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al editar el pedido',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error al editar el pedido', error: error.message });
     }
 };
 
@@ -149,31 +110,20 @@ export const eliminarPedido = async (req, res) => {
 
         const pedido = await Pedido.findById(id);
         if (!pedido) {
-            return res.status(404).json({
-                success: false,
-                message: 'Pedido no encontrado'
-            });
+            return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
         if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'No puedes eliminar un pedido ajeno'
-            });
+            return res.status(403).json({ success: false, message: 'No puedes eliminar un pedido ajeno' });
         }
 
-        const pedidoEliminado = await Pedido.findByIdAndDelete(id);
+        const restaurante = await Restaurante.findById(pedido.restaurante).select('nombre').lean();
+        await Pedido.findByIdAndDelete(id);
 
-        res.status(200).json({
-            success: true,
-            message: 'Pedido eliminado correctamente',
-            data: pedidoEliminado
-        });
+        notificar(req.usuario.email, req.usuario.name, 'eliminado', pedido, restaurante?.nombre ?? 'Restaurante');
+
+        res.status(200).json({ success: true, message: 'Pedido eliminado correctamente' });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al eliminar el pedido',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error al eliminar el pedido', error: error.message });
     }
 };
