@@ -89,11 +89,7 @@ export const updateDetallePedido = async (req, res) => {
         const { id } = req.params;
         const detallePedidoData = req.body;
         
-        const detallePedido = await DetallePedido.findByIdAndUpdate(
-            id,
-            detallePedidoData,
-            { new: true, runValidators: true }
-        );
+        const detallePedido = await DetallePedido.findById(id).populate('pedido');
 
         if (!detallePedido) {
             return res.status(404).json({
@@ -102,10 +98,24 @@ export const updateDetallePedido = async (req, res) => {
             });
         }
 
+        // Validar que el usuario sea el propietario del pedido
+        if (req.usuario.role === 'USER_ROLE' && (!req.usuario._id || detallePedido.pedido.usuario.toString() !== req.usuario._id.toString())) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permiso para editar este detalle de pedido'
+            });
+        }
+
+        const detallePedidoActualizado = await DetallePedido.findByIdAndUpdate(
+            id,
+            detallePedidoData,
+            { new: true, runValidators: true }
+        );
+
         res.status(200).json({
             success: true,
             message: 'Detalle de pedido actualizado exitosamente',
-            data: detallePedido
+            data: detallePedidoActualizado
         });
 
     } catch (error) {
@@ -120,7 +130,8 @@ export const updateDetallePedido = async (req, res) => {
 export const deleteDetallePedido = async (req, res) => {
     try {
         const { id } = req.params;
-        const detallePedido = await DetallePedido.findByIdAndDelete(id);
+        
+        const detallePedido = await DetallePedido.findById(id).populate('pedido');
 
         if (!detallePedido) {
             return res.status(404).json({
@@ -128,6 +139,16 @@ export const deleteDetallePedido = async (req, res) => {
                 message: 'Detalle de pedido no encontrado'
             });
         }
+
+        // Validar que el usuario sea el propietario del pedido
+        if (req.usuario.role === 'USER_ROLE' && (!req.usuario._id || detallePedido.pedido.usuario.toString() !== req.usuario._id.toString())) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permiso para eliminar este detalle de pedido'
+            });
+        }
+
+        await DetallePedido.findByIdAndDelete(id);
 
         res.status(200).json({
             success: true,

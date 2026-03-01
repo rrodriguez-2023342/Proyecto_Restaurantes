@@ -24,19 +24,21 @@ export const createEvento = async (req, res) => {
 export const getEventos = async (req, res) => {
     try {
         const { page = 1, limit = 10} = req.query;
+        let query = {};
 
-        const options = {
-            page: parseInt(page, 10),
-            limit: parseInt(limit),
-            sort: { createdAt: -1 }
+        // Si es administrador de restaurante, filtrar por su restaurante
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            query.restaurante = req.usuario.restaurante;
         }
 
-        const eventos = await Evento.find({})
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .sort();
-
-        const total = await Evento.countDocuments();
+        const [eventos, total] = await Promise.all([
+            Evento.find(query)
+                .populate('restaurante', 'nombre')
+                .limit(limit * 1)
+                .skip((page - 1) * limit)
+                .sort({ createdAt: -1 }),
+            Evento.countDocuments(query)
+        ]);
 
         res.status(200).json({
             success: true,
@@ -88,11 +90,7 @@ export const updateEvento = async (req, res) => {
         const { id } = req.params;
         const eventoData = req.body;
         
-        const evento = await Evento.findByIdAndUpdate(
-            id,
-            eventoData,
-            { new: true, runValidators: true }
-        );
+        const evento = await Evento.findById(id);
 
         if (!evento) {
             return res.status(404).json({
@@ -101,10 +99,26 @@ export const updateEvento = async (req, res) => {
             });
         }
 
+        // Validar que el restaurante sea el propietario del evento (excepto si es ADMIN_ROLE)
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!req.usuario.restaurante || evento.restaurante.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para editar este evento'
+                });
+            }
+        }
+
+        const eventoActualizado = await Evento.findByIdAndUpdate(
+            id,
+            eventoData,
+            { new: true, runValidators: true }
+        );
+
         res.status(200).json({
             success: true,
             message: 'Evento actualizado exitosamente',
-            data: evento
+            data: eventoActualizado
         });
 
     } catch (error) {
@@ -119,7 +133,8 @@ export const updateEvento = async (req, res) => {
 export const deleteEvento = async (req, res) => {
     try {
         const { id } = req.params;
-        const evento = await Evento.findByIdAndDelete(id);
+        
+        const evento = await Evento.findById(id);
 
         if (!evento) {
             return res.status(404).json({
@@ -127,6 +142,18 @@ export const deleteEvento = async (req, res) => {
                 message: 'Evento no encontrado'
             });
         }
+
+        // Validar que el restaurante sea el propietario del evento (excepto si es ADMIN_ROLE)
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!req.usuario.restaurante || evento.restaurante.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para eliminar este evento'
+                });
+            }
+        }
+
+        await Evento.findByIdAndDelete(id);
 
         res.status(200).json({
             success: true,

@@ -45,13 +45,23 @@ export const getFacturas = async (req, res) => {
         const page  = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
 
+        let query = {};
+
+        // Si es administrador de restaurante, filtrar por su restaurante
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            // Buscar pedidos del restaurante
+            const pedidosDelRestaurante = await Pedido.find({ restaurante: req.usuario.restaurante }).select('_id');
+            const pedidoIds = pedidosDelRestaurante.map(p => p._id);
+            query.pedido = { $in: pedidoIds };
+        }
+
         const [facturas, total] = await Promise.all([
-            Factura.find()
+            Factura.find(query)
                 .populate('pedido')
                 .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
                 .limit(limit),
-            Factura.countDocuments(),
+            Factura.countDocuments(query),
         ]);
 
         res.status(200).json({
@@ -106,12 +116,22 @@ export const updateFactura = async (req, res) => {
         const { total: _ignorado, ...updateData } = req.body;
 
         // Si se está actualizando subtotal o impuesto, recalcular total
-        const facturaActual = await Factura.findById(id);
+        const facturaActual = await Factura.findById(id).populate('pedido');
         if (!facturaActual) {
             return res.status(404).json({
                 success: false,
                 message: 'Factura no encontrada',
             });
+        }
+
+        // Validar que el restaurante sea el propietario de la factura (excepto si es ADMIN_ROLE)
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!req.usuario.restaurante || facturaActual.pedido.restaurante.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para editar esta factura',
+                });
+            }
         }
 
         const subtotal = updateData.subtotal ?? facturaActual.subtotal;
@@ -141,7 +161,8 @@ export const updateFactura = async (req, res) => {
 export const deleteFactura = async (req, res) => {
     try {
         const { id } = req.params;
-        const factura = await Factura.findByIdAndDelete(id);
+        
+        const factura = await Factura.findById(id).populate('pedido');
 
         if (!factura) {
             return res.status(404).json({
@@ -149,6 +170,18 @@ export const deleteFactura = async (req, res) => {
                 message: 'Factura no encontrada',
             });
         }
+
+        // Validar que el restaurante sea el propietario de la factura (excepto si es ADMIN_ROLE)
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            if (!req.usuario.restaurante || factura.pedido.restaurante.toString() !== req.usuario.restaurante.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para eliminar esta factura',
+                });
+            }
+        }
+
+        await Factura.findByIdAndDelete(id);
 
         res.status(200).json({
             success: true,
