@@ -1,5 +1,13 @@
 import Reservacion from './reservacion.model.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
 import { validarMesaParaReservacion } from '../../helpers/reservacion.helper.js';
+
+/** Para ADMIN_RESTAURANT_ROLE obtiene el ID de su restaurante (req.usuario.restaurante o desde BD). */
+const getRestauranteId = async (usuario) => {
+    if (usuario.restaurante) return usuario.restaurante;
+    const r = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return r?._id ?? null;
+};
 
 //Crear Reservaciones.
 export const createReservacion = async (req, res) => {
@@ -48,7 +56,9 @@ export const getReservaciones = async (req, res) => {
             query.usuario = req.usuario._id;
         } 
         else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            query.restaurante = req.usuario.restaurante;
+            const restauranteId = await getRestauranteId(req.usuario);
+            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            query.restaurante = restauranteId;
         }
 
         const [reservaciones, total] = await Promise.all([
@@ -85,8 +95,19 @@ export const getReservacionById = async (req, res) => {
 
         if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
 
-        if (req.usuario.role === 'USER_ROLE' && reservacion.usuario._id.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
+        if (req.usuario.role === 'USER_ROLE') {
+            const usuarioId = (reservacion.usuario?._id ?? reservacion.usuario)?.toString?.() ?? '';
+            const currentUserId = (req.usuario._id ?? req.usuario.id)?.toString?.() ?? '';
+            if (usuarioId !== currentUserId) {
+                return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
+            }
+        } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const restauranteId = await getRestauranteId(req.usuario);
+            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            const resRestauranteId = (reservacion.restaurante?._id ?? reservacion.restaurante)?.toString();
+            if (resRestauranteId !== restauranteId.toString()) {
+                return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
+            }
         }
 
         res.status(200).json({ success: true, data: reservacion });
@@ -106,11 +127,47 @@ export const updateReservacion = async (req, res) => {
         if (!reservacionExistente) return res.status(404).json({ message: 'Reservación no encontrada' });
 
         if (req.usuario.role === 'USER_ROLE') {
-            if (reservacionExistente.usuario.toString() !== req.usuario._id.toString()) {
+            const autorId = (reservacionExistente.usuario?._id ?? reservacionExistente.usuario)?.toString?.() ?? '';
+            const currentUserId = (req.usuario._id ?? req.usuario.id)?.toString?.() ?? '';
+            if (autorId !== currentUserId) {
                 return res.status(403).json({ message: 'No puedes editar una reservación ajena' });
             }
             if (reservacionExistente.estado !== 'PENDIENTE') {
                 return res.status(400).json({ message: 'Solo puedes editar reservaciones en estado PENDIENTE' });
+            }
+        } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const restauranteId = await getRestauranteId(req.usuario);
+            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            const resRestauranteId = (reservacionExistente.restaurante?._id ?? reservacionExistente.restaurante)?.toString?.() ?? '';
+            if (resRestauranteId !== restauranteId.toString()) {
+                return res.status(403).json({ message: 'Solo puedes editar reservaciones de tu restaurante' });
+            }
+        }
+
+        // USER_ROLE no puede cambiar estado a CONFIRMADA ni COMPLETADA (solo el restaurante)
+        if (req.usuario.role === 'USER_ROLE' && req.body.estado != null) {
+            if (['CONFIRMADA', 'COMPLETADA'].includes(req.body.estado)) {
+                return res.status(403).json({
+                    message: 'Solo el restaurante puede confirmar o marcar como completada la reservación'
+                });
+            }
+        }
+
+        // Revalidar mesa si se cambia fecha, mesa o cantidadPersonas
+        const mesaId = req.body.mesa ?? reservacionExistente.mesa;
+        const restauranteId = reservacionExistente.restaurante;
+        const fecha = req.body.fecha ? new Date(req.body.fecha) : reservacionExistente.fecha;
+        const cantidadPersonas = req.body.cantidadPersonas ?? reservacionExistente.cantidadPersonas;
+        const debeRevalidar = req.body.mesa != null || req.body.fecha != null || req.body.cantidadPersonas != null;
+        if (debeRevalidar) {
+            const validacionMesa = await validarMesaParaReservacion({
+                mesaId,
+                restauranteId,
+                fecha,
+                cantidadPersonas
+            });
+            if (!validacionMesa.ok) {
+                return res.status(validacionMesa.status).json(validacionMesa.payload);
             }
         }
 
@@ -136,8 +193,19 @@ export const deleteReservacion = async (req, res) => {
 
         if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
 
-        if (req.usuario.role === 'USER_ROLE' && reservacion.usuario.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({ message: 'No puedes cancelar una reservación ajena' });
+        if (req.usuario.role === 'USER_ROLE') {
+            const autorId = (reservacion.usuario?._id ?? reservacion.usuario)?.toString?.() ?? '';
+            const currentUserId = (req.usuario._id ?? req.usuario.id)?.toString?.() ?? '';
+            if (autorId !== currentUserId) {
+                return res.status(403).json({ message: 'No puedes cancelar una reservación ajena' });
+            }
+        } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const restauranteId = await getRestauranteId(req.usuario);
+            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            const resRestauranteId = (reservacion.restaurante?._id ?? reservacion.restaurante)?.toString?.() ?? '';
+            if (resRestauranteId !== restauranteId.toString()) {
+                return res.status(403).json({ message: 'Solo puedes cancelar reservaciones de tu restaurante' });
+            }
         }
 
         reservacion.estado = 'CANCELADA';

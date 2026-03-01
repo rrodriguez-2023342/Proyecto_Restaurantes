@@ -43,26 +43,11 @@ router.put(
     updateReseña
 );
 
-// Eliminar o Ocultar reseña
+// Eliminar reseña (solo el autor)
 router.delete(
     '/:id',
     validateDeleteResenia,
     deleteReseña
 );
-
-router.put(
-    '/:id',
-    updateReseña
-)
-
-router.delete(
-    '/:id',
-    deleteReseña
-)
-router.get(
-    '/:id',
-    getReseñaById
-)
-
 
 export default router;

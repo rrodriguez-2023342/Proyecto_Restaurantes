@@ -251,6 +251,22 @@ export const createReporte = async (req, res) => {
         delete data.generadoPor;
         delete data.data; // El data siempre se genera automáticamente
 
+        // Validar que fechaInicio sea anterior a fechaFin
+        const fechaInicio = new Date(data.fechaInicio);
+        const fechaFin = new Date(data.fechaFin);
+        if (Number.isNaN(fechaInicio.getTime()) || Number.isNaN(fechaFin.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Las fechas de inicio y fin deben ser válidas',
+            });
+        }
+        if (fechaInicio >= fechaFin) {
+            return res.status(400).json({
+                success: false,
+                message: 'La fecha de inicio debe ser anterior a la fecha de fin',
+            });
+        }
+
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
             if (!restaurante) {
@@ -339,6 +355,14 @@ export const getReporteById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
         }
 
+        // Solo el restaurante que hizo el reporte puede verlo (o ADMIN_ROLE)
+        if (!(await puedeAccederReporte(req.usuario, reporte.restaurante?._id ?? reporte.restaurante))) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permiso para ver este reporte',
+            });
+        }
+
         return res.status(200).json({
             success: true,
             message: 'Reporte obtenido exitosamente',
@@ -369,8 +393,25 @@ export const updateReporte = async (req, res) => {
             });
         }
 
-        const updateData = { ...req.body };
-        delete updateData.generadoPor;
+        // No permitir editar campos sensibles: solo fechaInicio y fechaFin
+        const updateData = {};
+        if (req.body.fechaInicio != null) updateData.fechaInicio = req.body.fechaInicio;
+        if (req.body.fechaFin != null) updateData.fechaFin = req.body.fechaFin;
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Solo se pueden actualizar fechaInicio y fechaFin',
+            });
+        }
+        // Validar que fechaInicio < fechaFin si se envían ambas
+        const newInicio = updateData.fechaInicio ? new Date(updateData.fechaInicio) : reporteExistente.fechaInicio;
+        const newFin = updateData.fechaFin ? new Date(updateData.fechaFin) : reporteExistente.fechaFin;
+        if (new Date(newInicio) >= new Date(newFin)) {
+            return res.status(400).json({
+                success: false,
+                message: 'La fecha de inicio debe ser anterior a la fecha de fin',
+            });
+        }
 
         const reporteEditado = await Reporte.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -390,11 +431,21 @@ export const updateReporte = async (req, res) => {
 
 export const deleteReporte = async (req, res) => {
     try {
-        const reporteEliminado = await Reporte.findByIdAndDelete(req.params.id);
+        const reporteExistente = await Reporte.findById(req.params.id);
 
-        if (!reporteEliminado) {
+        if (!reporteExistente) {
             return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
         }
+
+        // Solo el restaurante que hizo el reporte puede eliminarlo (o ADMIN_ROLE)
+        if (!(await puedeAccederReporte(req.usuario, reporteExistente.restaurante))) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permiso para eliminar este reporte',
+            });
+        }
+
+        const reporteEliminado = await Reporte.findByIdAndDelete(req.params.id);
 
         return res.status(200).json({
             success: true,

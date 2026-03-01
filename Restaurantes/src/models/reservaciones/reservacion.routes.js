@@ -50,18 +50,4 @@ router.delete(
     deleteReservacion
 );
 
-router.put(
-    '/:id',
-    updateReservacion
-)
-
-router.delete(
-    '/:id',
-    deleteReservacion
-)
-router.get(
-    '/:id',
-    getReservacionById
-)
-
 export default router;
