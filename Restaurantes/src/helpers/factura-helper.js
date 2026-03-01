@@ -1,5 +1,3 @@
-// ─── PDF primitives (mismo motor que reporte.helper.js) ──────────────────────
-
 const normalizeText = (text) =>
     String(text)
         .replace(/á/g, 'a').replace(/Á/g, 'A')
@@ -51,27 +49,26 @@ const opLine = (x1, y1, x2, y2, width = 0.5, r = 0.78, g = 0.78, b = 0.78) => [
     `0 0 0 RG`,
 ];
 
-// ─── Paleta ───────────────────────────────────────────────────────────────────
+// Paleta de colores
 
-const GREEN_D = [0.063, 0.275, 0.133];  // #104523
-const GREEN_M = [0.118, 0.467, 0.235];  // #1E773C
-const GREEN_L = [0.902, 0.957, 0.914];  // #E6F4E9
-const GOLD    = [0.824, 0.647, 0.173];  // #D2A52C
+const GREEN_D = [0.063, 0.275, 0.133];
+const GREEN_M = [0.118, 0.467, 0.235];
+const GREEN_L = [0.902, 0.957, 0.914];
+const GOLD    = [0.824, 0.647, 0.173];
 const GREY_L  = [0.965, 0.965, 0.965];
-const GREY_M  = [0.878, 0.878, 0.878];
 const WHITE   = [1, 1, 1];
 
-// ─── Columnas de la tabla de items ───────────────────────────────────────────
+// Columnas de la tabla 
 
 const COL = {
-    num:      MARGIN_X + 4,          // #
-    nombre:   MARGIN_X + 28,         // Plato
-    cantidad: MARGIN_X + 320,        // Cant.
-    precio:   MARGIN_X + 390,        // Precio unit.
-    subtotal: RIGHT_X  - 4,          // Subtotal (right-aligned)
+    num:      MARGIN_X + 4,
+    nombre:   MARGIN_X + 28,
+    cantidad: MARGIN_X + 320,
+    precio:   MARGIN_X + 390,
+    subtotal: RIGHT_X  - 4,
 };
 
-// ─── Motor de paginación ─────────────────────────────────────────────────────
+// Motor de paginación 
 
 const buildPages = (commands) => {
     const pages = [];
@@ -85,42 +82,19 @@ const buildPages = (commands) => {
     for (const cmd of commands) {
         switch (cmd.type) {
 
-            // ── Encabezado de factura ─────────────────────────────────────
             case 'facturaHeader': {
                 const blockH = 100;
                 need(blockH + 20);
-
-                // Fondo verde oscuro
                 ops.push(...opRect(0, PAGE_H - MARGIN_Y - blockH, PAGE_W, blockH + MARGIN_Y, ...GREEN_D));
-                // Línea dorada inferior
                 ops.push(...opRect(0, PAGE_H - MARGIN_Y - blockH - 3, PAGE_W, 3, ...GOLD));
-
-                // FACTURA (título grande)
-                ops.push(...opColorText(
-                    centerX('FACTURA', 28), PAGE_H - MARGIN_Y - 38,
-                    'F2', 28, 'FACTURA', ...WHITE
-                ));
-                // Restaurante
-                ops.push(...opColorText(
-                    centerX(cmd.restaurante, 12), PAGE_H - MARGIN_Y - 62,
-                    'F1', 12, cmd.restaurante, ...GOLD
-                ));
-                // No. factura (derecha)
-                ops.push(...opColorText(
-                    rightX(`No. ${cmd.facturaId}`, 8), PAGE_H - MARGIN_Y - 82,
-                    'F1', 8, `No. ${cmd.facturaId}`, 0.7, 0.9, 0.7
-                ));
-                // Fecha (derecha)
-                ops.push(...opColorText(
-                    rightX(cmd.fecha, 8), PAGE_H - MARGIN_Y - 93,
-                    'F1', 8, cmd.fecha, 0.7, 0.9, 0.7
-                ));
-
+                ops.push(...opColorText(centerX('FACTURA', 28), PAGE_H - MARGIN_Y - 38, 'F2', 28, 'FACTURA', ...WHITE));
+                ops.push(...opColorText(centerX(cmd.restaurante, 12), PAGE_H - MARGIN_Y - 62, 'F1', 12, cmd.restaurante, ...GOLD));
+                ops.push(...opColorText(rightX(`No. ${cmd.facturaId}`, 8), PAGE_H - MARGIN_Y - 82, 'F1', 8, `No. ${cmd.facturaId}`, 0.7, 0.9, 0.7));
+                ops.push(...opColorText(rightX(cmd.fecha, 8), PAGE_H - MARGIN_Y - 93, 'F1', 8, cmd.fecha, 0.7, 0.9, 0.7));
                 drop(blockH + 14);
                 break;
             }
 
-            // ── Sección info pedido ───────────────────────────────────────
             case 'sectionHeader': {
                 const h = 22;
                 need(h + 6);
@@ -132,7 +106,6 @@ const buildPages = (commands) => {
                 break;
             }
 
-            // ── Fila clave-valor (info pedido) ────────────────────────────
             case 'keyvalue': {
                 const h = 16;
                 need(h);
@@ -143,22 +116,20 @@ const buildPages = (commands) => {
                 break;
             }
 
-            // ── Encabezado de tabla de items ──────────────────────────────
             case 'tableHeader': {
                 const h = 20;
                 need(h + 4);
                 drop(4);
                 ops.push(...opRect(MARGIN_X - 4, y - h + 4, CONTENT_W + 8, h, ...GREEN_D));
-                ops.push(...opColorText(COL.num,      y - 4, 'F2', 8, '#',          ...WHITE));
-                ops.push(...opColorText(COL.nombre,   y - 4, 'F2', 8, 'Plato',      ...WHITE));
-                ops.push(...opColorText(COL.cantidad, y - 4, 'F2', 8, 'Cant.',      ...WHITE));
-                ops.push(...opColorText(COL.precio,   y - 4, 'F2', 8, 'Precio',     ...WHITE));
+                ops.push(...opColorText(COL.num,      y - 4, 'F2', 8, 'No.',       ...WHITE));
+                ops.push(...opColorText(COL.nombre,   y - 4, 'F2', 8, 'Plato',   ...WHITE));
+                ops.push(...opColorText(COL.cantidad, y - 4, 'F2', 8, 'Cant.',   ...WHITE));
+                ops.push(...opColorText(COL.precio,   y - 4, 'F2', 8, 'Precio',  ...WHITE));
                 ops.push(...opColorText(rightX('Subtotal', 8) - 4, y - 4, 'F2', 8, 'Subtotal', ...WHITE));
                 drop(h + 2);
                 break;
             }
 
-            // ── Fila de item ──────────────────────────────────────────────
             case 'itemRow': {
                 const h = 18;
                 need(h);
@@ -166,16 +137,15 @@ const buildPages = (commands) => {
                     ops.push(...opRect(MARGIN_X - 4, y - h + 4, CONTENT_W + 8, h, ...GREY_L));
                 }
                 const subtotal = (cmd.cantidad * cmd.precio).toFixed(2);
-                ops.push(opText(COL.num,                                  y - 3, 'F1', 8, String(cmd.index + 1)));
-                ops.push(opText(COL.nombre,                               y - 3, 'F1', 8, normalizeText(cmd.nombre)));
-                ops.push(opText(COL.cantidad,                             y - 3, 'F1', 8, String(cmd.cantidad)));
-                ops.push(opText(COL.precio,                               y - 3, 'F1', 8, `Q ${Number(cmd.precio).toFixed(2)}`));
-                ops.push(opText(rightX(`Q ${subtotal}`, 8) - 4,           y - 3, 'F1', 8, `Q ${subtotal}`));
+                ops.push(opText(COL.num,                        y - 3, 'F1', 8, String(cmd.index + 1)));
+                ops.push(opText(COL.nombre,                     y - 3, 'F1', 8, normalizeText(cmd.nombre)));
+                ops.push(opText(COL.cantidad,                   y - 3, 'F1', 8, String(cmd.cantidad)));
+                ops.push(opText(COL.precio,                     y - 3, 'F1', 8, `Q ${Number(cmd.precio).toFixed(2)}`));
+                ops.push(opText(rightX(`Q ${subtotal}`, 8) - 4, y - 3, 'F1', 8, `Q ${subtotal}`));
                 drop(h);
                 break;
             }
 
-            // ── Línea separadora ──────────────────────────────────────────
             case 'divider': {
                 need(10);
                 ops.push(...opLine(MARGIN_X, y - 4, RIGHT_X, y - 4));
@@ -183,17 +153,12 @@ const buildPages = (commands) => {
                 break;
             }
 
-            // ── Fila de totales (subtotal / impuesto / total) ─────────────
             case 'totalRow': {
                 const h = 18;
                 need(h + 2);
-                if (cmd.highlight) {
-                    ops.push(...opRect(MARGIN_X - 4, y - h + 4, CONTENT_W + 8, h, ...GREEN_L));
-                }
+                if (cmd.highlight) ops.push(...opRect(MARGIN_X - 4, y - h + 4, CONTENT_W + 8, h, ...GREEN_L));
                 ops.push(opText(
-                    cmd.highlight
-                        ? rightX(cmd.key, 9) - 120
-                        : rightX(cmd.key, 8.5) - 120,
+                    cmd.highlight ? rightX(cmd.key, 9) - 120 : rightX(cmd.key, 8.5) - 120,
                     y - 3,
                     cmd.highlight ? 'F2' : 'F1',
                     cmd.highlight ? 9 : 8.5,
@@ -208,7 +173,6 @@ const buildPages = (commands) => {
                 break;
             }
 
-            // ── Línea de total final ──────────────────────────────────────
             case 'totalFinal': {
                 const h = 24;
                 need(h + 6);
@@ -221,7 +185,6 @@ const buildPages = (commands) => {
                 break;
             }
 
-            // ── Texto secundario ──────────────────────────────────────────
             case 'text': {
                 need(14);
                 ops.push(...opColorText(MARGIN_X + 4, y - 2, 'F1', 7.5, cmd.text, 0.35, 0.35, 0.35));
@@ -229,7 +192,6 @@ const buildPages = (commands) => {
                 break;
             }
 
-            // ── Footer ────────────────────────────────────────────────────
             case 'footer': {
                 need(20);
                 drop(6);
@@ -249,7 +211,7 @@ const buildPages = (commands) => {
     return pages;
 };
 
-// ─── Ensamblador de PDF raw ───────────────────────────────────────────────────
+//Ensamblador de PDF raw 
 
 const generatePdfFromCommands = (commands) => {
     const pages = buildPages(commands);
@@ -310,16 +272,16 @@ const generatePdfFromCommands = (commands) => {
     return Buffer.from(parts.join(''), 'utf8');
 };
 
-// ─── Export público ───────────────────────────────────────────────────────────
+// Export público 
 
 /**
  * Genera el PDF de una factura.
- * @param {Object} factura     - Documento Mongoose de la factura
- * @param {Object} pedido      - Documento Mongoose del pedido (populado con restaurante)
- * @param {Array}  detalles    - Array de DetallePedido populados con plato
+ * @param {Object} factura  - Documento Mongoose de la factura
+ * @param {Object} pedido   - Documento Mongoose del pedido (populado con restaurante)
+ * @param {Array}  items    - Array plano de { plato: { nombrePlato }, cantidad, precio }
  * @returns {Buffer}
  */
-export const generateFacturaPdf = (factura, pedido, detalles) => {
+export const generateFacturaPdf = (factura, pedido, items) => {
     const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('es-GT') : '—';
     const fmtMoney = (n) => `Q ${Number(n ?? 0).toFixed(2)}`;
 
@@ -328,7 +290,7 @@ export const generateFacturaPdf = (factura, pedido, detalles) => {
     );
 
     const commands = [
-        // ── Encabezado ──────────────────────────────────────────────────
+        //Encabezado
         {
             type:        'facturaHeader',
             restaurante: restauranteNombre,
@@ -337,7 +299,7 @@ export const generateFacturaPdf = (factura, pedido, detalles) => {
         },
         { type: 'spacer', h: 16 },
 
-        // ── Info del pedido ─────────────────────────────────────────────
+        // Info del pedido
         { type: 'sectionHeader', text: 'Informacion del pedido' },
         { type: 'keyvalue', key: 'No. Pedido',     value: pedido?._id?.toString().slice(-8).toUpperCase() ?? '—', zebra: false },
         { type: 'keyvalue', key: 'Restaurante',    value: restauranteNombre,                                       zebra: true  },
@@ -346,18 +308,18 @@ export const generateFacturaPdf = (factura, pedido, detalles) => {
         { type: 'keyvalue', key: 'Fecha',          value: fmtDate(pedido?.createdAt),                             zebra: false },
         { type: 'spacer', h: 16 },
 
-        // ── Tabla de items ──────────────────────────────────────────────
+        // Tabla de items
         { type: 'sectionHeader', text: 'Detalle de productos' },
         { type: 'spacer', h: 4 },
         { type: 'tableHeader' },
 
-        ...(detalles.length > 0
-            ? detalles.map((d, i) => ({
+        ...(items.length > 0
+            ? items.map((item, i) => ({
                 type:     'itemRow',
                 index:    i,
-                nombre:   d.plato?.nombrePlato ?? 'Plato eliminado',
-                cantidad: d.cantidad,
-                precio:   d.precio,
+                nombre:   item.plato?.nombrePlato ?? 'Plato eliminado',
+                cantidad: item.cantidad,
+                precio:   item.precio,
             }))
             : [{ type: 'text', text: 'Sin items registrados en este pedido.' }]
         ),
@@ -366,14 +328,14 @@ export const generateFacturaPdf = (factura, pedido, detalles) => {
         { type: 'divider' },
         { type: 'spacer', h: 4 },
 
-        // ── Totales ─────────────────────────────────────────────────────
-        { type: 'totalRow', key: 'Subtotal:',  value: fmtMoney(factura.subtotal), highlight: false },
-        { type: 'totalRow', key: 'Impuesto:',  value: fmtMoney(factura.impuesto), highlight: false },
+        // Totales 
+        { type: 'totalRow',   key: 'Subtotal:', value: fmtMoney(factura.subtotal), highlight: false },
+        { type: 'totalRow',   key: 'Propina:', value: fmtMoney(factura.propina), highlight: false },
         { type: 'spacer', h: 4 },
-        { type: 'totalFinal', key: 'TOTAL:', value: fmtMoney(factura.total) },
+        { type: 'totalFinal', key: 'TOTAL:',    value: fmtMoney(factura.total) },
 
         { type: 'spacer', h: 20 },
-        { type: 'text', text: `Factura generada el ${fmtDate(factura.createdAt)}` },
+        { type: 'text',   text: `Factura generada el ${fmtDate(factura.createdAt)}` },
         { type: 'spacer', h: 6 },
         { type: 'footer', text: 'Documento generado electronicamente. No requiere firma ni sello.' },
     ];

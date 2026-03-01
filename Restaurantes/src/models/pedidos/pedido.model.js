@@ -1,5 +1,4 @@
 'use strict';
-
 import mongoose from "mongoose";
 
 const pedidoSchema = new mongoose.Schema(
@@ -9,18 +8,8 @@ const pedidoSchema = new mongoose.Schema(
             ref: 'Restaurante',
             required: true
         },
-        plato: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Plato',
-            required: true
-        },
-        cantidad: {
-            type: Number,
-            required: true,
-            min: 1
-        },
         usuario: {
-            type: String, // almacenamos el id tal como viene del token
+            type: String,
             required: true
         },
         tipoPedido: {
@@ -35,17 +24,16 @@ const pedidoSchema = new mongoose.Schema(
         },
         totalPedido: {
             type: Number,
-            required: true
+            default: 0
         }
     },
     {
         timestamps: true,
         versionKey: false
     }
-)
+);
 
 pedidoSchema.index({ restaurante: 1 });
-pedidoSchema.index({ plato: 1 });
 pedidoSchema.index({ usuario: 1 });
 pedidoSchema.index({ tipoPedido: 1 });
 pedidoSchema.index({ estadoPedido: 1 });

@@ -24,8 +24,6 @@ const createTransporter = () => {
 
 const transporter = createTransporter();
 
-// Helpers compartidos
-
 const TIPO_LABEL = {
     VENTAS:           'Reporte de Ventas',
     RESERVACIONES:    'Reporte de Reservaciones',
@@ -46,10 +44,10 @@ const supportBlock = `
     <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">¿Tuviste algún problema?</p>
     <p style="margin: 0 0 8px; color: #555; font-size: 13px;">Comunícate con nuestro equipo de soporte:</p>
     <p style="margin: 0 0 4px; color: #333; font-size: 13px;">
-        📧 <a href="mailto:restaurantein6bm@gmail.com" style="color: #104523; text-decoration: none;">restaurantein6bm@gmail.com</a>
+        @ <a href="mailto:restaurantein6bm@gmail.com" style="color: #104523; text-decoration: none;">restaurantein6bm@gmail.com</a>
     </p>
     <p style="margin: 0; color: #333; font-size: 13px;">
-        📞 <a href="tel:+50211110000" style="color: #104523; text-decoration: none;">+502 1111-0000</a>
+        Tel. <a href="tel:+50211110000" style="color: #104523; text-decoration: none;">+502 1111-0000</a>
     </p>
 </div>`;
 
@@ -71,7 +69,7 @@ const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) => `
     </div>
 
     <div style="padding: 24px; background-color: #f9f9f9;">
-        <p>Hola <strong>${name}</strong>,</p>
+        <p>Estimado <strong>${name}</strong>,</p>
         <p>Tu reporte ha sido generado exitosamente. Encontrarás el PDF adjunto a este correo.</p>
 
         <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
@@ -131,7 +129,7 @@ const buildFacturaHtml = ({ name, factura, pedido, restaurante }) => `
     </div>
 
     <div style="padding: 24px; background-color: #f9f9f9;">
-        <p>Hola <strong>${name}</strong>,</p>
+        <p>Estimado <strong>${name}</strong>,</p>
         <p>Tu factura ha sido generada exitosamente. Encontrarás el PDF adjunto a este correo.</p>
 
         <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
@@ -156,8 +154,8 @@ const buildFacturaHtml = ({ name, factura, pedido, restaurante }) => `
                 <td style="padding: 8px 12px;">${fmtMoney(factura.subtotal)}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Impuesto</td>
-                <td style="padding: 8px 12px;">${fmtMoney(factura.impuesto)}</td>
+                <td style="padding: 8px 12px; font-weight: bold; color: #104523;">Propina</td>
+                <td style="padding: 8px 12px;">${fmtMoney(factura.propina)}</td>
             </tr>
             <tr style="background-color: #104523;">
                 <td style="padding: 10px 12px; font-weight: bold; color: #D2A52C; font-size: 15px;">TOTAL</td>
@@ -184,7 +182,6 @@ const buildFacturaHtml = ({ name, factura, pedido, restaurante }) => `
 
 // Exports
 
-// Envia el PDF de un reporte por correo al usuario que lo generó
 export const sendReportePdfEmail = async (email, name, pdfBuffer, reporte) => {
     if (!transporter) {
         throw new Error('[email-service] Transportador SMTP no configurado');
@@ -206,7 +203,6 @@ export const sendReportePdfEmail = async (email, name, pdfBuffer, reporte) => {
     });
 };
 
-//Envia el PDF de una factura por correo
 export const sendFacturaPdfEmail = async (email, name, pdfBuffer, factura, pedido) => {
     if (!transporter) {
         throw new Error('[email-service] Transportador SMTP no configurado');

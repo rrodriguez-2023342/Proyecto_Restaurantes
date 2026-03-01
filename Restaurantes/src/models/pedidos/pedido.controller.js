@@ -1,19 +1,12 @@
 import Pedido from './pedido.model.js';
-import Plato from '../platos/plato.model.js';
 
 export const createPedido = async (req, res) => {
     try {
         const data = req.body;
-        // asegurar que el usuario viene del token
+        // usuario siempre viene del token, nunca del body
         data.usuario = String(req.usuario.id || req.usuario._id);
-
-        // calcular total automáticamente si no viene o para evitar inconsistencias
-        if (!data.totalPedido || Number(data.totalPedido) <= 0) {
-            const plato = await Plato.findById(data.plato).lean();
-            if (plato) {
-                data.totalPedido = parseFloat((plato.precio * data.cantidad).toFixed(2));
-            }
-        }
+        // el total arranca en 0, se actualiza cuando se crean los detalles
+        data.totalPedido = 0;
 
         const pedido = new Pedido(data);
         await pedido.save();
@@ -22,22 +15,21 @@ export const createPedido = async (req, res) => {
             success: true,
             message: 'Pedido creado exitosamente',
             data: pedido
-        })
+        });
     } catch (error) {
         res.status(400).json({
             success: false,
             message: 'Error al crear el pedido',
             error: error.message
-        })
+        });
     }
-}
+};
 
 export const getPedidos = async (req, res) => {
     try {
-        const { page = 1, limit = 10} = req.query;
+        const { page = 1, limit = 10 } = req.query;
         let query = {};
 
-        // restricciones por rol
         if (req.usuario.role === 'USER_ROLE') {
             query.usuario = req.usuario._id;
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
@@ -47,7 +39,6 @@ export const getPedidos = async (req, res) => {
         const [pedidos, total] = await Promise.all([
             Pedido.find(query)
                 .populate('restaurante', 'nombre')
-                .populate('plato', 'nombre precio')
                 .populate('usuario', 'nombre apellido')
                 .limit(limit * 1)
                 .skip((page - 1) * limit)
@@ -64,41 +55,42 @@ export const getPedidos = async (req, res) => {
                 totalItems: total,
                 limit
             }
-        })
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
             message: 'Error al obtener los pedidos',
             error: error.message
-        })
+        });
     }
-}
+};
 
 export const getPedidoById = async (req, res) => {
     try {
         const { id } = req.params;
         const pedido = await Pedido.findById(id)
             .populate('restaurante', 'nombre')
-            .populate('plato', 'nombre precio')
             .populate('usuario', 'nombre apellido');
 
         if (!pedido) {
             return res.status(404).json({
                 success: false,
                 message: 'Pedido no encontrado'
-            })
+            });
         }
 
-        // chequeo propiedad si es cliente
-        if (req.usuario.role === 'USER_ROLE' && pedido.usuario._id.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
+        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permiso para ver este pedido'
+            });
         }
 
         res.status(200).json({
             success: true,
             message: 'Pedido obtenido exitosamente',
             data: pedido
-        })
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -106,7 +98,7 @@ export const getPedidoById = async (req, res) => {
             error: error.message
         });
     }
-}
+};
 
 export const editarPedido = async (req, res) => {
     try {
@@ -122,24 +114,20 @@ export const editarPedido = async (req, res) => {
         }
 
         if (req.usuario.role === 'USER_ROLE' && pedidoExistente.usuario.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({ success: false, message: 'No puedes editar un pedido ajeno' });
+            return res.status(403).json({
+                success: false,
+                message: 'No puedes editar un pedido ajeno'
+            });
         }
 
-        // si cambian plato, cantidad o no se envía total, recalcular
-        if (pedidoData.plato || pedidoData.cantidad || pedidoData.totalPedido === undefined) {
-            const platoId = pedidoData.plato || pedidoExistente.plato;
-            const cantidad = pedidoData.cantidad || pedidoExistente.cantidad;
-            const platoObj = await Plato.findById(platoId).lean();
-            if (platoObj) {
-                pedidoData.totalPedido = parseFloat((platoObj.precio * cantidad).toFixed(2));
-            }
-        }
+        // no permitir que el usuario sobreescriba el total manualmente
+        delete pedidoData.totalPedido;
 
         const pedidoEditado = await Pedido.findByIdAndUpdate(
             id,
             pedidoData,
             { new: true, runValidators: true }
-        )
+        );
 
         res.status(200).json({
             success: true,
@@ -153,7 +141,7 @@ export const editarPedido = async (req, res) => {
             error: error.message
         });
     }
-}
+};
 
 export const eliminarPedido = async (req, res) => {
     try {
@@ -168,7 +156,10 @@ export const eliminarPedido = async (req, res) => {
         }
 
         if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario._id.toString()) {
-            return res.status(403).json({ success: false, message: 'No puedes eliminar un pedido ajeno' });
+            return res.status(403).json({
+                success: false,
+                message: 'No puedes eliminar un pedido ajeno'
+            });
         }
 
         const pedidoEliminado = await Pedido.findByIdAndDelete(id);
@@ -178,7 +169,6 @@ export const eliminarPedido = async (req, res) => {
             message: 'Pedido eliminado correctamente',
             data: pedidoEliminado
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,

@@ -6,30 +6,32 @@ import { sendFacturaPdfEmail } from '../../helpers/email-service.js';
 
 export const createFactura = async (req, res) => {
     try {
-        const { pedido, impuesto = 0 } = req.body;
+        const { pedido, propina = 0, correoCliente } = req.body;
 
-        // Calcular subtotal sumando los subtotales de cada detalle del pedido
-        const detalles = await DetallePedido.find({ pedido });
-
-        if (!detalles.length) {
+        // Buscar el detalle del pedido
+        const detalle = await DetallePedido.findOne({ pedido });
+        if (!detalle || !detalle.items.length) {
             return res.status(400).json({
                 success: false,
                 message: 'El pedido no tiene productos asociados, no se puede generar la factura',
             });
         }
 
+        // Calcular subtotal desde los items
         const subtotal = parseFloat(
-            detalles.reduce((acc, d) => acc + (d.precio * d.cantidad), 0).toFixed(2)
+            detalle.items.reduce((acc, item) => acc + item.precio * item.cantidad, 0).toFixed(2)
         );
 
-        // total se calcula en el pre-save del modelo
-        const factura = new Factura({ pedido, subtotal, impuesto });
+        const factura = new Factura({ pedido, subtotal, propina, correoCliente: correoCliente ?? null });
         await factura.save();
+
+        const { _id, ...facturaData } = factura.toObject();
 
         res.status(201).json({
             success: true,
             message: 'Factura creada exitosamente',
-            data: factura,
+            facturaId: _id,
+            data: facturaData,
         });
     } catch (error) {
         res.status(400).json({
@@ -47,9 +49,7 @@ export const getFacturas = async (req, res) => {
 
         let query = {};
 
-        // Si es administrador de restaurante, filtrar por su restaurante
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            // Buscar pedidos del restaurante
             const pedidosDelRestaurante = await Pedido.find({ restaurante: req.usuario.restaurante }).select('_id');
             const pedidoIds = pedidosDelRestaurante.map(p => p._id);
             query.pedido = { $in: pedidoIds };
@@ -111,11 +111,8 @@ export const getFacturaById = async (req, res) => {
 export const updateFactura = async (req, res) => {
     try {
         const { id } = req.params;
-
-        // Evitar que total se actualice manualmente desde el body
         const { total: _ignorado, ...updateData } = req.body;
 
-        // Si se está actualizando subtotal o impuesto, recalcular total
         const facturaActual = await Factura.findById(id).populate('pedido');
         if (!facturaActual) {
             return res.status(404).json({
@@ -124,7 +121,6 @@ export const updateFactura = async (req, res) => {
             });
         }
 
-        // Validar que el restaurante sea el propietario de la factura (excepto si es ADMIN_ROLE)
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             if (!req.usuario.restaurante || facturaActual.pedido.restaurante.toString() !== req.usuario.restaurante.toString()) {
                 return res.status(403).json({
@@ -135,14 +131,10 @@ export const updateFactura = async (req, res) => {
         }
 
         const subtotal = updateData.subtotal ?? facturaActual.subtotal;
-        const impuesto = updateData.impuesto ?? facturaActual.impuesto;
-        updateData.total = parseFloat((subtotal + impuesto).toFixed(2));
+        const propina = updateData.propina ?? facturaActual.propina;
+        updateData.total = parseFloat((subtotal + propina).toFixed(2));
 
-        const factura = await Factura.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        );
+        const factura = await Factura.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
         res.status(200).json({
             success: true,
@@ -161,9 +153,8 @@ export const updateFactura = async (req, res) => {
 export const deleteFactura = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        const factura = await Factura.findById(id).populate('pedido');
 
+        const factura = await Factura.findById(id).populate('pedido');
         if (!factura) {
             return res.status(404).json({
                 success: false,
@@ -171,7 +162,6 @@ export const deleteFactura = async (req, res) => {
             });
         }
 
-        // Validar que el restaurante sea el propietario de la factura (excepto si es ADMIN_ROLE)
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             if (!req.usuario.restaurante || factura.pedido.restaurante.toString() !== req.usuario.restaurante.toString()) {
                 return res.status(403).json({
@@ -196,45 +186,41 @@ export const deleteFactura = async (req, res) => {
     }
 };
 
-// Descarga el PDF de una factura
-
+// Descarga el PDF y lo envía por correo
 export const descargarFacturaPdf = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // 1. Factura
         const factura = await Factura.findById(id);
         if (!factura) {
-            return res.status(404).json({
-                success: false,
-                message: 'Factura no encontrada',
-            });
+            return res.status(404).json({ success: false, message: 'Factura no encontrada' });
         }
 
-        // 2. Pedido con restaurante populado
-        const pedido = await Pedido.findById(factura.pedido)
-            .populate('restaurante', 'nombre');
+        const pedido = await Pedido.findById(factura.pedido).populate('restaurante', 'nombre');
         if (!pedido) {
-            return res.status(404).json({
-                success: false,
-                message: 'Pedido asociado a la factura no encontrado',
-            });
+            return res.status(404).json({ success: false, message: 'Pedido asociado no encontrado' });
         }
 
-        // 3. Detalles del pedido con plato populado
-        const detalles = await DetallePedido.find({ pedido: pedido._id })
-            .populate('plato', 'nombrePlato tipoPlato');
+        const detalle = await DetallePedido.findOne({ pedido: pedido._id })
+            .populate('items.plato', 'nombrePlato tipoPlato');
 
-        // 4. Generar PDF
-        const pdfBuffer = generateFacturaPdf(factura, pedido, detalles);
+        const items = detalle?.items?.map(item => ({
+            plato:    item.plato,
+            cantidad: item.cantidad,
+            precio:   item.precio,
+        })) ?? [];
 
-        // 5. Enviar por correo — fallo no bloquea la descarga
-        if (req.usuario?.email) {
-            const userName = req.usuario.name ?? 'Usuario';
-            sendFacturaPdfEmail(req.usuario.email, userName, pdfBuffer, factura, pedido)
-                .catch((err) =>
-                    console.error(`[descargarFacturaPdf] Error al enviar email factura ${factura._id}:`, err.message)
-                );
+        const pdfBuffer = generateFacturaPdf(factura, pedido, items);
+
+        // Enviar al admin que descarga
+        const nombreAdmin = `${req.usuario.name ?? ''} ${req.usuario.surname ?? ''}`.trim();
+        sendFacturaPdfEmail(req.usuario.email, nombreAdmin, pdfBuffer, factura, pedido)
+            .catch(err => console.error('[descargarFacturaPdf] Error email admin:', err.message));
+
+        // Enviar al cliente si tiene correo guardado
+        if (factura.correoCliente) {
+            sendFacturaPdfEmail(factura.correoCliente, 'Cliente', pdfBuffer, factura, pedido)
+                .catch(err => console.error('[descargarFacturaPdf] Error email cliente:', err.message));
         }
 
         const filename = `factura-${factura._id.toString().slice(-8).toUpperCase()}.pdf`;
