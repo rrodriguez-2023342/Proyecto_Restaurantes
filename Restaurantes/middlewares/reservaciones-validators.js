@@ -37,7 +37,7 @@ export const validateViewReservaciones = [
 // El controlador verificará si está "PENDIENTE" para el USER_ROLE
 export const validateUpdateReservacion = [
     validateJWT,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
+    requireRoles('ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     param('id')
         .isMongoId()
         .withMessage('ID de reservación no válido'),
@@ -53,7 +53,7 @@ export const validateUpdateReservacion = [
 // Validaciones para CANCELAR/ELIMINAR
 export const validateDeleteReservacion = [
     validateJWT,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
+    requireRoles('ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     param('id')
         .isMongoId()
         .withMessage('ID de reservación no válido'),

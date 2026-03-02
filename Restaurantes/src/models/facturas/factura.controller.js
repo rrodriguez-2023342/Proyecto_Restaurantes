@@ -1,8 +1,17 @@
 import Factura from './factura.model.js';
 import Pedido from '../pedidos/pedido.model.js';
 import DetallePedido from '../detallePedidos/detallePedido.model.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
 import { generateFacturaPdf } from '../../helpers/factura-helper.js';
 import { sendFacturaPdfEmail } from '../../helpers/email-service.js';
+
+const getAdminRestaurantId = async (usuario) => {
+    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario.restaurante) return String(usuario.restaurante);
+
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return restaurante?._id ? String(restaurante._id) : null;
+};
 
 export const createFactura = async (req, res) => {
     try {
@@ -50,7 +59,16 @@ export const getFacturas = async (req, res) => {
         let query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const pedidosDelRestaurante = await Pedido.find({ restaurante: req.usuario.restaurante }).select('_id');
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para listar facturas',
+                });
+            }
+
+            const pedidosDelRestaurante = await Pedido.find({ restaurante: adminRestaurantId }).select('_id');
             const pedidoIds = pedidosDelRestaurante.map(p => p._id);
             query.pedido = { $in: pedidoIds };
         }
@@ -122,7 +140,9 @@ export const updateFactura = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!req.usuario.restaurante || facturaActual.pedido.restaurante.toString() !== req.usuario.restaurante.toString()) {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+
+            if (!adminRestaurantId || String(facturaActual.pedido.restaurante) !== adminRestaurantId) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes permiso para editar esta factura',
@@ -163,7 +183,9 @@ export const deleteFactura = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!req.usuario.restaurante || factura.pedido.restaurante.toString() !== req.usuario.restaurante.toString()) {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+
+            if (!adminRestaurantId || String(factura.pedido.restaurante) !== adminRestaurantId) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes permiso para eliminar esta factura',
@@ -199,6 +221,16 @@ export const descargarFacturaPdf = async (req, res) => {
         const pedido = await Pedido.findById(factura.pedido).populate('restaurante', 'nombre');
         if (!pedido) {
             return res.status(404).json({ success: false, message: 'Pedido asociado no encontrado' });
+        }
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(pedido.restaurante?._id || pedido.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para generar el PDF de esta factura',
+                });
+            }
         }
 
         const detalle = await DetallePedido.findOne({ pedido: pedido._id })

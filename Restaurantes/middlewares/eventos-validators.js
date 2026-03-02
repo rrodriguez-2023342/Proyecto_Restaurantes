@@ -70,3 +70,13 @@ export const validateDeleteEvento = [
         .withMessage('El ID del evento debe ser válido'),
     checkValidators,
 ];
+
+export const validateViewEvento = [
+    validateJWT,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
+    param('id')
+        .optional()
+        .isMongoId()
+        .withMessage('El ID del evento debe ser valido'),
+    checkValidators,
+];

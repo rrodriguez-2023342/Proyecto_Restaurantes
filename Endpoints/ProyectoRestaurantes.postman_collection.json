@@ -1,2732 +1,3427 @@
 {
-  "info": {
-    "_postman_id": "e1a07d21-03bd-4127-82d1-22484b610203",
-    "name": "ProyectoRestaurantes",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "48332475",
-    "_collection_link": "https://go.postman.co/collection/48332475-e1a07d21-03bd-4127-82d1-22484b610203?source=collection_link"
-  },
-  "item": [
-    {
-      "name": "RestauranteService",
-      "item": [
-        {
-          "name": "Restaurantes",
-          "item": [
-            {
-              "name": "crearRestaurante",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "nombre",
-                      "value": "Restaurante 2",
-                      "type": "text"
-                    },
-                    {
-                      "key": "descripcion",
-                      "value": "Todos comen pene x2",
-                      "type": "text"
-                    },
-                    {
-                      "key": "direccion",
-                      "value": "a la par del pinulo de la petapa",
-                      "type": "text"
-                    },
-                    {
-                      "key": "categoria",
-                      "value": "Comida Rapida",
-                      "type": "text"
-                    },
-                    {
-                      "key": "telefono",
-                      "value": "49138795",
-                      "type": "text"
-                    },
-                    {
-                      "key": "fotos",
-                      "type": "file",
-                      "src": "/C:/Users/PC/Pictures/Screenshots/Captura de pantalla 2025-02-05 183338.png"
-                    },
-                    {
-                      "key": "dueno",
-                      "value": "usr_gDVsDRPY3F57",
-                      "type": "text"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/restaurantes/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "restaurantes",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getRestaurantes",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfeEtmZFhIUGM5ZUVIIiwianRpIjoiMzg5NTAxMzItMDA5ZS00ODQ4LWE2ODYtMDZiZWI4NzJlZDhhIiwiaWF0IjoxNzcyMzA4NDgxLCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqY3J1ei0yMDIxNjQ0QGtpbmFsLmVkdS5ndCIsIm5hbWUiOiJKZWZyeSIsInN1cm5hbWUiOiJDcnV6IiwiZXhwIjoxNzcyMzEwMjgxLCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.YCwavuEM9oXxeRq6ZUy1sOpF3jviTB4j9F1JsE0yrE4",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/restaurantes/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "restaurantes",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarRestaurante",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfeEtmZFhIUGM5ZUVIIiwianRpIjoiN2QyNGY3YWMtYjllNS00MzJhLTk3MWQtMTY2ZDA3YmVlYjEwIiwiaWF0IjoxNzcyMzA4NzM4LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqY3J1ei0yMDIxNjQ0QGtpbmFsLmVkdS5ndCIsIm5hbWUiOiJKZWZyeSIsInN1cm5hbWUiOiJDcnV6IiwiZXhwIjoxNzcyMzEwNTM4LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.VCRQ8NV2NxUWvMTP-jxOAJYSAD2aqH5fn5atsPLpExM",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "nombre",
-                      "value": "Hola Mundo",
-                      "type": "text"
-                    },
-                    {
-                      "key": "descripcion",
-                      "value": "hola mundo restaurante",
-                      "type": "text"
-                    },
-                    {
-                      "key": "direccion",
-                      "value": "cerca de mi casita",
-                      "type": "text"
-                    },
-                    {
-                      "key": "categoria",
-                      "value": "Comida Rapida",
-                      "type": "text"
-                    },
-                    {
-                      "key": "telefono",
-                      "value": "49138795",
-                      "type": "text"
-                    },
-                    {
-                      "key": "fotos",
-                      "type": "file",
-                      "src": "/C:/Users/PC/Pictures/Screenshots/Captura de pantalla (4).png"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/restaurantes/69a33daf002e4e5079ba310b",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "restaurantes",
-                    "69a33daf002e4e5079ba310b"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarRestaurante",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/restaurantes/69a33d71002e4e5079ba3109",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "restaurantes",
-                    "69a33d71002e4e5079ba3109"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Mesas",
-          "item": [
-            {
-              "name": "CrearMesa",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"69a3234784bbc314546087d3\",\r\n    \"numeroMesa\": 1,\r\n    \"capacidad\": 4\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/mesas/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "mesas",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getMesas",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/mesas/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "mesas",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getMesaById",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/mesas/69a3238984bbc314546087d5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "mesas",
-                    "69a3238984bbc314546087d5"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarMesa",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n\t\"restaurante\": \"69a3234784bbc314546087d3\",\r\n    \"numeroMesa\": 1,\r\n    \"capacidad\": 3\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/mesas/69a321510f5bb84f59ea1e32",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "mesas",
-                    "69a321510f5bb84f59ea1e32"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarMesa",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/mesas/69a3238984bbc314546087d5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "mesas",
-                    "69a3238984bbc314546087d5"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Menus",
-          "item": [
-            {
-              "name": "crearMenu",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"69a33d71002e4e5079ba3109\",\r\n    \"nombreMenu\": \"Desayuno chapin del restaurante shinji\",\r\n    \"descripcionMenu\": \"Los mejores desayunos al mejor precio\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/menus/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "menus",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getMenus",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfZ0RWc0RSUFkzRjU3IiwianRpIjoiMTc2YWRjZGUtY2I0OC00MGU5LWI3ZTItNmExZjUwODZiYTA5IiwiaWF0IjoxNzcyMzA2MzU1LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqZWZyeXl1NjdAZ21haWwuY29tIiwibmFtZSI6IlNoaW5qaSIsInN1cm5hbWUiOiJLIiwiZXhwIjoxNzcyMzA4MTU1LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.TZRjnFXKxDwJgKvw57DpzzgjeUKqpZ027c15-y5bOuk",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/menus/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "menus",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getMenuById",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfZ0RWc0RSUFkzRjU3IiwianRpIjoiMTc2YWRjZGUtY2I0OC00MGU5LWI3ZTItNmExZjUwODZiYTA5IiwiaWF0IjoxNzcyMzA2MzU1LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqZWZyeXl1NjdAZ21haWwuY29tIiwibmFtZSI6IlNoaW5qaSIsInN1cm5hbWUiOiJLIiwiZXhwIjoxNzcyMzA4MTU1LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.TZRjnFXKxDwJgKvw57DpzzgjeUKqpZ027c15-y5bOuk",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/menus/69a33ea8002e4e5079ba310d",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "menus",
-                    "69a33ea8002e4e5079ba310d"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarMenus",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfZ0RWc0RSUFkzRjU3IiwianRpIjoiMTc2YWRjZGUtY2I0OC00MGU5LWI3ZTItNmExZjUwODZiYTA5IiwiaWF0IjoxNzcyMzA2MzU1LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqZWZyeXl1NjdAZ21haWwuY29tIiwibmFtZSI6IlNoaW5qaSIsInN1cm5hbWUiOiJLIiwiZXhwIjoxNzcyMzA4MTU1LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.TZRjnFXKxDwJgKvw57DpzzgjeUKqpZ027c15-y5bOuk",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"69a33d71002e4e5079ba3109\",\r\n    \"nombreMenu\": \"Menu 2\",\r\n    \"descripcionMenu\": \"Este es un menu de jcruz\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/menus/69a33f3d002e4e5079ba3115",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "menus",
-                    "69a33f3d002e4e5079ba3115"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarMenu",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/menus/69a33f3d002e4e5079ba3115",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "menus",
-                    "69a33f3d002e4e5079ba3115"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Platos",
-          "item": [
-            {
-              "name": "crearPlato",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfZ0RWc0RSUFkzRjU3IiwianRpIjoiMTc2YWRjZGUtY2I0OC00MGU5LWI3ZTItNmExZjUwODZiYTA5IiwiaWF0IjoxNzcyMzA2MzU1LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqZWZyeXl1NjdAZ21haWwuY29tIiwibmFtZSI6IlNoaW5qaSIsInN1cm5hbWUiOiJLIiwiZXhwIjoxNzcyMzA4MTU1LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.TZRjnFXKxDwJgKvw57DpzzgjeUKqpZ027c15-y5bOuk",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "menu",
-                      "value": "69a33ea8002e4e5079ba310d",
-                      "type": "text"
-                    },
-                    {
-                      "key": "nombrePlato",
-                      "value": "Sopa de pussy 2",
-                      "type": "text"
-                    },
-                    {
-                      "key": "descripcionPlato",
-                      "value": "Sopa de pussy2",
-                      "type": "text"
-                    },
-                    {
-                      "key": "precio",
-                      "value": "12.5",
-                      "type": "text"
-                    },
-                    {
-                      "key": "tipoPlato",
-                      "value": "PLATO_FUERTE",
-                      "type": "text"
-                    },
-                    {
-                      "key": "fotosPlato",
-                      "type": "file",
-                      "src": "/C:/Users/PC/Pictures/Screenshots/Captura de pantalla 2025-01-27 175829.png"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/platos/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "platos",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getPlatos",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfeEtmZFhIUGM5ZUVIIiwianRpIjoiNzc1MDdlOTQtMTVlMC00ZTI1LWFlNjMtNjEwZDljZWIwNThjIiwiaWF0IjoxNzcyMzA2Mzc2LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqY3J1ei0yMDIxNjQ0QGtpbmFsLmVkdS5ndCIsIm5hbWUiOiJKZWZyeSIsInN1cm5hbWUiOiJDcnV6IiwiZXhwIjoxNzcyMzA4MTc2LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.VBivcQ01KP3a4ZGw9HM17ygO61SCTujEQGbPr0g4khE",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/platos?menu=69a33ea8002e4e5079ba310d",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "platos"
-                  ],
-                  "query": [
-                    {
-                      "key": "menu",
-                      "value": "69a33ea8002e4e5079ba310d"
-                    }
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getPlatoById",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfeEtmZFhIUGM5ZUVIIiwianRpIjoiNzc1MDdlOTQtMTVlMC00ZTI1LWFlNjMtNjEwZDljZWIwNThjIiwiaWF0IjoxNzcyMzA2Mzc2LCJyb2xlIjoiQURNSU5fUkVTVEFVUkFOVF9ST0xFIiwiZW1haWwiOiJqY3J1ei0yMDIxNjQ0QGtpbmFsLmVkdS5ndCIsIm5hbWUiOiJKZWZyeSIsInN1cm5hbWUiOiJDcnV6IiwiZXhwIjoxNzcyMzA4MTc2LCJhdWQiOiJSZXN0YXVyYW50ZUFQSSIsImlzcyI6IlJlc3RhdXJhbnRlQVBJIn0.VBivcQ01KP3a4ZGw9HM17ygO61SCTujEQGbPr0g4khE",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/platos/69a34141002e4e5079ba313e",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "platos",
-                    "69a34141002e4e5079ba313e"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarPlato",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"menu\": \"69a33f3d002e4e5079ba3115\",\r\n    \"nombrePlato\": \"aaaaaaa\",\r\n    \"descripcionPlato\": \"aaaaaa\",\r\n    \"precio\": 15.50,\r\n    \"tipoPlato\": \"PLATO_FUERTE\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/platos/69a34182002e4e5079ba3144",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "platos",
-                    "69a34182002e4e5079ba3144"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarPlato",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/platos/69a34141002e4e5079ba313e",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "platos",
-                    "69a34141002e4e5079ba313e"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Reservaciones",
-          "item": [
-            {
-              "name": "crearReservacion",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"usuario\": \"usr_7fs5N63qXgc2\",\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"mesa\": \"699c5b646c92c0ff2d8f62ef\",\r\n    \"fecha\": \"2026-02-23\",\r\n    \"cantidadPersonas\": 2\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reservaciones/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reservaciones",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getReservaciones",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reservaciones/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reservaciones",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarReservacion",
-              "request": {
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"usuario\": \"usr_7fs5N63qXgc2\",\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"mesa\": \"699c5b646c92c0ff2d8f62ef\",\r\n    \"fecha\": \"2026-02-23\",\r\n    \"cantidadPersonas\": 2\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reservaciones/699c7c303e4fb1ff265b5e17",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reservaciones",
-                    "699c7c303e4fb1ff265b5e17"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarReservacion",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reservaciones/699c5d046c92c0ff2d8f62f5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reservaciones",
-                    "699c5d046c92c0ff2d8f62f5"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Pedidos",
-          "item": [
-            {
-              "name": "crearPedido",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"698fc4d7fa6b4e2b44639dbd\",\r\n    \"plato\": \"69a317a5256d30d58e59be6f\",\r\n    \"cantidad\": 1,\r\n    \"usuario\": \"usr_z5J9b7fxUw1P\",\r\n    \"tipoPedido\": \"Domicilio\",\r\n    \"totalPedido\": 20.00\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/pedidos/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "pedidos",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getPedidos",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/pedidos/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "pedidos",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getPedidoById",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/pedidos/698fc4f1fa6b4e2b44639dc7",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "pedidos",
-                    "698fc4f1fa6b4e2b44639dc7"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarPedido",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"698bceeec64855ca579b2afc\",\r\n    \"tipoPedido\": \"Domicilio\",\r\n    \"totalPedido\": 15.00\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/pedidos/6993908dc7f91f3244a512b8",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "pedidos",
-                    "6993908dc7f91f3244a512b8"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarPedido",
-              "request": {
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/pedidos/698fc4f1fa6b4e2b44639dc7",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "pedidos",
-                    "698fc4f1fa6b4e2b44639dc7"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "DetallePedidos",
-          "item": [
-            {
-              "name": "crearDetallePedido",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"pedido\": \"698d1c44e4565a816db958fa\",\r\n    \"plato\": \"698d156007af84590408c1bc\",\r\n    \"cantidad\": 1,\r\n    \"precio\": 12.65\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "detalle-pedidos",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getDetallesPedidos",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "detalle-pedidos",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarDetallePedido",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/698fc4f9fa6b4e2b44639dc9",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "detalle-pedidos",
-                    "698fc4f9fa6b4e2b44639dc9"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarDetallePedido",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"pedido\": \"698d1c44e4565a816db958fa\",\r\n    \"plato\": \"698d156007af84590408c1bc\",\r\n    \"cantidad\": 456,\r\n    \"precio\": 12.65\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/698fc4f9fa6b4e2b44639dc9",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "detalle-pedidos",
-                    "698fc4f9fa6b4e2b44639dc9"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "New Request",
-              "request": {
-                "method": "GET",
-                "header": []
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Eventos",
-          "item": [
-            {
-              "name": "crearEvento",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"698bceeec64855ca579b2afc\",\r\n    \"titulo\": \"Graduacion\",\r\n    \"descripcion\": \"HOla\",\r\n    \"fechaEvento\": \"03/05/2026\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/eventos/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "eventos",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getEventos",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/eventos/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "eventos",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarEvento",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/eventos/698fc4fdfa6b4e2b44639dcb",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "eventos",
-                    "698fc4fdfa6b4e2b44639dcb"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarEvento",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"698bceeec64855ca579b2afc\",\r\n    \"titulo\": \"Primera Comunion\",\r\n    \"descripcion\": \"Primera comunion de Juan\",\r\n    \"fechaEvento\": \"03/05/2026\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/eventos/698fc4fdfa6b4e2b44639dcb",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "eventos",
-                    "698fc4fdfa6b4e2b44639dcb"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Reseñas",
-          "item": [
-            {
-              "name": "crearReseña",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"usuario\": \"usr_r51kMKA2j89g\",\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"comentario\": \"La comida es muy buena!\",\r\n    \"calificacion\": 4\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/resenas/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "resenas",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getReseñas",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/resenas/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "resenas",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarReseña",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"usuario\": \"usr_r51kMKA2j89g\",\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"comentario\": \"La comida es muy buena!\",\r\n    \"calificacion\": 4\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reseñas/699c7c303e4fb1ff265b5e17",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reseñas",
-                    "699c7c303e4fb1ff265b5e17"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarReseña",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3006/restaurantes/v1/reseñas/699c5d046c92c0ff2d8f62f5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3006",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reseñas",
-                    "699c5d046c92c0ff2d8f62f5"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Inventarios",
-          "item": [
-            {
-              "name": "crearInventario",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"69a31690256d30d58e59be6b\",\r\n    \"nombreItem\": \"tomate\",\r\n    \"cantidad\": 12,\r\n    \"minStock\": 10\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/inventarios/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "inventarios",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getInventarios",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/inventarios/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "inventarios",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getInventarioById",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/inventarios/69a32a64a59992aebf7163e5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "inventarios",
-                    "69a32a64a59992aebf7163e5"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarPedido",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/inventarios/69a32a64a59992aebf7163e5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "inventarios",
-                    "69a32a64a59992aebf7163e5"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarInventario",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"69a3234784bbc314546087d3\",\r\n    \"nombreItem\": \"azucar\",\r\n    \"cantidad\": 15,\r\n    \"minStock\": 10\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/inventarios/69a32a56a59992aebf7163e2",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "inventarios",
-                    "69a32a56a59992aebf7163e2"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Facturas",
-          "item": [
-            {
-              "name": "crearFacturas",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"pedido\": \"698d1c44e4565a816db958fa\",\r\n    \"subtotal\": 10,\r\n    \"impuesto\": 1.2,\r\n    \"total\": 1200\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/facturas/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "facturas",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getFacturas",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/facturas/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "facturas",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarFactura",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/facturas/698fc50bfa6b4e2b44639dd1",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "facturas",
-                    "698fc50bfa6b4e2b44639dd1"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarFactura",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"pedido\": \"698d1c44e4565a816db958fa\",\r\n    \"subtotal\": 10,\r\n    \"impuesto\": 1.2,\r\n    \"total\": 45\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/facturas/698fc50bfa6b4e2b44639dd1",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "facturas",
-                    "698fc50bfa6b4e2b44639dd1"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Reportes",
-          "item": [
-            {
-              "name": "crearReportes",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"tipoReporte\": \"VENTAS\",\r\n    \"fechaInicio\": \"2026-02-23\",\r\n    \"fechaFin\": \"2026-02-24\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reportes/create",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reportes",
-                    "create"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "getReportes",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reportes/",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reportes",
-                    ""
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "editarReportes",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "PUT",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"tipoReporte\": \"VENTAS\",\r\n    \"fechaInicio\": \"2026-02-24\",\r\n    \"fechaFin\": \"2026-02-25\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reportes/699c5d046c92c0ff2d8f62f5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reportes",
-                    "699c5d046c92c0ff2d8f62f5"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "eliminarReporte",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{vault:authorization-secret}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "http://localhost:3007/restaurantes/v1/reportes/699c5d046c92c0ff2d8f62f5",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3007",
-                  "path": [
-                    "restaurantes",
-                    "v1",
-                    "reportes",
-                    "699c5d046c92c0ff2d8f62f5"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Authentication Service (.NET)",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{authDotNetUrl}}/api/v1/health",
-              "host": [
-                "{{authDotNetUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "health"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Register",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.json().token) {",
-                  "    pm.environment.set('authToken', pm.response.json().token);",
-                  "    pm.environment.set('userId', pm.response.json().user.id);",
-                  "    pm.environment.set('userEmail', pm.response.json().user.email);",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "name",
-                  "value": "Shinji",
-                  "type": "text"
-                },
-                {
-                  "key": "surname",
-                  "value": "K",
-                  "type": "text"
-                },
-                {
-                  "key": "username",
-                  "value": "Kshinji",
-                  "type": "text"
-                },
-                {
-                  "key": "email",
-                  "value": "jefryyu67@gmail.com",
-                  "type": "text"
-                },
-                {
-                  "key": "password",
-                  "value": "admin123",
-                  "type": "text"
-                },
-                {
-                  "key": "phone",
-                  "value": "49138795",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "http://localhost:3006/api/v1/auth/register",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3006",
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.json().token) {",
-                  "    pm.environment.set('authToken', pm.response.json().token);",
-                  "    pm.environment.set('userId', pm.response.json().userDetails.id);",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"emailOrUsername\": \"jcruz-2021644@kinal.edu.gt\",\n    \"password\": \"admin123\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3006/api/v1/auth/login",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3006",
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Verify Email",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"token\": \"yP9uJ44SFs7Lw8x2CFBwHOPdf7cbc37GhdrDM3rE1PU\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3006/api/v1/auth/verify-email",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3006",
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "verify-email"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Resend Verification",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"robertoandrerodri@gmail.com\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/auth/resend-verification",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "resend-verification"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Forgot Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"joshua.ja2007@gmail.com\"\n}"
-            },
-            "url": {
-              "raw": "{{authDotNetUrl}}/api/v1/auth/forgot-password",
-              "host": [
-                "{{authDotNetUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "forgot-password"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"token\": \"Ymy_P0R39CtXqbs4fO42didQEpgph1TPt7Jx7WgVdes\",\n    \"newPassword\": \"12121212\"\n}"
-            },
-            "url": {
-              "raw": "{{authDotNetUrl}}/api/v1/auth/reset-password",
-              "host": [
-                "{{authDotNetUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "reset-password"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Profile",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "url": {
-              "raw": "http://localhost:5026/api/v1/auth/profile",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "profile"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change Role",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "    {\r\n\t\"roleName\": \"ADMIN_RESTAURANT_ROLE\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:3006/api/v1/users/usr_gDVsDRPY3F57/role",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3006",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_gDVsDRPY3F57",
-                "role"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "VerRol",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3006/api/v1/users/usr_ihAjP7myhZCV/roles",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3006",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_ihAjP7myhZCV",
-                "roles"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "UsuariosRol",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": ""
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/auth/logout",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "logout"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Users",
-      "item": [
-        {
-          "name": "Listar",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "BuscarId",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users/usr_aYK3d1tW759C",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_aYK3d1tW759C"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "name",
-                  "value": "Joshua",
-                  "type": "text"
-                },
-                {
-                  "key": "surname",
-                  "value": "Jimenez",
-                  "type": "text"
-                },
-                {
-                  "key": "phone",
-                  "value": "22334455",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users/usr_QparXRhs6DS7",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_QparXRhs6DS7"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Desactivar",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"name\": \"dd\",\r\n  \"surname\": \"Pddrez\",\r\n  \"username\": \"dd\",\r\n  \"email\": \"dd@example.com\",\r\n  \"password\": \"SecurePassword123!\",\r\n  \"phone\": \"77778888\",\r\n  \"role\": \"ADMIN_RESTAURANT_ROLE\"\r\n}"
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users/usr_1tPAsXfN5NwJ",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_1tPAsXfN5NwJ"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Crear",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.json().token) {",
-                  "    pm.environment.set('authToken', pm.response.json().token);",
-                  "    pm.environment.set('userId', pm.response.json().user.id);",
-                  "    pm.environment.set('userEmail', pm.response.json().user.email);",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"name\": \"dd\",\r\n  \"surname\": \"Pddrez\",\r\n  \"username\": \"dd\",\r\n  \"email\": \"dd@example.com\",\r\n  \"password\": \"SecurePassword123!\",\r\n  \"phone\": \"77778888\",\r\n  \"role\": \"ADMIN_RESTAURANT_ROLE\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users/",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                ""
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "SubirImage",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "profilePicture",
-                  "type": "file",
-                  "src": "/C:/Users/joshu/OneDrive/Escritorio/Mis Archivos/FondoCel.jpeg"
-                }
-              ]
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users/usr_A6bdGUp3bDEx/profile-picture",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_A6bdGUp3bDEx",
-                "profile-picture"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Eliminar",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{vault:authorization-secret}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"name\": \"dd\",\r\n  \"surname\": \"Pddrez\",\r\n  \"username\": \"dd\",\r\n  \"email\": \"dd@example.com\",\r\n  \"password\": \"SecurePassword123!\",\r\n  \"phone\": \"77778888\",\r\n  \"role\": \"ADMIN_RESTAURANT_ROLE\"\r\n}"
-            },
-            "url": {
-              "raw": "http://localhost:5026/api/v1/users/usr_1tPAsXfN5NwJ-delete",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "5026",
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "usr_1tPAsXfN5NwJ-delete"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    }
-  ]
+	"info": {
+		"_postman_id": "dbb3abed-0f74-4728-ab49-9dd3dd6d4e5c",
+		"name": "ProyectoRestaurantes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48332489",
+		"_collection_link": "https://www.postman.com/rrodriguez-2023342-3990564/workspace/in5bm/collection/48332489-dbb3abed-0f74-4728-ab49-9dd3dd6d4e5c?action=share&source=collection_link&creator=48332489"
+	},
+	"item": [
+		{
+			"name": "Authentication Service",
+			"item": [
+				{
+					"name": "Actions Users",
+					"item": [
+						{
+							"name": "Register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Nuria",
+											"type": "text"
+										},
+										{
+											"key": "surname",
+											"value": "Gonzalez",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "robertorodri",
+											"type": "text"
+										},
+										{
+											"key": "email",
+											"value": "robertoandrerodri@gmail.com",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "rrodriguez",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "56063626",
+											"type": "text"
+										},
+										{
+											"key": "profilePicture",
+											"type": "file",
+											"src": "/C:/Users/Roberto/OneDrive/Pictures/fondoprincipal.png"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/register",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.json().token) {",
+											"    pm.environment.set('authToken', pm.response.json().token);",
+											"    pm.environment.set('userId', pm.response.json().userDetails.id);",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"emailOrUsername\": \"restaurantein6bm@gmail.com\",\n    \"password\": \"admin\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Email",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"token\": \"AKaeV_CkiEeKU0tK1jjg9vuTAs1HzQKrtaA5VHQASyk\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/verify-email",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"verify-email"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Resend Verification",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"jjimenez-2021647@kinal.edu.gt\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/resend-verification",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"resend-verification"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Forgot Password",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"jjimenez-2021647@kinal.edu.gt\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/forgot-password",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"forgot-password"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Reset Password",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"token\": \"q_RS697AvBpGBckKAk-uSY5RNcx-a1UNehXwC0sPvuk\",\n    \"newPassword\": \"12341234\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/reset-password",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"reset-password"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{authToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change Role",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{authToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\t\"roleName\": \"ADMIN_RESTAURANT_ROLE\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/usr_8ECxm7zp2Mtv/role",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"usr_8ECxm7zp2Mtv",
+										"role"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "VerRol",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/usr_UR6DdfCCdD2h/roles",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"usr_UR6DdfCCdD2h",
+										"roles"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UsuariosRol",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/by-role/ADMIN_RESTAURANT_ROLE",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"by-role",
+										"ADMIN_RESTAURANT_ROLE"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Logout",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/logout",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"logout"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CambiarContraseña",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"currentPassword\": \"12341234\",\n    \"newPassword\": \"3333\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/change-password",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"change-password"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpdateProfile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Admin\",\n    \"surname\": \"restadmin\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ChangeImage",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "profilePicture",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile/image",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile",
+										"image"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Username Change",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"newUsername\": \"jjimenez\"\r\n}   ",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile/username",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile",
+										"username"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Username Change",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"token\": \"d_pDi_xbrBQP6S_btl11jj8EeftToueG6vdZgt2iAD4\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile/username/confirm",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile",
+										"username",
+										"confirm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Phone Service",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"newPhone\": \"00001111\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile/phone",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile",
+										"phone"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm phone change",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"token\": \"2mK5Za-1QlIoifl9FaqUl13Fbdv3B_KZM5u82FqB91k\"\r\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/profile/phone/confirm",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"profile",
+										"phone",
+										"confirm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Deactivete Acount",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/deactivate",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"deactivate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Deactivate Acount",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"token\": \"pVEq3AR6WZ3izcbHrA2ZcoCPbbVHKx838ASTA_Me2fc\",\r\n    \"emailOrUsername\": \"jjimenez\",\r\n    \"password\": \"3333\"\r\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/deactivate/confirm",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"deactivate",
+										"confirm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ActivateAccount",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"emailOrUsername\": \"jjimenez\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/activate",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"activate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Activate Account",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"emailOrUsername\": \"jjimenez\",\r\n    \"password\": \"3333\",\r\n    \"token\": \"7ZYOG2v6rlOREo0NZWcnjrpvvcgloWDCecldQR6Rkro\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/auth/activate/confirm",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"activate",
+										"confirm"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Actions Admin",
+					"item": [
+						{
+							"name": "Create",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"Josué\",\r\n    \"surname\": \"Jimenez\",\r\n    \"username\": \"jj\",\r\n    \"email\": \"jjimenez-2021647@kinal.edu.gt\",\r\n    \"password\": \"jimenezXD\",\r\n    \"phone\": \"00001111\",\r\n    \"roleName\": \"ADMIN_RESTAURANT_ROLE\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"J\",\r\n    \"surname\": \"C\",\r\n    \"phone\": \"12122121\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/usr_27h6ZXKZDm8D",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"usr_27h6ZXKZDm8D"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/usr_1XQFBvw7Pc6p",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"usr_1XQFBvw7Pc6p"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "FindById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/usr_27h6ZXKZDm8D",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"usr_27h6ZXKZDm8D"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Deactivate Users",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3006/api/v1/users/deactivate/usr_27h6ZXKZDm8D",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3006",
+									"path": [
+										"api",
+										"v1",
+										"users",
+										"deactivate",
+										"usr_27h6ZXKZDm8D"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Health Check Auth Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3006/api/v1/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3006",
+							"path": [
+								"api",
+								"v1",
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "RestauranteService",
+			"item": [
+				{
+					"name": "Restaurantes",
+					"item": [
+						{
+							"name": "crearRestaurante",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "nombre",
+											"value": "Cafeteria Kinal",
+											"type": "text"
+										},
+										{
+											"key": "descripcion",
+											"value": "Comida escolar",
+											"type": "text"
+										},
+										{
+											"key": "categoria",
+											"value": "Guatemalteca",
+											"type": "text"
+										},
+										{
+											"key": "telefono",
+											"value": "4913-8795",
+											"type": "text"
+										},
+										{
+											"key": "correo",
+											"value": "rrodriguez-2023342@kinal.edu.gt",
+											"type": "text"
+										},
+										{
+											"key": "direccion[calle]",
+											"value": "4ta calle A",
+											"type": "text"
+										},
+										{
+											"key": "direccion[zona]",
+											"value": "Zona 2",
+											"type": "text"
+										},
+										{
+											"key": "direccion[ciudad]",
+											"value": "Guatemala",
+											"type": "text"
+										},
+										{
+											"key": "direccion[departamento]",
+											"value": "Mixco",
+											"type": "text"
+										},
+										{
+											"key": "direccion[referencia]",
+											"value": "Frente al parque central",
+											"type": "text"
+										},
+										{
+											"key": "horario[apertura]",
+											"value": "08:00",
+											"type": "text"
+										},
+										{
+											"key": "horario[cierre]",
+											"value": "22:00",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][0]",
+											"value": "Lunes",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][1]",
+											"value": "Martes",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][2]",
+											"value": "Miercoles",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][3]",
+											"value": "Jueves",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][4]",
+											"value": "Viernes",
+											"type": "text"
+										},
+										{
+											"key": "dueno",
+											"value": "usr_8ECxm7zp2Mtv",
+											"type": "text"
+										},
+										{
+											"key": "fotos",
+											"type": "file",
+											"src": "/C:/Users/joshu/OneDrive/Escritorio/Mis Archivos/Fondo.png"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/restaurantes/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"restaurantes",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarRestaurante",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "nombre",
+											"value": "Restaurante de Patos",
+											"type": "text"
+										},
+										{
+											"key": "descripcion",
+											"value": "Comida guatemalteca tradicional",
+											"type": "text"
+										},
+										{
+											"key": "categoria",
+											"value": "Guatemalteca",
+											"type": "text"
+										},
+										{
+											"key": "telefono",
+											"value": "2222-3333",
+											"type": "text"
+										},
+										{
+											"key": "correo",
+											"value": "robertoandre0307@gmail.com",
+											"type": "text"
+										},
+										{
+											"key": "direccion[calle]",
+											"value": "6a Avenida 12-34",
+											"type": "text"
+										},
+										{
+											"key": "direccion[zona]",
+											"value": "Zona 1",
+											"type": "text"
+										},
+										{
+											"key": "direccion[ciudad]",
+											"value": "Guatemala",
+											"type": "text"
+										},
+										{
+											"key": "direccion[departamento]",
+											"value": "Guatemala",
+											"type": "text"
+										},
+										{
+											"key": "direccion[referencia]",
+											"value": "Frente al parque central",
+											"type": "text"
+										},
+										{
+											"key": "horario[apertura]",
+											"value": "08:00",
+											"type": "text"
+										},
+										{
+											"key": "horario[cierre]",
+											"value": "22:00",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][0]",
+											"value": "Lunes",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][1]",
+											"value": "Martes",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][2]",
+											"value": "Miercoles",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][3]",
+											"value": "Jueves",
+											"type": "text"
+										},
+										{
+											"key": "horario[diasAbierto][4]",
+											"value": "Viernes",
+											"type": "text"
+										},
+										{
+											"key": "dueno",
+											"value": "usr_8ECxm7zp2Mtv",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "fotos",
+											"type": "file",
+											"src": "/C:/Users/joshu/OneDrive/Escritorio/Mis Archivos/Fondo.png"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/restaurantes/69a49b8899161fdf855425f5",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"restaurantes",
+										"69a49b8899161fdf855425f5"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getRestaurantes",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/restaurantes/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"restaurantes",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getRestaurantesById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/restaurantes/69a49b8899161fdf855425f5",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"restaurantes",
+										"69a49b8899161fdf855425f5"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarRestaurante",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/restaurantes/69a49b8899161fdf855425f5",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"restaurantes",
+										"69a49b8899161fdf855425f5"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Mesas",
+					"item": [
+						{
+							"name": "CrearMesa",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49b8899161fdf855425f5\",\r\n    \"numeroMesa\": 1,\r\n    \"capacidad\": 4\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/mesas/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"mesas",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getMesas",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/mesas/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"mesas",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getMesaById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/mesas/69a4afed99161fdf8554269a",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"mesas",
+										"69a4afed99161fdf8554269a"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarMesa",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a416d019ac88d35e9bb4c2\",\r\n    \"numeroMesa\": 1,\r\n    \"capacidad\": 12,\r\n    \"disponibilidad\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/mesas/69a4afed99161fdf8554269a",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"mesas",
+										"69a4afed99161fdf8554269a"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarMesa",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/mesas/69a41e0b646070f10eef3d0f",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"mesas",
+										"69a41e0b646070f10eef3d0f"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Menus",
+					"item": [
+						{
+							"name": "crearMenu",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49b8899161fdf855425f5\",\r\n    \"nombreMenu\": \"Desayuno\",\r\n    \"descripcionMenu\": \"Los mejores desayunos al mejor precio\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/menus/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"menus",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getMenus",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/menus/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"menus",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getMenuById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/menus/69a4a2e399161fdf85542611",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"menus",
+										"69a4a2e399161fdf85542611"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarMenus",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49b8899161fdf855425f5\",\r\n    \"nombreMenu\": \"Menu 2\",\r\n    \"descripcionMenu\": \"Este es un menu\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/menus/69a4a2e399161fdf85542611",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"menus",
+										"69a4a2e399161fdf85542611"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarMenu",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/menus/69a4a2b799161fdf8554260e",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"menus",
+										"69a4a2b799161fdf8554260e"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Platos",
+					"item": [
+						{
+							"name": "crearPlato",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "menu",
+											"value": "69a4a2b799161fdf8554260e",
+											"type": "text"
+										},
+										{
+											"key": "nombrePlato",
+											"value": "Pasta",
+											"type": "text"
+										},
+										{
+											"key": "descripcionPlato",
+											"value": "Pasta con salsa blanca",
+											"type": "text"
+										},
+										{
+											"key": "precio",
+											"value": "12.50",
+											"type": "text"
+										},
+										{
+											"key": "tipoPlato",
+											"value": "PLATO_FUERTE",
+											"type": "text"
+										},
+										{
+											"key": "fotosPlato",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/platos/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"platos",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getPlatos",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/platos/?menu=69a4a2b799161fdf8554260e",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"platos",
+										""
+									],
+									"query": [
+										{
+											"key": "menu",
+											"value": "69a4a2b799161fdf8554260e"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getPlatoById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/platos/69a4a96e99161fdf85542640",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"platos",
+										"69a4a96e99161fdf85542640"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarPlato",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"menu\": \"69a4a2b799161fdf8554260e\",\r\n    \"nombrePlato\": \"Crema de papa\",\r\n    \"descripcionPlato\": \"Crema de papa\",\r\n    \"precio\": 15.50,\r\n    \"tipoPlato\": \"PLATO_FUERTE\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/platos/69a4a96e99161fdf85542640",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"platos",
+										"69a4a96e99161fdf85542640"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarPlato",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/platos/69a4a96e99161fdf85542640",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"platos",
+										"69a4a96e99161fdf85542640"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Reservaciones",
+					"item": [
+						{
+							"name": "crearReservacion",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"usuario\": \"usr_SwScSz8PS4zG\",\r\n    \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n    \"mesa\": \"69a4afed99161fdf8554269a\",\r\n    \"fecha\": \"2026-03-02\",\r\n    \"cantidadPersonas\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reservaciones/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reservaciones",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getReservaciones",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reservaciones/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reservaciones",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarReservacion",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"usuario\": \"usr_SwScSz8PS4zG\",\r\n    \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n    \"mesa\": \"69a4afed99161fdf8554269a\",\r\n    \"fecha\": \"2026-03-03\",\r\n    \"cantidadPersonas\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reservaciones/69a4d058c6cfde1b78df3fdf",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reservaciones",
+										"69a4d058c6cfde1b78df3fdf"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarReservacion",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reservaciones/69a4d3aadbcc900b20a128a4",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reservaciones",
+										"69a4d3aadbcc900b20a128a4"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Pedidos",
+					"item": [
+						{
+							"name": "crearPedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n  \"tipoPedido\": \"Para llevar\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/pedidos/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"pedidos",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getPedidos",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/pedidos/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"pedidos",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getPedidoById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/pedidos/69a4bec199161fdf855426bc",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"pedidos",
+										"69a4bec199161fdf855426bc"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarPedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49b8899161fdf855425f5\",\r\n    \"tipoPedido\": \"En el restaurante\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/pedidos/69a4c187012af7d099c26668",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"pedidos",
+										"69a4c187012af7d099c26668"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarPedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/pedidos/69a4c187012af7d099c26668",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"pedidos",
+										"69a4c187012af7d099c26668"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "DetallePedidos",
+					"item": [
+						{
+							"name": "crearDetallePedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pedido\": \"69a4c1a4012af7d099c2666e\",\r\n  \"items\": [\r\n    { \"plato\": \"69a4a9cf99161fdf85542647\", \"cantidad\": 1 },\r\n    { \"plato\": \"69a4aa0e99161fdf8554264e\", \"cantidad\": 1 }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"detalle-pedidos",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getDetallesPedidosByID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/69a4c2ad012af7d099c26681",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"detalle-pedidos",
+										"69a4c2ad012af7d099c26681"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarDetallePedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/69a4c32020a79b275f2932c2",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"detalle-pedidos",
+										"69a4c32020a79b275f2932c2"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarDetallePedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pedido\": \"69a4c19b012af7d099c2666b\",\r\n  \"items\": [\r\n    { \"plato\": \"69a4a9cf99161fdf85542647\", \"cantidad\": 2 },\r\n    { \"plato\": \"69a4aa0e99161fdf8554264e\", \"cantidad\": 1 }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/detalle-pedidos/69a4c32020a79b275f2932c2",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"detalle-pedidos",
+										"69a4c32020a79b275f2932c2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Eventos",
+					"item": [
+						{
+							"name": "crearEvento",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n  \"titulo\": \"Cena temática italiana\",\r\n  \"descripcion\": \"Noche de pasta y vino\",\r\n  \"fechaEvento\": \"2026-04-15T20:00:00Z\",\r\n  \"servicios\": [\"Música en vivo\", \"Decoración\", \"Menú especial\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/eventos/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"eventos",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getEventos",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/eventos/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"eventos",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarEvento",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/eventos/69a4d4dc9f690b5e0fb77a80",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"eventos",
+										"69a4d4dc9f690b5e0fb77a80"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarEvento",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n  \"titulo\": \"Cena temática italiana\",\r\n  \"descripcion\": \"Noche de pasta y carne\",\r\n  \"fechaEvento\": \"2026-04-15T20:00:00Z\",\r\n  \"servicios\": [\"Música en vivo\", \"Decoración\", \"Menú especial\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/eventos/69a4d4dc9f690b5e0fb77a80",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"eventos",
+										"69a4d4dc9f690b5e0fb77a80"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Reseñas",
+					"item": [
+						{
+							"name": "crearReseña",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n    \"comentario\": \"La comida es muy mala!\",\r\n    \"calificacion\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/resenas/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"resenas",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getReseñas",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/resenas/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"resenas",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarReseña",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"comentario\": \"boooooo\",\r\n    \"calificacion\": 4\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/resenas/69a4d920a99daaf47a1ec9df",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"resenas",
+										"69a4d920a99daaf47a1ec9df"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarReseña",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/resenas/69a4d920a99daaf47a1ec9df",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"resenas",
+										"69a4d920a99daaf47a1ec9df"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Inventarios",
+					"item": [
+						{
+							"name": "crearInventario",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a23025662c4a842c591abe\",\r\n    \"nombreItem\": \"tomate\",\r\n    \"cantidad\": 12,\r\n    \"minStock\": 10\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/inventarios/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"inventarios",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getInventarios",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/inventarios/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"inventarios",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarPedido",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/inventarios/69a4d6459f690b5e0fb77a9e",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"inventarios",
+										"69a4d6459f690b5e0fb77a9e"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarPedidos",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49c2e99161fdf855425f7\",\r\n    \"nombreItem\": \"azucar\",\r\n    \"cantidad\": 12,\r\n    \"minStock\": 10\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/inventarios/69a4d6459f690b5e0fb77a9e",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"inventarios",
+										"69a4d6459f690b5e0fb77a9e"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Facturas",
+					"item": [
+						{
+							"name": "crearFacturas",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pedido\": \"69a4c1a4012af7d099c2666e\",\r\n  \"propina\": 1.50,\r\n  \"correoCliente\": \"nurialez1808@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/facturas/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"facturas",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getFacturas",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/facturas/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"facturas",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarFactura",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/facturas/69a4c7b8e9e22566701c2bcb",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"facturas",
+										"69a4c7b8e9e22566701c2bcb"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarFactura",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pedido\": \"69a4c1a4012af7d099c2666e\",\r\n  \"propina\": 3.50,\r\n  \"correoCliente\": \"nurialez1808@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/facturas/69a4c7b8e9e22566701c2bcb",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"facturas",
+										"69a4c7b8e9e22566701c2bcb"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generar Factura PDF",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"pedido\": \"69a4c1a4012af7d099c2666e\",\r\n    \"impuesto\": 1.20\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/facturas/69a4c7b8e9e22566701c2bcb/pdf",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"facturas",
+										"69a4c7b8e9e22566701c2bcb",
+										"pdf"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Reportes",
+					"item": [
+						{
+							"name": "crearReportes",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"69a49b8899161fdf855425f5\",\r\n    \"tipoReporte\": \"VENTAS\",\r\n    \"fechaInicio\": \"2026-02-28\",\r\n    \"fechaFin\": \"2026-03-02\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reportes/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reportes",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getReportes",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reportes/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reportes",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "editarReportes",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"restaurante\": \"699c5af26c92c0ff2d8f62ed\",\r\n    \"tipoReporte\": \"VENTAS\",\r\n    \"fechaInicio\": \"2026-02-24\",\r\n    \"fechaFin\": \"2026-02-25\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reportes/699c5d046c92c0ff2d8f62f5",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reportes",
+										"699c5d046c92c0ff2d8f62f5"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "eliminarReporte",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reportes/699c5d046c92c0ff2d8f62f5",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reportes",
+										"699c5d046c92c0ff2d8f62f5"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generar Reporte PDF",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{vault:authorization-secret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3007/restaurantes/v1/reportes/69a4ccc338905fef83275d80/pdf",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3007",
+									"path": [
+										"restaurantes",
+										"v1",
+										"reportes",
+										"69a4ccc338905fef83275d80",
+										"pdf"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
 }

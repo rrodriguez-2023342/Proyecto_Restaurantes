@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createEvento, getEventos, getEventoById, updateEvento, deleteEvento } from './evento.controller.js';
-import { validateCreateEvento, validateUpdateEvento, validateDeleteEvento } from '../../../middlewares/eventos-validators.js';
+import { validateCreateEvento, validateUpdateEvento, validateDeleteEvento, validateViewEvento } from '../../../middlewares/eventos-validators.js';
 
 const router = Router();
 
@@ -12,11 +12,13 @@ router.post(
 
 router.get(
     '/',
+    validateViewEvento,
     getEventos
 )
 
 router.get(
     '/:id',
+    validateViewEvento,
     getEventoById
 )
 

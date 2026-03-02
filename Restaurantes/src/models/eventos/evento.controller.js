@@ -7,6 +7,14 @@ const notificar = (email, name, accion, evento, restaurante) => {
         .catch(err => console.error(`[evento] Error al enviar correo (${accion}):`, err.message));
 };
 
+const getAdminRestaurantId = async (usuario) => {
+    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario.restaurante) return String(usuario.restaurante);
+
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return restaurante?._id ? String(restaurante._id) : null;
+};
+
 export const createEvento = async (req, res) => {
     try {
         const eventoData = req.body;
@@ -29,7 +37,14 @@ export const getEventos = async (req, res) => {
         let query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            query.restaurante = req.usuario.restaurante;
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para ver eventos',
+                });
+            }
+            query.restaurante = adminRestaurantId;
         }
 
         const [eventos, total] = await Promise.all([
@@ -77,8 +92,14 @@ export const updateEvento = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!req.usuario.restaurante || evento.restaurante.toString() !== req.usuario.restaurante.toString()) {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(evento.restaurante) !== adminRestaurantId) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para editar este evento' });
+            }
+
+            // Evita que un ADMIN_RESTAURANT_ROLE reasigne el evento a otro restaurante
+            if (eventoData.restaurante && String(eventoData.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({ success: false, message: 'No puedes mover eventos a otro restaurante' });
             }
         }
 
@@ -103,7 +124,8 @@ export const deleteEvento = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!req.usuario.restaurante || evento.restaurante.toString() !== req.usuario.restaurante.toString()) {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(evento.restaurante) !== adminRestaurantId) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este evento' });
             }
         }

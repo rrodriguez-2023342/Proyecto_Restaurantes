@@ -1,5 +1,6 @@
 import Reservacion from './reservacion.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
+import Mesa from '../mesas/mesa.model.js';
 import { validarMesaParaReservacion } from '../../helpers/reservacion.helper.js';
 import { sendReservacionEmail } from '../../helpers/email-service.js';
 
@@ -128,6 +129,10 @@ export const updateReservacion = async (req, res) => {
             if (resRestauranteId !== restauranteId.toString()) {
                 return res.status(403).json({ message: 'Solo puedes editar reservaciones de tu restaurante' });
             }
+        } else {
+            return res.status(403).json({
+                message: 'Solo el usuario que hizo la reservacion o el admin del restaurante puede editar',
+            });
         }
 
         if (req.usuario.role === 'USER_ROLE' && req.body.estado != null) {
@@ -180,10 +185,17 @@ export const deleteReservacion = async (req, res) => {
             if (resRestauranteId !== restauranteId.toString()) {
                 return res.status(403).json({ message: 'Solo puedes cancelar reservaciones de tu restaurante' });
             }
+        } else {
+            return res.status(403).json({
+                message: 'Solo el usuario que hizo la reservacion o el admin del restaurante puede eliminar',
+            });
         }
 
         reservacion.estado = 'CANCELADA';
         await reservacion.save();
+
+        // Al cancelar la reservacion, la mesa vuelve a estar disponible.
+        await Mesa.findByIdAndUpdate(reservacion.mesa, { disponibilidad: true });
 
         const restaurante = await Restaurante.findById(reservacion.restaurante).select('nombre').lean();
         notificar(req.usuario.email, req.usuario.name, 'cancelada', reservacion, restaurante?.nombre ?? 'Restaurante');

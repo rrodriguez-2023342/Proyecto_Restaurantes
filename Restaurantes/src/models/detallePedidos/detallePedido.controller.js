@@ -1,8 +1,9 @@
 import DetallePedido from './detallePedido.model.js';
 import Pedido from '../pedidos/pedido.model.js';
 import Plato from '../platos/plato.model.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
 
-// Recalcula el totalPedido 
+// Recalcula el totalPedido
 const recalcularTotalPedido = async (pedidoId) => {
     const detalle = await DetallePedido.findOne({ pedido: pedidoId });
     if (!detalle) {
@@ -11,53 +12,92 @@ const recalcularTotalPedido = async (pedidoId) => {
     }
     const total = detalle.items.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
     await Pedido.findByIdAndUpdate(pedidoId, {
-        totalPedido: parseFloat(total.toFixed(2))
+        totalPedido: parseFloat(total.toFixed(2)),
     });
+};
+
+const getAuthUserId = (usuario) => String(usuario?.id || usuario?._id || '');
+
+const canViewDetallePedido = async (usuario, pedidoDoc) => {
+    const authUserId = getAuthUserId(usuario);
+    const pedidoUserId = String(pedidoDoc?.usuario || '');
+    const pedidoRestaurantId = String(pedidoDoc?.restaurante || '');
+
+    if (usuario?.role === 'USER_ROLE') {
+        if (pedidoUserId !== authUserId) {
+            return { allowed: false, message: 'No tienes permiso para ver este detalle de pedido' };
+        }
+        return { allowed: true };
+    }
+
+    if (usuario?.role === 'ADMIN_RESTAURANT_ROLE') {
+        let adminRestaurantId = usuario?.restaurante ? String(usuario.restaurante) : null;
+        if (!adminRestaurantId) {
+            const restaurante = await Restaurante.findOne({ dueño: authUserId }).select('_id').lean();
+            adminRestaurantId = restaurante?._id ? String(restaurante._id) : null;
+        }
+
+        if (!adminRestaurantId) {
+            return { allowed: false, message: 'No tienes un restaurante asignado' };
+        }
+
+        if (adminRestaurantId !== pedidoRestaurantId) {
+            return { allowed: false, message: 'No tienes permiso para ver pedidos de otro restaurante' };
+        }
+
+        return { allowed: true };
+    }
+
+    return { allowed: false, message: 'No tienes permiso para ver este detalle de pedido' };
 };
 
 export const createDetallePedido = async (req, res) => {
     try {
         const { pedido, items } = req.body;
+        const authUserId = getAuthUserId(req.usuario);
 
-        // verificar que el pedido existe
         const pedidoExistente = await Pedido.findById(pedido);
         if (!pedidoExistente) {
             return res.status(404).json({
                 success: false,
-                message: 'El pedido indicado no existe'
+                message: 'El pedido indicado no existe',
             });
         }
 
-        // verificar que no exista ya un detalle para este pedido
+        if (String(pedidoExistente.usuario) !== authUserId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Solo el usuario que creo el pedido puede crear el detalle-pedido',
+            });
+        }
+
         const detalleExistente = await DetallePedido.findOne({ pedido });
         if (detalleExistente) {
             return res.status(400).json({
                 success: false,
-                message: 'Este pedido ya tiene un detalle, usa PUT para modificarlo'
+                message: 'Este pedido ya tiene un detalle, usa PUT para modificarlo',
             });
         }
 
-        // construir los items jalando el precio de cada plato desde la BD
         const itemsConPrecio = [];
         for (const item of items) {
             const platoObj = await Plato.findById(item.plato).lean();
             if (!platoObj) {
                 return res.status(404).json({
                     success: false,
-                    message: `Plato con id ${item.plato} no encontrado`
+                    message: `Plato con id ${item.plato} no encontrado`,
                 });
             }
             itemsConPrecio.push({
                 plato: item.plato,
                 cantidad: item.cantidad,
-                precio: platoObj.precio
+                precio: platoObj.precio,
             });
         }
 
         const detalle = new DetallePedido({ pedido, items: itemsConPrecio });
         await detalle.save();
 
-        // actualizar el total del pedido
         await recalcularTotalPedido(pedido);
         const pedidoActualizado = await Pedido.findById(pedido);
 
@@ -69,13 +109,13 @@ export const createDetallePedido = async (req, res) => {
             detallePedidoId: _id,
             pedidoId: pedido,
             totalPedido: pedidoActualizado.totalPedido,
-            data: detalleData
+            data: detalleData,
         });
     } catch (error) {
         res.status(400).json({
             success: false,
             message: 'Error al crear el detalle del pedido',
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -91,7 +131,7 @@ export const getDetallesPedidos = async (req, res) => {
                 .limit(limit * 1)
                 .skip((page - 1) * limit)
                 .sort({ createdAt: -1 }),
-            DetallePedido.countDocuments()
+            DetallePedido.countDocuments(),
         ]);
 
         res.status(200).json({
@@ -101,14 +141,14 @@ export const getDetallesPedidos = async (req, res) => {
                 currentPage: page,
                 totalPages: Math.ceil(total / limit),
                 totalItems: total,
-                limit
-            }
+                limit,
+            },
         });
     } catch (error) {
         res.status(500).json({
             success: false,
             message: 'Error al obtener los detalles de pedidos',
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -124,19 +164,27 @@ export const getDetallePedidoById = async (req, res) => {
         if (!detalle) {
             return res.status(404).json({
                 success: false,
-                message: 'Detalle de pedido no encontrado'
+                message: 'Detalle de pedido no encontrado',
+            });
+        }
+
+        const access = await canViewDetallePedido(req.usuario, detalle.pedido);
+        if (!access.allowed) {
+            return res.status(403).json({
+                success: false,
+                message: access.message,
             });
         }
 
         res.status(200).json({
             success: true,
-            data: detalle
+            data: detalle,
         });
     } catch (error) {
         res.status(500).json({
             success: false,
             message: 'Error al buscar el detalle de pedido',
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -152,19 +200,27 @@ export const getDetallePedidoByPedido = async (req, res) => {
         if (!detalle) {
             return res.status(404).json({
                 success: false,
-                message: 'No se encontró detalle para este pedido'
+                message: 'No se encontro detalle para este pedido',
+            });
+        }
+
+        const access = await canViewDetallePedido(req.usuario, detalle.pedido);
+        if (!access.allowed) {
+            return res.status(403).json({
+                success: false,
+                message: access.message,
             });
         }
 
         res.status(200).json({
             success: true,
-            data: detalle
+            data: detalle,
         });
     } catch (error) {
         res.status(500).json({
             success: false,
             message: 'Error al buscar el detalle del pedido',
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -178,34 +234,31 @@ export const updateDetallePedido = async (req, res) => {
         if (!detalle) {
             return res.status(404).json({
                 success: false,
-                message: 'Detalle de pedido no encontrado'
+                message: 'Detalle de pedido no encontrado',
             });
         }
 
-        if (
-            req.usuario.role === 'USER_ROLE' &&
-            detalle.pedido.usuario.toString() !== req.usuario._id.toString()
-        ) {
+        const authUserId = getAuthUserId(req.usuario);
+        if (String(detalle.pedido.usuario) !== authUserId) {
             return res.status(403).json({
                 success: false,
-                message: 'No tienes permiso para editar este detalle de pedido'
+                message: 'Solo el usuario que creo el pedido puede editar el detalle',
             });
         }
 
-        // reconstruir items jalando precios actualizados de la BD
         const itemsConPrecio = [];
         for (const item of items) {
             const platoObj = await Plato.findById(item.plato).lean();
             if (!platoObj) {
                 return res.status(404).json({
                     success: false,
-                    message: `Plato con id ${item.plato} no encontrado`
+                    message: `Plato con id ${item.plato} no encontrado`,
                 });
             }
             itemsConPrecio.push({
                 plato: item.plato,
                 cantidad: item.cantidad,
-                precio: platoObj.precio
+                precio: platoObj.precio,
             });
         }
 
@@ -222,13 +275,13 @@ export const updateDetallePedido = async (req, res) => {
             success: true,
             message: 'Detalle de pedido actualizado exitosamente',
             totalPedido: pedidoActualizado.totalPedido,
-            data: detalleActualizado
+            data: detalleActualizado,
         });
     } catch (error) {
         res.status(400).json({
             success: false,
             message: 'Error al actualizar el detalle de pedido',
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -241,17 +294,15 @@ export const deleteDetallePedido = async (req, res) => {
         if (!detalle) {
             return res.status(404).json({
                 success: false,
-                message: 'Detalle de pedido no encontrado'
+                message: 'Detalle de pedido no encontrado',
             });
         }
 
-        if (
-            req.usuario.role === 'USER_ROLE' &&
-            detalle.pedido.usuario.toString() !== req.usuario._id.toString()
-        ) {
+        const authUserId = getAuthUserId(req.usuario);
+        if (String(detalle.pedido.usuario) !== authUserId) {
             return res.status(403).json({
                 success: false,
-                message: 'No tienes permiso para eliminar este detalle de pedido'
+                message: 'Solo el usuario que creo el pedido puede eliminar el detalle',
             });
         }
 
@@ -261,13 +312,13 @@ export const deleteDetallePedido = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Detalle de pedido eliminado exitosamente'
+            message: 'Detalle de pedido eliminado exitosamente',
         });
     } catch (error) {
         res.status(400).json({
             success: false,
             message: 'Error al eliminar el detalle de pedido',
-            error: error.message
+            error: error.message,
         });
     }
 };

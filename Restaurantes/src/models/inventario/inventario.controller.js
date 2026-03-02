@@ -1,4 +1,13 @@
 import Inventario from './inventario.model.js';
+import Restaurante from '../restaurantes/restaurante.model.js';
+
+const getAdminRestaurantId = async (usuario) => {
+    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario.restaurante) return String(usuario.restaurante);
+
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return restaurante?._id ? String(restaurante._id) : null;
+};
 
 export const createInventario = async (req, res) => {
     try {
@@ -32,7 +41,14 @@ export const getInventarios = async (req, res) => {
         let query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            query.restaurante = req.usuario.restaurante;
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para ver inventario',
+                });
+            }
+            query.restaurante = adminRestaurantId;
         }
 
         const [inventarios, total] = await Promise.all([
@@ -107,6 +123,7 @@ export const updateInventario = async (req, res) => {
     try {
         const { id } = req.params;
         const inventarioData = req.body;
+        let adminRestaurantId = null;
         
         const inventarioExistente = await Inventario.findById(id);
         if (!inventarioExistente) {
@@ -117,16 +134,22 @@ export const updateInventario = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!inventarioExistente.restaurante || !req.usuario.restaurante) {
+            adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!inventarioExistente.restaurante || !adminRestaurantId) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para editar este inventario' });
             }
-            if (inventarioExistente.restaurante.toString() !== req.usuario.restaurante.toString()) {
+            if (String(inventarioExistente.restaurante) !== adminRestaurantId) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para editar este inventario' });
+            }
+
+            // Evita reasignar inventario a otro restaurante.
+            if (inventarioData.restaurante && String(inventarioData.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({ success: false, message: 'No puedes mover inventario a otro restaurante' });
             }
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            inventarioData.restaurante = req.usuario.restaurante;
+            inventarioData.restaurante = adminRestaurantId;
         }
 
         const inventario = await Inventario.findByIdAndUpdate(
@@ -163,10 +186,11 @@ export const deleteInventario = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!inventario.restaurante || !req.usuario.restaurante) {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!inventario.restaurante || !adminRestaurantId) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este inventario' });
             }
-            if (inventario.restaurante.toString() !== req.usuario.restaurante.toString()) {
+            if (String(inventario.restaurante) !== adminRestaurantId) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este inventario' });
             }
         }

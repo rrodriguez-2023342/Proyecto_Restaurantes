@@ -7,7 +7,9 @@ const normalizeText = (text) =>
         .replace(/ú/g, 'u').replace(/Ú/g, 'U')
         .replace(/ü/g, 'u').replace(/Ü/g, 'U')
         .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
-        .replace(/¿/g, '?').replace(/¡/g, '!');
+        .replace(/¿/g, '?').replace(/¡/g, '!')
+        .replace(/—/g, '-')
+        .replace(/–/g, '-');
 
 const escapePdfText = (text) =>
     String(text)
@@ -86,7 +88,7 @@ const SECCIONES_REPORTE = {
             campos: [
                 { key: 'Ingresos totales (Q)',        field: 'totalIngresos'         },
                 { key: 'Ticket promedio (Q)',         field: 'ticketPromedio'        },
-                { key: 'Total propinas (Q)',          field: 'totalImpuestos'        },
+                { key: 'Total propinas (Q)', field: 'totalPropinas' },
             ],
         },
         {

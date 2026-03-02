@@ -7,6 +7,14 @@ const notificar = (email, name, accion, pedido, restaurante) => {
         .catch(err => console.error(`[pedido] Error al enviar correo (${accion}):`, err.message));
 };
 
+const getAdminRestaurantId = async (usuario) => {
+    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario.restaurante) return String(usuario.restaurante);
+
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return restaurante?._id ? String(restaurante._id) : null;
+};
+
 export const createPedido = async (req, res) => {
     try {
         const data = req.body;
@@ -31,7 +39,7 @@ export const getPedidos = async (req, res) => {
         let query = {};
 
         if (req.usuario.role === 'USER_ROLE') {
-            query.usuario = req.usuario._id;
+            query.usuario = req.usuario.id;
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             query.restaurante = req.usuario.restaurante;
         }
@@ -67,7 +75,7 @@ export const getPedidoById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario._id.toString()) {
+        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario.id.toString()) {
             return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
         }
 
@@ -87,8 +95,26 @@ export const editarPedido = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedidoExistente.usuario.toString() !== req.usuario._id.toString()) {
+        if (req.usuario.role === 'USER_ROLE' && pedidoExistente.usuario.toString() !== req.usuario.id.toString()) {
             return res.status(403).json({ success: false, message: 'No puedes editar un pedido ajeno' });
+        }
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para editar pedidos',
+                });
+            }
+
+            if (String(pedidoExistente.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No puedes editar pedidos de otro restaurante',
+                });
+            }
         }
 
         delete pedidoData.totalPedido;
@@ -113,8 +139,26 @@ export const eliminarPedido = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario._id.toString()) {
+        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario.id.toString()) {
             return res.status(403).json({ success: false, message: 'No puedes eliminar un pedido ajeno' });
+        }
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para eliminar pedidos',
+                });
+            }
+
+            if (String(pedido.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No puedes eliminar pedidos de otro restaurante',
+                });
+            }
         }
 
         const restaurante = await Restaurante.findById(pedido.restaurante).select('nombre').lean();

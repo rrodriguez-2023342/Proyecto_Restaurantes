@@ -44,3 +44,12 @@ export const validateDeletePedido = [
         .isMongoId().withMessage('El ID del pedido debe ser válido'),
     checkValidators,
 ];
+
+export const validateViewPedido = [
+    validateJWT,
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
+    param('id')
+        .optional()
+        .isMongoId().withMessage('El ID del pedido debe ser valido'),
+    checkValidators,
+];

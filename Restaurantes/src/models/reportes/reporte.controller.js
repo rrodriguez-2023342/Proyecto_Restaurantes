@@ -19,6 +19,14 @@ const puedeAccederReporte = async (usuario, reporteRestauranteId) => {
     return restaurante && reporteRestauranteId.toString() === restaurante._id.toString();
 };
 
+const getAdminRestaurantId = async (usuario) => {
+    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario.restaurante) return String(usuario.restaurante);
+
+    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    return restaurante?._id ? String(restaurante._id) : null;
+};
+
 const buildFilename = (reporte) =>
     `reporte-${reporte.tipoReporte.toLowerCase()}-${reporte._id}.pdf`;
 
@@ -32,7 +40,7 @@ const buildFilename = (reporte) =>
  * - pedidosEntregados / pedidosCancelados: salud operativa
  * - ticketPromedio: KPI estándar de restaurantes
  * - pedidosPorTipo: saber qué canal genera más (domicilio, llevar, local)
- * - totalImpuestos: útil para contabilidad
+ * - totalPropinas: útil para contabilidad
  */
 const generarDataVentas = async (restauranteId, fechaInicio, fechaFin) => {
     const [pedidos, facturas] = await Promise.all([
@@ -48,7 +56,7 @@ const generarDataVentas = async (restauranteId, fechaInicio, fechaFin) => {
     const facturasDelRestaurante = facturas.filter((f) => f.pedido !== null);
 
     const totalIngresos     = facturasDelRestaurante.reduce((s, f) => s + (f.total ?? 0), 0);
-    const totalImpuestos    = facturasDelRestaurante.reduce((s, f) => s + (f.impuesto ?? 0), 0);
+    const totalPropinas = facturasDelRestaurante.reduce((s, f) => s + (f.propina ?? 0), 0);
     const totalPedidos      = pedidos.length;
     const pedidosEntregados = pedidos.filter((p) => p.estadoPedido === 'Entregado').length;
     const pedidosCancelados = pedidos.filter((p) => p.estadoPedido === 'Cancelado').length;
@@ -65,7 +73,7 @@ const generarDataVentas = async (restauranteId, fechaInicio, fechaFin) => {
         pedidosEntregados,
         pedidosCancelados,
         ticketPromedio,
-        totalImpuestos:      totalImpuestos.toFixed(2),
+        totalPropinas: totalPropinas.toFixed(2),
         pedidosDomicilio:    porTipo['Domicilio']            ?? 0,
         pedidosParaLlevar:   porTipo['Para llevar']          ?? 0,
         pedidosEnRestaurante: porTipo['En el restaurante']   ?? 0,
@@ -268,14 +276,15 @@ export const createReporte = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
-            if (!restaurante) {
-                return res.status(404).json({
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
                     success: false,
-                    message: 'No tienes un restaurante asignado',
+                    message: 'No tienes un restaurante asignado para generar reportes',
                 });
             }
-            data.restaurante = restaurante._id;
+            // Si mandan restaurante en body, se ignora y se usa el del admin autenticado.
+            data.restaurante = adminRestaurantId;
         }
 
         data.generadoPor = {
@@ -315,8 +324,14 @@ export const getReportes = async (req, res) => {
         const query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
-            if (restaurante) query.restaurante = restaurante._id;
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para ver reportes',
+                });
+            }
+            query.restaurante = adminRestaurantId;
         }
 
         const [reportes, total] = await Promise.all([
@@ -386,7 +401,15 @@ export const updateReporte = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
         }
 
-        if (!(await puedeAccederReporte(req.usuario, reporteExistente.restaurante))) {
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(reporteExistente.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para editar este reporte',
+                });
+            }
+        } else if (!(await puedeAccederReporte(req.usuario, reporteExistente.restaurante))) {
             return res.status(403).json({
                 success: false,
                 message: 'No tienes permiso para editar este reporte',
@@ -437,8 +460,15 @@ export const deleteReporte = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Reporte no encontrado' });
         }
 
-        // Solo el restaurante que hizo el reporte puede eliminarlo (o ADMIN_ROLE)
-        if (!(await puedeAccederReporte(req.usuario, reporteExistente.restaurante))) {
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(reporteExistente.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para eliminar este reporte',
+                });
+            }
+        } else if (!(await puedeAccederReporte(req.usuario, reporteExistente.restaurante))) {
             return res.status(403).json({
                 success: false,
                 message: 'No tienes permiso para eliminar este reporte',
@@ -473,7 +503,15 @@ export const generarReporte = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Restaurante del reporte no encontrado' });
         }
 
-        if (!(await puedeAccederReporte(req.usuario, reporte.restaurante._id))) {
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(reporte.restaurante._id) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para descargar este reporte',
+                });
+            }
+        } else if (!(await puedeAccederReporte(req.usuario, reporte.restaurante._id))) {
             return res.status(403).json({
                 success: false,
                 message: 'No tienes permiso para descargar este reporte',
