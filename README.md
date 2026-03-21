@@ -1,23 +1,29 @@
-# Proyecto Restaurantes
+﻿# Proyecto Restaurantes
 
-Este proyecto tiene 2 partes principales:
+Este proyecto ahora queda dividido en 4 servicios:
 
-1. `AuthService`: aqui se maneja el inicio de sesion, registro de usuarios y roles.
-2. `Restaurantes`: aqui se maneja todo lo del restaurante (mesas, menus, pedidos, facturas, etc.).
+1. `AuthService`: autenticacion, usuarios y roles.
+2. `RestaurantesService`: restaurantes, mesas, menus, platos, inventarios y resenas.
+3. `PedidosReservacionesService`: pedidos, detalle de pedidos, reservaciones y facturas.
+4. `EventosReportesService`: eventos y reportes.
 
 ## Archivos importantes
 
 - `AuthService/`
-- `Restaurantes/`
+- `RestaurantesService/`
+- `PedidosReservacionesService/`
+- `EventosReportesService/`
+- `Restaurantes/` (monolito original, se conserva como referencia)
 - `Endpoints/ProyectoRestaurantes.postman_collection.json`
 - `docs/AUTH_SERVICE.md`
 - `docs/RESTAURANTES_SERVICE.md`
-- `docs/PRUEBAS_Y_COLECCIONES.md`
+- `docs/MICROSERVICIOS.md`
 
 ## Documentacion
 
 - [Servicio de Autenticacion](./docs/AUTH_SERVICE.md)
 - [Servicio de Restaurantes](./docs/RESTAURANTES_SERVICE.md)
+- [Mapa de microservicios](./docs/MICROSERVICIOS.md)
 - [Pruebas y colecciones](./docs/PRUEBAS_Y_COLECCIONES.md)
 
 ## Como correr el proyecto rapido
@@ -37,18 +43,36 @@ pnpm install
 pnpm run dev
 ```
 
-3. Levantar `Restaurantes`:
+3. Levantar `RestaurantesService`:
 
 ```bash
-cd Restaurantes
+cd RestaurantesService
 pnpm install
 pnpm run dev
 ```
 
-4. Revisar si estan activos:
+4. Levantar `PedidosReservacionesService`:
+
+```bash
+cd PedidosReservacionesService
+pnpm install
+pnpm run dev
+```
+
+5. Levantar `EventosReportesService`:
+
+```bash
+cd EventosReportesService
+pnpm install
+pnpm run dev
+```
+
+## Health checks
 
 - AuthService: `http://localhost:3006/api/v1/health`
-- Restaurantes: `http://localhost:3007/restaurantes/v1/Health`
+- RestaurantesService: `http://localhost:3007/restaurantes/v1/Health`
+- PedidosReservacionesService: `http://localhost:3008/restaurantes/v1/Health`
+- EventosReportesService: `http://localhost:3009/restaurantes/v1/Health`
 
 ## Nota
 
