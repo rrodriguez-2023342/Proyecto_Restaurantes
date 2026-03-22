@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import { dbConnection } from './db.js';
 import { corsOptions } from './cors-configuration.js';
 import { helmetConfiguration } from './helmet-configuration.js';
+// Swagger se usa para mostrar la documentacion del servicio.
+import { setupSwagger } from './swagger.js';
 
 import eventoRoutes from '../src/models/eventos/evento.routes.js';
 import reporteRoutes from '../src/models/reportes/reporte.routes.js';
@@ -50,6 +52,8 @@ export const initServer = async () => {
     try {
         await dbConnection();
         middlewares(app);
+        // Aqui se activa la documentacion en /restaurantes/v1/docs
+        setupSwagger(app);
         routes(app);
 
         app.listen(PORT, () => {
@@ -62,3 +66,8 @@ export const initServer = async () => {
         process.exit(1);
     }
 };
+
+
+
+
+

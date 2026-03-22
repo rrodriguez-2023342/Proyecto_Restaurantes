@@ -78,3 +78,12 @@ pnpm run dev
 
 La coleccion de Postman para probar endpoints esta en:
 `Endpoints/ProyectoRestaurantes.postman_collection.json`
+
+
+## Swagger
+
+- AuthService: http://localhost:3006/api/v1/docs`r
+- RestaurantesService: http://localhost:3007/restaurantes/v1/docs`r
+- PedidosReservacionesService: http://localhost:3008/restaurantes/v1/docs`r
+- EventosReportesService: http://localhost:3009/restaurantes/v1/docs`r
+

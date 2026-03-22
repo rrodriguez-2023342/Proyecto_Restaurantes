@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 import express from 'express';
 import cors from 'cors';
@@ -17,6 +17,8 @@ import {
 } from '../middlewares/server-genericError-handler.js';
 import authRoutes from '../src/auth/auth.routes.js';
 import userRoutes from '../src/users/user.routes.js';
+// Import de Swagger para publicar la documentacion del microservicio.
+import { setupSwagger } from './swagger.js';
 
 const BASE_PATH = '/api/v1';
 
@@ -60,6 +62,8 @@ export const initServer = async () => {
         await seedDefaultAdmin();
 
         middlewares(app);
+        // Se monta Swagger antes de las rutas normales para tener docs listas al iniciar.
+        setupSwagger(app);
         routes(app);
 
         app.listen(PORT, () => {

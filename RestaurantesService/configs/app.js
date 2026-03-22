@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import { dbConnection } from './db.js';
 import { corsOptions } from './cors-configuration.js';
 import { helmetConfiguration } from './helmet-configuration.js';
+// Swagger se usa para ver y probar endpoints desde el navegador.
+import { setupSwagger } from './swagger.js';
 
 import restauranteRoutes from '../src/models/restaurantes/restaurante.routes.js';
 import mesaRoutes from '../src/models/mesas/mesa.routes.js';
@@ -58,6 +60,8 @@ export const initServer = async () => {
     try {
         await dbConnection();
         middlewares(app);
+        // Activamos la documentacion en /restaurantes/v1/docs
+        setupSwagger(app);
         routes(app);
 
         app.listen(PORT, () => {
@@ -70,3 +74,7 @@ export const initServer = async () => {
         process.exit(1);
     }
 };
+
+
+
+

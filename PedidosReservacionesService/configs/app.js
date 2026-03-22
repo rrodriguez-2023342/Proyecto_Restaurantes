@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import { dbConnection } from './db.js';
 import { corsOptions } from './cors-configuration.js';
 import { helmetConfiguration } from './helmet-configuration.js';
+// Import de Swagger para documentar este microservicio.
+import { setupSwagger } from './swagger.js';
 
 import reservacionRoutes from '../src/models/reservaciones/reservacion.routes.js';
 import pedidoRoutes from '../src/models/pedidos/pedido.routes.js';
@@ -54,6 +56,8 @@ export const initServer = async () => {
     try {
         await dbConnection();
         middlewares(app);
+        // Activamos Swagger antes de registrar las rutas del negocio.
+        setupSwagger(app);
         routes(app);
 
         app.listen(PORT, () => {
@@ -66,3 +70,8 @@ export const initServer = async () => {
         process.exit(1);
     }
 };
+
+
+
+
+

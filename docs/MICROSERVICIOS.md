@@ -46,3 +46,11 @@ Para mantener el comportamiento actual sin reescribir toda la logica de negocio,
 - El servicio `Restaurantes/` original se conserva como referencia.
 - Los endpoints mantienen la misma estructura de URL; lo que cambia es el puerto segun el dominio.
 - `AuthService` sigue siendo el servicio emisor/validador de autenticacion.
+
+## Swagger
+
+- AuthService: http://localhost:3006/api/v1/docs`r
+- RestaurantesService: http://localhost:3007/restaurantes/v1/docs`r
+- PedidosReservacionesService: http://localhost:3008/restaurantes/v1/docs`r
+- EventosReportesService: http://localhost:3009/restaurantes/v1/docs`r
+
