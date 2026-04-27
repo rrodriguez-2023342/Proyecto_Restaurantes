@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form"
 import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast";
+import { Spinner } from "../../../shared/layouts/Spinner";
 
 export const LoginForm = ({ onForgot, onRegister }) => {
     const navigate = useNavigate();
@@ -68,9 +69,9 @@ export const LoginForm = ({ onForgot, onRegister }) => {
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 rounded-xl py-3 text-sm font-semibold text-white transition disabled:opacity-50 cursor-pointer mt-1"
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 rounded-xl py-3 text-sm font-semibold text-white transition disabled:from-orange-400 disabled:to-orange-500 disabled:cursor-not-allowed cursor-pointer mt-1"
             >
-                {loading ? "Iniciando..." : "Iniciar sesión"}
+                {loading ? <Spinner small label="Cargando..." /> : "Iniciar sesión"}
             </button>
 
             {/* Divider */}
@@ -87,7 +88,7 @@ export const LoginForm = ({ onForgot, onRegister }) => {
                 onClick={onRegister}
                 className="w-full border border-orange-500/30 hover:bg-orange-500/8 hover:border-orange-500/50 rounded-xl py-3 text-sm font-medium text-orange-400 transition disabled:opacity-50 cursor-pointer"
             >
-                {loading ? "Cargando..." : "Crear una cuenta"}
+                {loading ? <Spinner small label="Cargando..." /> : "Crear una cuenta"}
             </button>
         </form>
     )

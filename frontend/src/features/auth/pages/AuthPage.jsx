@@ -3,6 +3,7 @@ import { ForgotPasswordForm } from "../components/ForgotPassword.jsx"
 import { LoginForm } from '../components/LoginForm'
 import { RegisterForm } from '../components/Register.jsx'
 import logo from '../../../assets/images/logo1.png'
+import fondoAuthPage from '../../../assets/images/fondoAuthPage.jpg'
 
 export const AuthPage = () => {
     const [view, setView] = useState('login')
@@ -20,19 +21,25 @@ export const AuthPage = () => {
             : 'Ingresa tus credenciales para continuar.'
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-orange-50 p-4 md:p-8">
+        <div 
+            className="min-h-screen flex items-center justify-center bg-cover bg-center bg-fixed p-4 md:p-8"
+            style={{ backgroundImage: `url(${fondoAuthPage})` }}
+        >
             <div className="w-full max-w-3xl flex rounded-2xl overflow-hidden shadow-2xl shadow-orange-100 min-h-[540px] bg-white border border-orange-100">
                 {/* Panel izquierdo — visual */}
                 <div className="hidden md:flex w-[42%] bg-orange-100 flex-col justify-end p-8 relative overflow-hidden">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_30%,rgba(249,115,22,0.18)_0%,transparent_60%)]" />
 
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-[0_0_60px_rgba(255,100,0,0.35)]">
-                            <img 
-                                src={logo} 
-                                alt="KinalEats logo" 
-                                className="w-20 h-20 rounded-full object-cover" 
-                            />
+                        <div className="relative w-36 h-36">
+                            <div className="absolute inset-0 rounded-full bg-orange-300/20 blur-2xl" />
+                            <div className="relative w-full h-full rounded-full bg-white/95 border border-white/80 flex items-center justify-center shadow-[0_25px_60px_rgba(249,115,22,0.24)]">
+                                <img 
+                                    src={logo} 
+                                    alt="KinalEats logo" 
+                                    className="w-24 h-24 rounded-full object-cover" 
+                                />
+                            </div>
                         </div>
                     </div>
 

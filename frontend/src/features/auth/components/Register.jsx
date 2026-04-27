@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
+import { Spinner } from "../../../shared/layouts/Spinner";
 
 export const RegisterForm = ({ onBack, onSuccess }) => {
     const {
@@ -177,9 +178,10 @@ export const RegisterForm = ({ onBack, onSuccess }) => {
 
                 <button
                     type="submit"
-                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 py-3 text-sm font-semibold text-white transition cursor-pointer"
+                    disabled={loading}
+                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 py-3 text-sm font-semibold text-white transition disabled:from-orange-400 disabled:to-orange-500 disabled:cursor-not-allowed cursor-pointer"
                 >
-                    Crear cuenta
+                    {loading ? <Spinner small label="Registrando..." /> : "Crear cuenta"}
                 </button>
             </div>
         </form>
