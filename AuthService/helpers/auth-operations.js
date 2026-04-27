@@ -133,13 +133,13 @@ export const loginUserHelper = async (emailOrUsername, password) => {
         const user = await findUserByEmailOrUsername(emailOrUsername);
 
         if (!user) {
-            throw new Error('Credenciales inválidas');
+            throw new Error('Email o contraseña incorrectos');
         }
 
         const isValidPassword = await verifyPassword(user.Password, password);
 
         if (!isValidPassword) {
-            throw new Error('Credenciales inválidas');
+            throw new Error('Email o contraseña incorrectos');
         }
 
         if (!user.UserEmail || !user.UserEmail.EmailVerified) {

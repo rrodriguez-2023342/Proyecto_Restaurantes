@@ -14,6 +14,8 @@ export const LoginForm = ({ onForgot, onRegister }) => {
         if (res.success) {
             navigate("/principal");
             toast.success("¡Bienvenido de nuevo!", { duration: 4000 });
+        } else {
+            toast.error(res.message || "El usuario o contraseña son incorrectos", { duration: 4000 });
         }
     }
 
