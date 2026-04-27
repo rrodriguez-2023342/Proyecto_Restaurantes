@@ -4,16 +4,28 @@ import {
     login as loginRequest,
     register as registerRequest
 } from "../../../shared/api"
+import { showError } from "../../../shared/utils/toast";
 
 export const useAuthStore = create(
     persist(
         (set, get) => ({
             user: null,
             token: null,
+            refreshToken: null,
             expiresAt: null,
             loading: false,
             error: null,
+            isLoadingAuth: true,
             isAuthenticated: false,
+
+            checkAuth: () => {
+                const token = get().token;
+
+                set({
+                    isLoadingAuth: false,
+                    isAuthenticated: Boolean(token)
+                })
+            },
 
             login: async ({ emailOrUsername, password }) => {
                 try {
@@ -24,8 +36,11 @@ export const useAuthStore = create(
                     set({
                         user: data.userDetails,
                         token: data.accessToken,
+                        refreshToken: data.refreshToken,
                         expiresAt: data.expiresAt,
                         loading: false,
+                        error: null,
+                        isAuthenticated: true,
                     })
 
                     return { success: true }
@@ -60,6 +75,7 @@ export const useAuthStore = create(
                 set({
                     user: null,
                     token: null,
+                    refreshToken: null,
                     expiresAt: null,
                     isAuthenticated: false
                 })
