@@ -6,6 +6,7 @@ import {
     deleteReseña,
     getReseñaById 
 } from './reseña.controller.js';
+import { uploadReviewImage } from '../../../middlewares/file-uploader.js';
 import { 
     validateCreateResenia, 
     validateUpdateResenia, 
@@ -18,6 +19,7 @@ const router = Router();
 // Crear reseña
 router.post(
     '/create',
+    uploadReviewImage.single('fotoResena'),
     validateCreateResenia,
     createReseña
 );

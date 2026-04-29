@@ -79,8 +79,8 @@ export const validateRestaurantOwnerUser = async ({ ownerId, token }) => {
         return { isValid: false, message: 'El dueño no existe en AuthService' };
     }
 
-    if (!roles.includes(RESTAURANT_ADMIN_ROLE)) {
-        return { isValid: false, message: 'El dueño debe tener rol ADMIN_RESTAURANT_ROLE' };
+    if (!roles.includes(RESTAURANT_ADMIN_ROLE) && !roles.includes('ADMIN_ROLE')) {
+        return { isValid: false, message: 'El dueño debe tener rol ADMIN_RESTAURANT_ROLE o ADMIN_ROLE' };
     }
 
     return { isValid: true };

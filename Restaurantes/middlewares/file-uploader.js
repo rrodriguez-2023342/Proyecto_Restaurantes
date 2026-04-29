@@ -73,3 +73,6 @@ export { cloudinary }
 
 // Exportar uploader para platos
 export const uploadPlatoImage = createCloudinaryUploader(baseFolder + 'platos');
+
+// Exportar uploader para reseñas
+export const uploadReviewImage = createCloudinaryUploader(baseFolder + 'reseñas');

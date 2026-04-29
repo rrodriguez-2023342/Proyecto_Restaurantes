@@ -14,6 +14,10 @@ export const createMenu = async (req, res) => {
     try {
         const menuData = { ...req.body };
 
+        if (req.file) {
+            menuData.fotoMenu = req.file.path.replace(/\\/g, '/');
+        }
+
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restauranteId = await getRestauranteFromUser(req.usuario);
             if (!restauranteId) {
@@ -44,10 +48,20 @@ export const createMenu = async (req, res) => {
 
 export const getMenus = async (req, res) => {
     try {
-        const { page = 1, limit = 10, isActive = true } = req.query;
+        const { page = 1, limit = 10, isActive, restaurante } = req.query;
         const numericPage = parseInt(page, 10);
         const numericLimit = parseInt(limit, 10);
-        const filter = { isActive };
+        
+        const filter = {};
+        if (req.usuario.role === 'USER_ROLE') {
+            filter.isActive = true;
+        } else if (isActive !== undefined) {
+            filter.isActive = isActive === 'true';
+        }
+        
+        if (restaurante) {
+            filter.restaurante = restaurante;
+        }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restauranteId = await getRestauranteFromUser(req.usuario);
@@ -163,6 +177,10 @@ export const editarMenu = async (req, res) => {
     try {
         const { id } = req.params;
         const menuData = { ...req.body };
+
+        if (req.file) {
+            menuData.fotoMenu = req.file.path.replace(/\\/g, '/');
+        }
 
         const menuExistente = await Menu.findById(id).select('restaurante');
         if (!menuExistente) {

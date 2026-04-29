@@ -22,6 +22,10 @@ const menuSchema = new mongoose.Schema(
         isActive: {
             type: Boolean,
             default: true
+        },
+        fotoMenu: {
+            type: String,
+            default: null
         }
     },
     {

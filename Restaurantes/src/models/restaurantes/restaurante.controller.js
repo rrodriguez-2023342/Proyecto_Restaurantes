@@ -32,8 +32,14 @@ export const createRestaurante = async (req, res) => {
 
 export const getRestaurantes = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        let filter = { isActive: true };
+        const { page = 1, limit = 10, isActive } = req.query;
+        let filter = {};
+
+        if (isActive !== undefined) {
+            filter.isActive = isActive === 'true';
+        } else if (req.usuario.role === 'USER_ROLE') {
+            filter.isActive = true;
+        }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             if (!req.usuario.restaurante) {

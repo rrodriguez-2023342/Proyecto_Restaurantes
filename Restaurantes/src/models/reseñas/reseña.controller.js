@@ -16,6 +16,10 @@ export const createReseña = async (req, res) => {
         const userId = String(req.usuario.id || req.usuario._id);
         data.usuario = userId;
 
+        if (req.file) {
+            data.fotoResena = req.file.path;
+        }
+
         // Validar que el restaurante exista y esté activo
         const restaurante = await Restaurante.findById(data.restaurante).select('_id isActive').lean();
         if (!restaurante) {
@@ -65,8 +69,11 @@ export const createReseña = async (req, res) => {
 
 export const getReseñas = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, restaurante, calificacion } = req.query;
         const filter = { estado: true };
+
+        if (restaurante) filter.restaurante = restaurante;
+        if (calificacion) filter.calificacion = Number(calificacion);
 
         // El restaurante solo puede listar las reseñas de su propio restaurante
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
