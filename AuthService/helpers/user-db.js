@@ -473,9 +473,9 @@ export const createUserByAdmin = async (userData) => {
         await transaction.commit();
         return await findUserById(user.Id);
     } catch (error) {
-        await transaction.rollback();
+        if (transaction) await transaction.rollback();
         console.error('Error creando usuario por admin:', error);
-        throw new Error('Error al crear usuario');
+        throw error;
     }
 };
 
@@ -499,24 +499,30 @@ export const deleteUser = async (userId) => {
 };
 
 // update user by admin
-export const updateUserByAdmin = async (userId, { name, surname, phone }) => {
+export const updateUserByAdmin = async (userId, { name, surname, phone, profilePicture }) => {
     const transaction = await User.sequelize.transaction();
     try {
         await User.update(
             { Name: name, Surname: surname },
             { where: { Id: userId }, transaction }
         );
-        if (phone) {
+        
+        const profileUpdates = {};
+        if (phone) profileUpdates.Phone = phone;
+        if (profilePicture) profileUpdates.ProfilePicture = profilePicture;
+
+        if (Object.keys(profileUpdates).length > 0) {
             await UserProfile.update(
-                { Phone: phone },
+                profileUpdates,
                 { where: { UserId: userId }, transaction }
             );
         }
+
         await transaction.commit();
     } catch (error) {
-        await transaction.rollback();
+        if (transaction) await transaction.rollback();
         console.error('Error actualizando usuario:', error);
-        throw new Error('Error al actualizar usuario');
+        throw error;
     }
 };
 
@@ -537,6 +543,6 @@ export const getAllUsers = async () => {
         return users;
     } catch (error) {
         console.error('Error obteniendo usuarios:', error);
-        throw new Error('Error al obtener usuarios');
+        throw error;
     }
 };

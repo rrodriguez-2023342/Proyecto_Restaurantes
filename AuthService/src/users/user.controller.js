@@ -9,6 +9,7 @@ import {
 import { ALLOWED_ROLES, ADMIN_ROLE } from '../../helpers/role-constants.js';
 import { buildUserResponse } from '../../utils/user-helpers.js';
 import { sequelize } from '../../configs/db.js';
+import { uploadImage } from '../../helpers/cloudinary-service.js';
 import {
     sendAccountCreatedByAdminEmail,
     sendAccountDeletedEmail,
@@ -177,9 +178,23 @@ export const createUser = [
             });
         }
 
+        let profilePictureToStore = null;
+        if (req.file) {
+            try {
+                profilePictureToStore = await uploadImage(req.file.path, req.file.filename);
+            } catch (err) {
+                console.error('Error al subir imagen a Cloudinary:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error al subir la imagen de perfil',
+                    error: err.message
+                });
+            }
+        }
+
         const newUser = await createUserByAdmin({
             name, surname, username, email, password, phone,
-            profilePicture: req.file ? req.file.path.replace(/\\/g, '/') : null,
+            profilePicture: profilePictureToStore,
             roleName: normalized,
         });
 
@@ -219,10 +234,20 @@ export const updateUser = [
             return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
         }
 
+        let profilePictureToStore = user.UserProfile?.ProfilePicture;
+        if (req.file) {
+            try {
+                profilePictureToStore = await uploadImage(req.file.path, req.file.filename);
+            } catch (err) {
+                console.error('Error al subir imagen a Cloudinary en update:', err);
+            }
+        }
+
         await updateUserByAdmin(userId, {
             name: name || user.Name,
             surname: surname || user.Surname,
-            phone: phone || null,
+            phone: phone || (user.UserProfile ? user.UserProfile.Phone : null),
+            profilePicture: profilePictureToStore,
         });
 
         Promise.resolve()

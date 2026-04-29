@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 import express from 'express';
 import cors from 'cors';
@@ -44,6 +44,8 @@ const routes = (app) => {
     });
     // 404 handler (standardized)
     app.use(notFound);
+    // Global error handler
+    app.use(errorHandler);
 };
 
 export const initServer = async () => {
