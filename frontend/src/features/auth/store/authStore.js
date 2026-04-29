@@ -4,7 +4,6 @@ import {
     login as loginRequest,
     register as registerRequest
 } from "../../../shared/api"
-import { showError } from "../../../shared/utils/toast";
 
 export const useAuthStore = create(
     persist(
@@ -31,16 +30,16 @@ export const useAuthStore = create(
                 try {
                     set({ loading: true, error: null });
                     const { data } = await loginRequest({ emailOrUsername, password })
-                    console.log(data)
+                    const accessToken = data.accessToken || data.token;
 
                     set({
-                        user: data.userDetails,
-                        token: data.accessToken,
-                        refreshToken: data.refreshToken,
-                        expiresAt: data.expiresAt,
+                        user: data.userDetails || null,
+                        token: accessToken || null,
+                        refreshToken: data.refreshToken || null,
+                        expiresAt: data.expiresAt || null,
                         loading: false,
                         error: null,
-                        isAuthenticated: true,
+                        isAuthenticated: Boolean(accessToken),
                     })
 
                     return { success: true }

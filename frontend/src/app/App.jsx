@@ -1,7 +1,15 @@
-import { Toaster } from "react-hot-toast"
-import { AppRoutes } from "./router/AppRoutes.jsx"
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
+import { AppRoutes } from "./router/AppRoutes.jsx";
+import { useAuthStore } from "../features/auth/store/authStore";
 
 export const App = () => {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <>
       <Toaster 
