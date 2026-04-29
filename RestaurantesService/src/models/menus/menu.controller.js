@@ -14,6 +14,15 @@ export const createMenu = async (req, res) => {
     try {
         const menuData = { ...req.body };
 
+        if (req.file && req.file.path) {
+            menuData.fotoMenu = req.file.path;
+        }
+
+        // Normalizar isActive cuando viene de multipart/form-data como string
+        if (typeof menuData.isActive === 'string') {
+            menuData.isActive = menuData.isActive === 'true';
+        }
+
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restauranteId = await getRestauranteFromUser(req.usuario);
             if (!restauranteId) {
@@ -163,6 +172,15 @@ export const editarMenu = async (req, res) => {
     try {
         const { id } = req.params;
         const menuData = { ...req.body };
+
+        if (req.file && req.file.path) {
+            menuData.fotoMenu = req.file.path;
+        }
+
+        // Normalizar isActive cuando viene de multipart/form-data como string
+        if (typeof menuData.isActive === 'string') {
+            menuData.isActive = menuData.isActive === 'true';
+        }
 
         const menuExistente = await Menu.findById(id).select('restaurante');
         if (!menuExistente) {

@@ -68,6 +68,7 @@ const baseFolder = process.env.CLOUDINARY_FOLDER || 'proyectorestaurantes/';
 
 export const uploadEventImage = createCloudinaryUploader(baseFolder + 'eventos');
 export const uploadMenuImage = createCloudinaryUploader(baseFolder + 'menus');
+export const uploadReviewImage = createCloudinaryUploader(baseFolder + 'resenas');
 
 export { cloudinary }
 

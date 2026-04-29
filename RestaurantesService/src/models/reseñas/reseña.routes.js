@@ -12,12 +12,14 @@ import {
     validateViewResenia,
     validateDeleteResenia 
 } from '../../../middlewares/resenias-validators.js';
+import { uploadReviewImage } from '../../../middlewares/file-uploader.js';
 
 const router = Router();
 
 // Crear reseña
 router.post(
     '/create',
+    uploadReviewImage.single('fotoResena'),
     validateCreateResenia,
     createReseña
 );
@@ -39,6 +41,7 @@ router.get(
 // Actualizar reseña
 router.put(
     '/:id',
+    uploadReviewImage.single('fotoResena'),
     validateUpdateResenia,
     updateReseña
 );

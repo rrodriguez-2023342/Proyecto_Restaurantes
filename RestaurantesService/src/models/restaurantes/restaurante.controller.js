@@ -95,13 +95,38 @@ export const updateRestaurante = async (req, res) => {
     try {
         const { id } = req.params;
         const OWNER_FIELD = 'due\u00F1o';
-        const restauranteData = { ...req.body };
+        const rawBody = req.body || {};
+        const restauranteData = Object.entries(rawBody).reduce((acc, [key, value]) => {
+            if (!key.startsWith('direccion.')) {
+                acc[key] = value;
+            }
+            return acc;
+        }, {});
 
         if (
             req.usuario.role === 'ADMIN_RESTAURANT_ROLE' &&
             (!req.usuario.restaurante || id !== req.usuario.restaurante.toString())
         ) {
             return res.status(403).json({ message: 'Solo puedes actualizar tu propio restaurante' });
+        }
+        const direccionFields = {
+            calle: rawBody['direccion.calle'],
+            ciudad: rawBody['direccion.ciudad'],
+            zona: rawBody['direccion.zona'],
+            departamento: rawBody['direccion.departamento'],
+            pais: rawBody['direccion.pais'],
+            referencia: rawBody['direccion.referencia'],
+        };
+        const hasDireccionUpdate = Object.values(direccionFields).some(
+            (value) => value !== undefined
+        );
+
+        if (hasDireccionUpdate) {
+            const direccion = Object.fromEntries(
+                Object.entries(direccionFields).filter(([, value]) => value !== undefined)
+            );
+            if (!direccion.pais) direccion.pais = 'Guatemala';
+            restauranteData.direccion = direccion;
         }
 
         if (

@@ -18,6 +18,10 @@ const reseñaSchema = new mongoose.Schema(
             required: [true, 'El comentario es obligatorio'],
             maxlength: [500, 'El comentario no puede exceder los 500 caracteres']
         },
+        fotoResena: {
+            type: String,
+            default: null
+        },
         calificacion: {
             type: Number,
             required: [true, 'La calificación es obligatoria'],

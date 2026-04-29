@@ -16,6 +16,10 @@ export const createReseña = async (req, res) => {
         const userId = String(req.usuario.id || req.usuario._id);
         data.usuario = userId;
 
+        if (req.file && req.file.path) {
+            data.fotoResena = req.file.path;
+        }
+
         // Validar que el restaurante exista y esté activo
         const restaurante = await Restaurante.findById(data.restaurante).select('_id isActive').lean();
         if (!restaurante) {
@@ -114,7 +118,12 @@ export const updateReseña = async (req, res) => {
             return res.status(403).json({ message: 'Solo el autor puede editar esta reseña' });
         }
 
-        const reseñaEditada = await Reseña.findByIdAndUpdate(id, req.body, { new: true });
+        const data = { ...req.body };
+        if (req.file && req.file.path) {
+            data.fotoResena = req.file.path;
+        }
+
+        const reseñaEditada = await Reseña.findByIdAndUpdate(id, data, { new: true });
 
         res.status(200).json({
             success: true,

@@ -19,6 +19,10 @@ const menuSchema = new mongoose.Schema(
             required: [true, 'La descripción del menú es obligatoria'],
             maxlength: [500, 'La descripción del menú no puede exceder los 500 caracteres']
         },
+        fotoMenu: {
+            type: String,
+            default: null
+        },
         isActive: {
             type: Boolean,
             default: true

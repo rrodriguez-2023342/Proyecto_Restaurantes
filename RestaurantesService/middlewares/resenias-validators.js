@@ -23,10 +23,10 @@ export const validateCreateResenia = [
     checkValidators
 ];
 
-// Validaciones para VER reseñas (Todos pueden ver)
+// Validaciones para VER reseñas (ADMIN_ROLE y USER_ROLE)
 export const validateViewResenia = [
     validateJWT,
-    requireRoles('USER_ROLE'),
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     param('id').optional().isMongoId().withMessage('ID no válido'),
     checkValidators
 ];
