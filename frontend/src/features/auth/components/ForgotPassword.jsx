@@ -2,9 +2,11 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "../../../shared/layouts/Spinner";
+import { useAuthStore } from "../store/authStore";
 
 export const ForgotPasswordForm = ({ onSwitch }) => {
     const [loading, setLoading] = useState(false);
+    const { forgotPassword } = useAuthStore();
     const {
         register,
         handleSubmit,
@@ -14,10 +16,13 @@ export const ForgotPasswordForm = ({ onSwitch }) => {
     const onSubmit = async (data) => {
         setLoading(true);
         try {
-            // TODO: Implementar llamada a la API para recuperar contraseña
-            console.log(data);
-            toast.success("Se envió un enlace de recuperación a tu email", { duration: 4000 });
-            onSwitch();
+            const result = await forgotPassword(data.email);
+            if (result.success) {
+                toast.success(result.message, { duration: 4000 });
+                onSwitch();
+            } else {
+                toast.error(result.error || "Error al enviar el correo", { duration: 4000 });
+            }
         } catch (error) {
             toast.error("Error al enviar el correo", { duration: 4000 });
             console.error(error);

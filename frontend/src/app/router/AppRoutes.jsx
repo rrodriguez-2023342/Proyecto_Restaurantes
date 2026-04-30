@@ -15,6 +15,7 @@ import { MenusPage } from "../../features/menus/pages/MenusPage.jsx";
 import { ReviewsPage } from "../../features/reviews/pages/ReviewsPage.jsx";
 import { UsersPage } from "../../features/users/pages/UsersPage.jsx";
 import { StatisticsPage } from "../../features/dashboard/pages/StatisticsPage.jsx";
+import { ResetPasswordPage } from "../../features/auth/pages/ResetPasswordPage.jsx";
 
 export const AppRoutes = () => {
     return (
@@ -22,6 +23,7 @@ export const AppRoutes = () => {
             <Route path="/" element={<AuthPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />}/>
             <Route path="/unauthorized" element={<UnauthorizatedPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
                 path="/principal"
                 element={
