@@ -18,7 +18,7 @@ export const useMenuStore = create((set, get) => ({
             const menus = data?.data || data?.menus || data || [];
             set({ menus, loading: false });
         } catch (err) {
-            const message = err.response?.data?.message || "Error al cargar menus";
+            const message = err.response?.data?.message || "Error al cargar menús";
             set({ error: message, loading: false });
             throw err;
         }

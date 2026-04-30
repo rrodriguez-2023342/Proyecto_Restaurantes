@@ -6,8 +6,8 @@ import { PrincipalContainer } from "./PrincipalContainer.jsx";
 const navItems = [
     { to: "/admin", label: "Dashboard" },
     { to: "/admin/restaurants", label: "Restaurantes" },
-    { to: "/admin/menus", label: "Menus" },
-    { to: "/admin/reviews", label: "Resenas" },
+    { to: "/admin/menus", label: "Menús" },
+    { to: "/admin/reviews", label: "Reseñas" },
     { to: "/admin/users", label: "Usuarios" },
     { to: "/admin/stats", label: "Estadísticas" },
 ];
@@ -81,7 +81,7 @@ export const AdminLayout = () => {
                         <div className="px-6 py-4 flex flex-col gap-1">
                             <h2 className="text-lg font-semibold text-slate-900">Panel administrativo</h2>
                             <p className="text-sm text-slate-500">
-                                Control general de restaurantes, menus, platos y resenas.
+                                Control general de restaurantes, menús, platos y reseñas.
                             </p>
                         </div>
                     </header>

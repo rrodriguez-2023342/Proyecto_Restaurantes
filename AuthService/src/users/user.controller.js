@@ -220,9 +220,9 @@ export const updateUser = [
         }
 
         const { userId } = req.params;
-        const { name, surname, phone } = req.body;
+        const { name, surname, phone, roleName } = req.body;
 
-        if (!name && !surname && !phone) {
+        if (!name && !surname && !phone && !roleName) {
             return res.status(400).json({
                 success: false,
                 message: 'Debes proporcionar al menos un campo para actualizar',
@@ -232,6 +232,14 @@ export const updateUser = [
         const user = await findUserById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+        }
+
+        // Si viene un rol y no es el suyo propio, actualizarlo
+        if (roleName && userId !== req.userId) {
+            const normalized = roleName.trim().toUpperCase();
+            if (ALLOWED_ROLES.includes(normalized)) {
+                await setUserSingleRole(user, normalized, sequelize);
+            }
         }
 
         let profilePictureToStore = user.UserProfile?.ProfilePicture;

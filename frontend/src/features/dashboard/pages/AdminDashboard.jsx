@@ -5,8 +5,8 @@ import { getMenus, getRestaurants, getReviews } from "../../../shared/api";
 
 const quickLinks = [
     { label: "Restaurantes", to: "/admin/restaurants", description: "Gestion completa" },
-    { label: "Menus", to: "/admin/menus", description: "Menus y platos" },
-    { label: "Resenas", to: "/admin/reviews", description: "Control de feedback" },
+    { label: "Menús", to: "/admin/menus", description: "Menús y platos" },
+    { label: "Reseñas", to: "/admin/reviews", description: "Control de feedback" },
     { label: "Pedidos", to: "/admin/orders", description: "Flujo de pedidos" },
     { label: "Reservas", to: "/admin/reservations", description: "Agenda y mesas" },
     { label: "Facturas", to: "/admin/invoices", description: "Pagos y reportes" },
@@ -65,14 +65,14 @@ export const AdminDashboard = () => {
             helper: "Se actualiza cuando crees restaurantes.",
         },
         {
-            label: "Menus publicados",
+            label: "Menús publicados",
             value: stats.menus,
-            helper: "Se actualiza cuando agregues menus.",
+            helper: "Se actualiza cuando agregues menús.",
         },
         {
-            label: "Resenas recientes",
+            label: "Reseñas recientes",
             value: stats.reviews,
-            helper: "Se actualiza cuando entren nuevas resenas.",
+            helper: "Se actualiza cuando entren nuevas reseñas.",
         },
     ];
     return (

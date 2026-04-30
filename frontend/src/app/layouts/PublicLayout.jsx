@@ -5,8 +5,8 @@ import { PrincipalContainer } from "./PrincipalContainer.jsx";
 
 const navItems = [
     { to: "/home", label: "Inicio" },
-    { to: "/home/reviews", label: "Resenas" },
-    { to: "/home/stats", label: "Estadísticas" },
+    { to: "/home/restaurants", label: "Restaurantes" },
+    { to: "/home/reviews", label: "Reseñas" },
 ];
 
 const linkClass = ({ isActive }) => {
