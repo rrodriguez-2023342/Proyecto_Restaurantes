@@ -9,6 +9,8 @@ const navItems = [
     { to: "/admin/menus", label: "Menús" },
     { to: "/admin/orders", label: "Pedidos" },
     { to: "/admin/detail-orders", label: "Detalles de Pedidos" },
+    { to: "/admin/reservaciones", label: "Reservaciones" },
+    { to: "/admin/mesas", label: "Mesas" },
     { to: "/admin/reviews", label: "Reseñas" },
     { to: "/admin/users", label: "Usuarios" },
     { to: "/admin/stats", label: "Estadísticas" },

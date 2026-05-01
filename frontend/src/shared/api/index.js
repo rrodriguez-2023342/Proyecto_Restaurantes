@@ -6,3 +6,5 @@ export * from "./plato";
 export * from "./users";
 export * from "./order";
 export * from "./detailOrder";
+export * from "./reservation";
+export * from "./table";

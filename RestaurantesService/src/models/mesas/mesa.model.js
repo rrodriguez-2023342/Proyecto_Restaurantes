@@ -17,7 +17,8 @@ const mesaSchema = new mongoose.Schema(
         capacidad: {
             type: Number,
             required: [true, 'La capacidad de la mesa es obligatoria'],
-            min: [1, 'La capacidad de la mesa debe ser al menos 1']
+            min: [1, 'La capacidad de la mesa debe ser al menos 1'],
+            max: [12, 'La capacidad de la mesa no puede ser mayor a 12']
         },
         disponibilidad: {
             type: Boolean,

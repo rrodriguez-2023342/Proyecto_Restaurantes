@@ -1,4 +1,5 @@
 import Mesa from './mesa.model.js';
+import Reservacion from '../reservaciones/reservacion.model.js';
 
 // Auxiliar para detectar error de duplicado de MongoDB
 const isDuplicateKeyError = (error) => error.code === 11000;
@@ -12,6 +13,12 @@ export const createMesa = async (req, res) => {
             data.restaurante = req.usuario.restaurante;
         }
 
+        const ultimaMesa = await Mesa.findOne({ restaurante: data.restaurante })
+            .sort({ numeroMesa: -1 })
+            .select('numeroMesa');
+
+        data.numeroMesa = (ultimaMesa?.numeroMesa || 0) + 1;
+
         const mesa = new Mesa(data);
         await mesa.save();
 
@@ -24,7 +31,7 @@ export const createMesa = async (req, res) => {
         if (isDuplicateKeyError(error)) {
             return res.status(400).json({
                 success: false,
-                message: `Ya existe una mesa con el número ${req.body.numeroMesa} en este restaurante`
+                message: 'No se pudo asignar el numero de mesa. Intenta crearla nuevamente'
             });
         }
         res.status(400).json({
@@ -38,8 +45,12 @@ export const createMesa = async (req, res) => {
 //OBTENER TODAS LAS MESAS
 export const getMesas = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, restaurante } = req.query;
         let query = { disponibilidad: true };
+
+        if (req.usuario.role === 'ADMIN_ROLE' && restaurante) {
+            query.restaurante = restaurante;
+        }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             query.restaurante = req.usuario.restaurante;
@@ -107,6 +118,7 @@ export const editarMesa = async (req, res) => {
     try {
         const { id } = req.params;
         const data = req.body;
+        delete data.numeroMesa;
 
         const mesaExistente = await Mesa.findById(id);
         if (!mesaExistente) return res.status(404).json({ message: 'Mesa no encontrada' });
@@ -160,11 +172,21 @@ export const eliminarMesa = async (req, res) => {
             }
         }
 
-        await Mesa.findByIdAndUpdate(id, { disponibilidad: false });
+        const [reservacionesCanceladas] = await Promise.all([
+            Reservacion.updateMany(
+                {
+                    mesa: id,
+                    estado: { $ne: 'CANCELADA' }
+                },
+                { $set: { estado: 'CANCELADA' } }
+            ),
+            Mesa.findByIdAndUpdate(id, { disponibilidad: false })
+        ]);
 
         res.status(200).json({
             success: true,
-            message: 'Mesa eliminada (desactivada) exitosamente'
+            message: 'Mesa eliminada (desactivada) exitosamente',
+            reservacionesCanceladas: reservacionesCanceladas.modifiedCount || 0
         });
     } catch (error) {
         res.status(500).json({

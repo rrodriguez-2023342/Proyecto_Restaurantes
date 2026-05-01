@@ -22,6 +22,10 @@ import { OrderDetail } from "../../features/orders/pages/OrderDetail.jsx";
 import { DetailOrdersPage } from "../../features/detailOrders/pages/DetailOrdersPage.jsx";
 import { UserOrdersPage } from "../../features/orders/pages/UserOrdersPage.jsx";
 import { UserOrderDetail } from "../../features/orders/pages/UserOrderDetail.jsx";
+import { AdminReservationsPage } from "../../features/reservations/pages/AdminReservationsPage.jsx";
+import { ReservationsPage } from "../../features/reservations/pages/ReservationsPage.jsx";
+import { CreateReservationPage } from "../../features/reservations/pages/CreateReservationPage.jsx";
+import { TablesPage } from "../../features/tables/pages/TablesPage.jsx";
 
 export const AppRoutes = () => {
     return (
@@ -59,6 +63,8 @@ export const AppRoutes = () => {
                 <Route path="/admin/orders/create" element={<CreateOrderPage />} />
                 <Route path="/admin/orders/:id" element={<OrderDetail />} />
                 <Route path="/admin/detail-orders" element={<DetailOrdersPage />} />
+                <Route path="/admin/reservaciones" element={<AdminReservationsPage />} />
+                <Route path="/admin/mesas" element={<TablesPage />} />
             </Route>
 
             <Route
@@ -74,6 +80,8 @@ export const AppRoutes = () => {
                 <Route path="/home/restaurants/:id" element={<RestaurantDetail />} />
                 <Route path="/home/reviews" element={<ReviewsPage />} />
                 <Route path="/home/orders" element={<UserOrdersPage />} />
+                <Route path="/reservaciones" element={<ReservationsPage />} />
+                <Route path="/reservaciones/crear" element={<CreateReservationPage />} />
                 <Route path="/home/orders/:id" element={<UserOrderDetail />} />
                 <Route path="/home/stats" element={<StatisticsPage />} />
             </Route>

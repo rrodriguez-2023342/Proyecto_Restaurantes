@@ -4,29 +4,25 @@ import { validateJWT } from './validate-JWT.js';
 import { requireRoles } from './validate-role.js';
 import { attachRestaurant } from './attach-restaurante.js';
 
-// USER_ROLE queda excluido no puede modificar nada como decia en la tabla solo 
+// USER_ROLE queda excluido no puede modificar nada como decia en la tabla solo
 // ADMIN_ROLE y ADMIN_RESTAURANT_ROLE pueden crear, actualizar o eliminar mesas.
 
-// Validaciones para crear una mesa
+// Validaciones para crear una mesa. El numero de mesa se asigna automaticamente.
 export const validateCreateMesa = [
     validateJWT,
     attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
-    body('numeroMesa')
-        .notEmpty()
-        .withMessage('El número de mesa es requerido')
-        .isInt({ min: 1 })
-        .withMessage('El número de mesa debe ser un número entero positivo'),
     body('capacidad')
         .notEmpty()
         .withMessage('La capacidad es requerida')
-        .isInt({ min: 1 })
-        .withMessage('La capacidad debe ser al menos para 1 persona'),
+        .isInt({ min: 1, max: 12 })
+        .withMessage('La capacidad debe ser entre 1 y 12 personas'),
     body('restaurante')
+        .if((value, { req }) => req.usuario?.role === 'ADMIN_ROLE')
         .notEmpty()
         .withMessage('El ID del restaurante es requerido')
         .isMongoId()
-        .withMessage('ID de restaurante no válido'),
+        .withMessage('ID de restaurante no valido'),
     checkValidators
 ];
 
@@ -37,13 +33,11 @@ export const validateUpdateMesa = [
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .isMongoId()
-        .withMessage('ID de mesa no válido'),
-    body('numeroMesa')
-        .optional()
-        .isInt({ min: 1 }),
+        .withMessage('ID de mesa no valido'),
     body('capacidad')
         .optional()
-        .isInt({ min: 1 }),
+        .isInt({ min: 1, max: 12 })
+        .withMessage('La capacidad debe ser entre 1 y 12 personas'),
     body('status')
         .optional()
         .isBoolean()
@@ -58,14 +52,14 @@ export const validateDeleteMesa = [
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .isMongoId()
-        .withMessage('ID de mesa no válido'),
+        .withMessage('ID de mesa no valido'),
     checkValidators
 ];
 
 // Validator para ver/consultar una mesa por ID (mismo que eliminar)
 export const validateViewMesa = validateDeleteMesa;
 
-// Validator para listar mesas (no necesita parámetro)
+// Validator para listar mesas (no necesita parametro)
 export const validateListMesas = [
     validateJWT,
     attachRestaurant,

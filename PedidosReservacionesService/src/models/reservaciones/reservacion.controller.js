@@ -10,15 +10,33 @@ const getRestauranteId = async (usuario) => {
     return r?._id ?? null;
 };
 
+const getUsuarioId = (usuario) => String(usuario.id || usuario._id);
+
 // Dispara el correo sin bloquear la respuesta
 const notificar = (email, name, accion, reservacion, restaurante) => {
     sendReservacionEmail(email, name, accion, reservacion, restaurante)
         .catch(err => console.error(`[reservacion] Error al enviar correo (${accion}):`, err.message));
 };
 
+const populateReservacion = (query) =>
+    query
+        .populate('restaurante', 'nombre')
+        .populate('mesa', 'numeroMesa capacidad');
+
 export const createReservacion = async (req, res) => {
     try {
         const data = req.body;
+        const mesa = await Mesa.findById(data.mesa).select('capacidad');
+
+        if (!mesa) {
+            return res.status(200).json({
+                success: false,
+                message: 'La mesa indicada no existe'
+            });
+        }
+
+        data.cantidadPersonas = mesa.capacidad;
+
         const validacionMesa = await validarMesaParaReservacion({
             mesaId: data.mesa,
             restauranteId: data.restaurante,
@@ -27,16 +45,19 @@ export const createReservacion = async (req, res) => {
         });
 
         if (!validacionMesa.ok) {
-            return res.status(validacionMesa.status).json(validacionMesa.payload);
+            return res.status(200).json(validacionMesa.payload);
         }
 
         data.usuario = String(req.usuario.id || req.usuario._id);
 
         const reservacion = new Reservacion(data);
         await reservacion.save();
+        await reservacion.populate([
+            { path: 'restaurante', select: 'nombre' },
+            { path: 'mesa', select: 'numeroMesa capacidad' }
+        ]);
 
-        const restaurante = await Restaurante.findById(data.restaurante).select('nombre').lean();
-        notificar(req.usuario.email, req.usuario.name, 'creada', reservacion, restaurante?.nombre ?? 'Restaurante');
+        notificar(req.usuario.email, req.usuario.name, 'creada', reservacion, reservacion.restaurante?.nombre ?? 'Restaurante');
 
         res.status(201).json({
             success: true,
@@ -50,11 +71,13 @@ export const createReservacion = async (req, res) => {
 
 export const getReservaciones = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        let query = { estado: { $ne: 'CANCELADA' } };
+        const { page = 1, limit = 10, restaurante } = req.query;
+        let query = {};
 
         if (req.usuario.role === 'USER_ROLE') {
-            query.usuario = req.usuario._id;
+            query.usuario = getUsuarioId(req.usuario);
+        } else if (req.usuario.role === 'ADMIN_ROLE' && restaurante) {
+            query.restaurante = restaurante;
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const restauranteId = await getRestauranteId(req.usuario);
             if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
@@ -62,10 +85,7 @@ export const getReservaciones = async (req, res) => {
         }
 
         const [reservaciones, total] = await Promise.all([
-            Reservacion.find(query)
-                .populate('restaurante', 'nombre')
-                .populate('mesa', 'numeroMesa')
-                .populate('usuario', 'nombre apellido')
+            populateReservacion(Reservacion.find(query))
                 .limit(limit * 1)
                 .skip((page - 1) * limit)
                 .sort({ fecha: 1 }),
@@ -81,7 +101,7 @@ export const getReservaciones = async (req, res) => {
 export const getReservacionById = async (req, res) => {
     try {
         const { id } = req.params;
-        const reservacion = await Reservacion.findById(id).populate('restaurante mesa usuario');
+        const reservacion = await populateReservacion(Reservacion.findById(id));
 
         if (!reservacion) return res.status(404).json({ message: 'Reservación no encontrada' });
 
@@ -109,6 +129,8 @@ export const getReservacionById = async (req, res) => {
 export const updateReservacion = async (req, res) => {
     try {
         const { id } = req.params;
+        delete req.body.hora;
+
         const reservacionExistente = await Reservacion.findById(id);
 
         if (!reservacionExistente) return res.status(404).json({ message: 'Reservación no encontrada' });
@@ -129,10 +151,6 @@ export const updateReservacion = async (req, res) => {
             if (resRestauranteId !== restauranteId.toString()) {
                 return res.status(403).json({ message: 'Solo puedes editar reservaciones de tu restaurante' });
             }
-        } else {
-            return res.status(403).json({
-                message: 'Solo el usuario que hizo la reservacion o el admin del restaurante puede editar',
-            });
         }
 
         if (req.usuario.role === 'USER_ROLE' && req.body.estado != null) {
@@ -148,16 +166,23 @@ export const updateReservacion = async (req, res) => {
         const debeRevalidar   = req.body.mesa != null || req.body.fecha != null || req.body.cantidadPersonas != null;
 
         if (debeRevalidar) {
-            const validacionMesa = await validarMesaParaReservacion({ mesaId, restauranteId, fecha, cantidadPersonas });
+            const validacionMesa = await validarMesaParaReservacion({
+                mesaId,
+                restauranteId,
+                fecha,
+                cantidadPersonas,
+                reservacionId: id
+            });
             if (!validacionMesa.ok) {
-                return res.status(validacionMesa.status).json(validacionMesa.payload);
+                return res.status(200).json(validacionMesa.payload);
             }
         }
 
-        const reservacionEditada = await Reservacion.findByIdAndUpdate(id, req.body, { new: true });
+        const reservacionEditada = await populateReservacion(
+            Reservacion.findByIdAndUpdate(id, req.body, { new: true })
+        );
 
-        const restaurante = await Restaurante.findById(reservacionEditada.restaurante).select('nombre').lean();
-        notificar(req.usuario.email, req.usuario.name, 'actualizada', reservacionEditada, restaurante?.nombre ?? 'Restaurante');
+        notificar(req.usuario.email, req.usuario.name, 'actualizada', reservacionEditada, reservacionEditada.restaurante?.nombre ?? 'Restaurante');
 
         res.status(200).json({ success: true, message: 'Reservación actualizada', data: reservacionEditada });
     } catch (error) {
@@ -185,10 +210,6 @@ export const deleteReservacion = async (req, res) => {
             if (resRestauranteId !== restauranteId.toString()) {
                 return res.status(403).json({ message: 'Solo puedes cancelar reservaciones de tu restaurante' });
             }
-        } else {
-            return res.status(403).json({
-                message: 'Solo el usuario que hizo la reservacion o el admin del restaurante puede eliminar',
-            });
         }
 
         reservacion.estado = 'CANCELADA';
