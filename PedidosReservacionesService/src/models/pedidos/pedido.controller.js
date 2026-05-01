@@ -1,4 +1,5 @@
 import Pedido from './pedido.model.js';
+import DetallePedido from '../detallePedidos/detallePedido.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
 import { sendPedidoEmail } from '../../helpers/email-service.js';
 
@@ -162,6 +163,7 @@ export const eliminarPedido = async (req, res) => {
         }
 
         const restaurante = await Restaurante.findById(pedido.restaurante).select('nombre').lean();
+        await DetallePedido.deleteMany({ pedido: id });
         await Pedido.findByIdAndDelete(id);
 
         notificar(req.usuario.email, req.usuario.name, 'eliminado', pedido, restaurante?.nombre ?? 'Restaurante');

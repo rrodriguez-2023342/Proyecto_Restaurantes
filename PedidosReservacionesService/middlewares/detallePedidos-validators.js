@@ -43,7 +43,7 @@ export const validateDeleteDetallePedido = [
 
 export const validateViewDetallePedidoById = [
     validateJWT,
-    requireRoles('USER_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    requireRoles('USER_ROLE', 'ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('id')
         .notEmpty().withMessage('El ID del detalle de pedido es requerido')
         .isMongoId().withMessage('El ID del detalle de pedido debe ser valido'),
@@ -52,7 +52,7 @@ export const validateViewDetallePedidoById = [
 
 export const validateViewDetallePedidoByPedido = [
     validateJWT,
-    requireRoles('USER_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    requireRoles('USER_ROLE', 'ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     param('pedidoId')
         .notEmpty().withMessage('El ID del pedido es requerido')
         .isMongoId().withMessage('El ID del pedido debe ser valido'),

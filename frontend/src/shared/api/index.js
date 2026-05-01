@@ -4,3 +4,5 @@ export * from "./menu";
 export * from "./review";
 export * from "./plato";
 export * from "./users";
+export * from "./order";
+export * from "./detailOrder";

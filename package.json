@@ -1,0 +1,12 @@
+{
+  "name": "proyecto-restaurantes-microservicios",
+  "version": "1.0.0",
+  "description": "Orquestador de microservicios Proyecto Restaurantes",
+  "private": true,
+  "packageManager": "pnpm@10.29.2",
+  "scripts": {
+    "install:services": "node scripts/install.js",
+    "dev": "node scripts/dev.js",
+    "start": "node scripts/start.js"
+  }
+}

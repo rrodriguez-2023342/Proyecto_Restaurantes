@@ -3,6 +3,21 @@ import Pedido from '../pedidos/pedido.model.js';
 import Plato from '../platos/plato.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
 
+const serializeDetallePedido = (detalleDoc) => {
+    if (!detalleDoc) return null;
+
+    const detalle = typeof detalleDoc.toObject === 'function'
+        ? detalleDoc.toObject()
+        : { ...detalleDoc };
+
+    const detallePedidoId = detalle._id?.toString?.() || detalle.id?.toString?.();
+
+    return {
+        detallePedidoId,
+        ...detalle,
+    };
+};
+
 // Recalcula el totalPedido
 const recalcularTotalPedido = async (pedidoId) => {
     const detalle = await DetallePedido.findOne({ pedido: pedidoId });
@@ -127,16 +142,26 @@ export const getDetallesPedidos = async (req, res) => {
         const [detalles, total] = await Promise.all([
             DetallePedido.find()
                 .populate('pedido', 'tipoPedido estadoPedido totalPedido')
-                .populate('items.plato', 'nombre precio')
+                .populate('items.plato', 'nombrePlato precio')
                 .limit(limit * 1)
                 .skip((page - 1) * limit)
                 .sort({ createdAt: -1 }),
             DetallePedido.countDocuments(),
         ]);
 
+        const orphanDetailIds = detalles
+            .filter((detalle) => !detalle.pedido)
+            .map((detalle) => detalle._id);
+
+        if (orphanDetailIds.length) {
+            await DetallePedido.deleteMany({ _id: { $in: orphanDetailIds } });
+        }
+
+        const validDetails = detalles.filter((detalle) => detalle.pedido);
+
         res.status(200).json({
             success: true,
-            data: detalles,
+            data: validDetails.map(serializeDetallePedido),
             pagination: {
                 currentPage: page,
                 totalPages: Math.ceil(total / limit),
@@ -159,9 +184,12 @@ export const getDetallePedidoById = async (req, res) => {
         const { id } = req.params;
         const detalle = await DetallePedido.findById(id)
             .populate('pedido', 'tipoPedido estadoPedido totalPedido restaurante usuario')
-            .populate('items.plato', 'nombre precio');
+            .populate('items.plato', 'nombrePlato precio');
 
-        if (!detalle) {
+        if (!detalle || !detalle.pedido) {
+            if (detalle && !detalle.pedido) {
+                await DetallePedido.findByIdAndDelete(id);
+            }
             return res.status(404).json({
                 success: false,
                 message: 'Detalle de pedido no encontrado',
@@ -178,7 +206,7 @@ export const getDetallePedidoById = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: detalle,
+            data: serializeDetallePedido(detalle),
         });
     } catch (error) {
         res.status(500).json({
@@ -195,9 +223,12 @@ export const getDetallePedidoByPedido = async (req, res) => {
         const { pedidoId } = req.params;
         const detalle = await DetallePedido.findOne({ pedido: pedidoId })
             .populate('pedido', 'tipoPedido estadoPedido totalPedido restaurante usuario')
-            .populate('items.plato', 'nombre precio');
+            .populate('items.plato', 'nombrePlato precio');
 
-        if (!detalle) {
+        if (!detalle || !detalle.pedido) {
+            if (detalle && !detalle.pedido) {
+                await DetallePedido.findByIdAndDelete(detalle._id);
+            }
             return res.status(404).json({
                 success: false,
                 message: 'No se encontro detalle para este pedido',
@@ -214,7 +245,7 @@ export const getDetallePedidoByPedido = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: detalle,
+            data: serializeDetallePedido(detalle),
         });
     } catch (error) {
         res.status(500).json({
@@ -266,7 +297,7 @@ export const updateDetallePedido = async (req, res) => {
             id,
             { items: itemsConPrecio },
             { new: true, runValidators: true }
-        ).populate('items.plato', 'nombre precio');
+        ).populate('items.plato', 'nombrePlato precio');
 
         await recalcularTotalPedido(detalle.pedido._id);
         const pedidoActualizado = await Pedido.findById(detalle.pedido._id);
@@ -275,7 +306,7 @@ export const updateDetallePedido = async (req, res) => {
             success: true,
             message: 'Detalle de pedido actualizado exitosamente',
             totalPedido: pedidoActualizado.totalPedido,
-            data: detalleActualizado,
+            data: serializeDetallePedido(detalleActualizado),
         });
     } catch (error) {
         res.status(400).json({
@@ -313,6 +344,7 @@ export const deleteDetallePedido = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Detalle de pedido eliminado exitosamente',
+            detallePedidoId: id,
         });
     } catch (error) {
         res.status(400).json({
