@@ -3,18 +3,20 @@ import { useAuthStore } from "../../features/auth/store/authStore";
 import { Avatar } from "../../shared/components";
 import { PrincipalContainer } from "./PrincipalContainer.jsx";
 
-const navItems = [
-    { to: "/admin", label: "Dashboard" },
-    { to: "/admin/restaurants", label: "Restaurantes" },
-    { to: "/admin/menus", label: "Menús" },
-    { to: "/admin/orders", label: "Pedidos" },
-    { to: "/admin/detail-orders", label: "Detalles de Pedidos" },
-    { to: "/admin/reservaciones", label: "Reservaciones" },
-    { to: "/admin/mesas", label: "Mesas" },
-    { to: "/admin/reviews", label: "Reseñas" },
-    { to: "/admin/users", label: "Usuarios" },
-    { to: "/admin/stats", label: "Estadísticas" },
-];
+ const navItems = [
+     { to: "/admin", label: "Dashboard" },
+     { to: "/admin/restaurants", label: "Restaurantes" },
+     { to: "/admin/menus", label: "Menús" },
+     { to: "/admin/orders", label: "Pedidos" },
+     { to: "/admin/detail-orders", label: "Detalles de Pedidos" },
+     { to: "/admin/reservaciones", label: "Reservaciones" },
+     { to: "/admin/mesas", label: "Mesas" },
+     { to: "/admin/reviews", label: "Reseñas" },
+     { to: "/admin/users", label: "Usuarios" },
+     { to: "/admin/stats", label: "Estadísticas" },
+     { to: "/admin/invoices", label: "Facturas" },
+     { to: "/admin/reports", label: "Reportes" },
+ ];
 
 const linkClass = ({ isActive }) => {
     const base = "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition";

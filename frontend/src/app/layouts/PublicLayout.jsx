@@ -3,11 +3,12 @@ import { useAuthStore } from "../../features/auth/store/authStore";
 import { Avatar } from "../../shared/components";
 import { PrincipalContainer } from "./PrincipalContainer.jsx";
 
-const navItems = [
-    { to: "/home", label: "Inicio" },
-    { to: "/home/restaurants", label: "Restaurantes" },
-    { to: "/home/reviews", label: "Reseñas" },
-];
+ const navItems = [
+     { to: "/home", label: "Inicio" },
+     { to: "/home/restaurants", label: "Restaurantes" },
+     { to: "/home/reviews", label: "Reseñas" },
+     { to: "/home/invoices", label: "Facturas" },
+ ];
 
 const linkClass = ({ isActive }) => {
     const base = "rounded-full px-4 py-2 text-sm font-semibold transition";

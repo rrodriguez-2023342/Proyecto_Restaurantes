@@ -8,3 +8,5 @@ export * from "./order";
 export * from "./detailOrder";
 export * from "./reservation";
 export * from "./table";
+export * from "./invoice";
+export * from "./report";

@@ -10,6 +10,7 @@ const quickLinks = [
     { label: "Pedidos", to: "/admin/orders", description: "Flujo de pedidos" },
     { label: "Reservas", to: "/admin/reservations", description: "Agenda y mesas" },
     { label: "Facturas", to: "/admin/invoices", description: "Pagos y reportes" },
+    { label: "Reportes", to: "/admin/reports", description: "Métricas del negocio" },
 ];
 
 export const AdminDashboard = () => {

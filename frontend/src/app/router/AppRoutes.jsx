@@ -26,7 +26,9 @@ import { AdminReservationsPage } from "../../features/reservations/pages/AdminRe
 import { ReservationsPage } from "../../features/reservations/pages/ReservationsPage.jsx";
 import { CreateReservationPage } from "../../features/reservations/pages/CreateReservationPage.jsx";
 import { TablesPage } from "../../features/tables/pages/TablesPage.jsx";
-
+import { InvoicesPage } from "../../features/invoices/pages/InvoicesPage.jsx";
+import { InvoiceDetail } from "../../features/invoices/pages/InvoiceDetail.jsx";
+import { ReportsDashboard } from "../../features/reports/pages/ReportsDashboard.jsx";
 export const AppRoutes = () => {
     return (
         <Routes>
@@ -65,6 +67,9 @@ export const AppRoutes = () => {
                 <Route path="/admin/detail-orders" element={<DetailOrdersPage />} />
                 <Route path="/admin/reservaciones" element={<AdminReservationsPage />} />
                 <Route path="/admin/mesas" element={<TablesPage />} />
+                <Route path="/admin/invoices" element={<InvoicesPage />} />
+                <Route path="/admin/invoices/:id" element={<InvoiceDetail />} />
+                <Route path="/admin/reports" element={<ReportsDashboard />} />
             </Route>
 
             <Route
@@ -84,6 +89,8 @@ export const AppRoutes = () => {
                 <Route path="/reservaciones/crear" element={<CreateReservationPage />} />
                 <Route path="/home/orders/:id" element={<UserOrderDetail />} />
                 <Route path="/home/stats" element={<StatisticsPage />} />
+                <Route path="/home/invoices" element={<InvoicesPage />} />
+                <Route path="/home/invoices/:id" element={<InvoiceDetail />} />
             </Route>
         </Routes>
     )
