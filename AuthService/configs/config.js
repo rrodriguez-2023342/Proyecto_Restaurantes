@@ -40,6 +40,7 @@ export const config = {
 
         defaultAvatar: process.env.CLOUDINARY_DEFAULT_AVATAR_FILENAME,
         defaultAvatarUrl: process.env.CLOUDINARY_DEFAULT_AVATAR_URL,
+        defaultAvatarPath: process.env.CLOUDINARY_DEFAULT_AVATAR_PATH,
     },
 
     // Rate Limiting (aligned with .NET AuthPolicy and ApiPolicy)

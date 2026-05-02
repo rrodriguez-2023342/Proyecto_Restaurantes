@@ -19,12 +19,16 @@ import {
 import { verifyPassword } from '../utils/password-utils.js';
 import { buildUserResponse } from '../utils/user-helpers.js';
 import { sendVerificationEmail } from './email-service.js';
-import { generateJWT } from './generate-jwt.js';
+import { generateJWT, verifyJWT } from './generate-jwt.js';
 import path from 'path';
-import { uploadImage } from './cloudinary-service.js';
+import {
+    uploadImage,
+    getFullImageUrl,
+    getDefaultAvatarPath,
+} from './cloudinary-service.js';
 import { config } from '../configs/config.js';
 
-const getExpirationTime = (timeString) => {
+const getExpirationTime = (timeString = '30m') => {
     const timeValue = parseInt(timeString);
     const timeUnit = timeString.replace(timeValue.toString(), '');
 
@@ -156,9 +160,17 @@ export const loginUserHelper = async (emailOrUsername, password) => {
 
         const role = plainUser.UserRoles?.[0]?.Role?.Name || 'USER_ROLE';
         
-        const token = await generateJWT(plainUser.Id.toString(), { role, email: plainUser.Email,
+        const accessToken = await generateJWT(plainUser.Id.toString(), {
+            role,
+            email: plainUser.Email,
             name: plainUser.Name,
-            surname: plainUser.Surname });
+            surname: plainUser.Surname,
+        });
+        const refreshToken = await generateJWT(
+            plainUser.Id.toString(),
+            { type: 'refresh' },
+            { expiresIn: config.jwt.refreshExpiresIn || '7d' }
+        );
 
         const expiresInMs = getExpirationTime(
             process.env.JWT_EXPIRES_IN || '30m'
@@ -167,16 +179,22 @@ export const loginUserHelper = async (emailOrUsername, password) => {
 
         const userDetails = {
             id: plainUser.Id,
+            name: plainUser.Name,
+            surname: plainUser.Surname,
+            email: plainUser.Email,
             username: plainUser.Username,
-            profilePicture:
-                plainUser.UserProfile?.ProfilePicture || null,
+            profilePicture: getFullImageUrl(
+                plainUser.UserProfile?.ProfilePicture || getDefaultAvatarPath()
+            ),
             role,
         };
 
         return {
             success: true,
             message: 'Login exitoso',
-            token,
+            token: accessToken,
+            accessToken,
+            refreshToken,
             userDetails,
             expiresAt,
         };
@@ -184,6 +202,51 @@ export const loginUserHelper = async (emailOrUsername, password) => {
         console.error('Error en login:', error);
         throw error;
     }
+};
+
+export const refreshTokenHelper = async (refreshToken) => {
+    if (!refreshToken) {
+        throw new Error('Refresh token requerido');
+    }
+
+    const decoded = await verifyJWT(refreshToken);
+    if (decoded.type !== 'refresh') {
+        throw new Error('Refresh token invalido');
+    }
+
+    const user = await findUserById(decoded.sub);
+    if (!user) {
+        throw new Error('Usuario no encontrado');
+    }
+
+    if (!user.Status) {
+        throw new Error('Tu cuenta esta desactivada.');
+    }
+
+    const plainUser = user.toJSON();
+    const role = plainUser.UserRoles?.[0]?.Role?.Name || 'USER_ROLE';
+    const accessToken = await generateJWT(plainUser.Id.toString(), {
+        role,
+        email: plainUser.Email,
+        name: plainUser.Name,
+        surname: plainUser.Surname,
+    });
+    const newRefreshToken = await generateJWT(
+        plainUser.Id.toString(),
+        { type: 'refresh' },
+        { expiresIn: config.jwt.refreshExpiresIn || '7d' }
+    );
+    const expiresInMs = getExpirationTime(process.env.JWT_EXPIRES_IN || '30m');
+    const expiresAt = new Date(Date.now() + expiresInMs);
+
+    return {
+        success: true,
+        accessToken,
+        token: accessToken,
+        refreshToken: newRefreshToken,
+        expiresAt,
+        userDetails: buildUserResponse(user),
+    };
 };
 
 export const verifyEmailHelper = async (token) => {

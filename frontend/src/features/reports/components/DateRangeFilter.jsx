@@ -5,82 +5,76 @@ export const DateRangeFilter = ({ onFilter, isExporting, onExportCSV, onExportPD
     const [endDate, setEndDate] = useState("");
 
     const handleFilter = () => {
-        if (onFilter) {
-            onFilter({ startDate, endDate });
-        }
+        if (onFilter) onFilter({ startDate, endDate });
     };
 
     const handleClear = () => {
         setStartDate("");
         setEndDate("");
-        if (onFilter) {
-            onFilter({ startDate: null, endDate: null });
-        }
+        if (onFilter) onFilter({ startDate: null, endDate: null });
     };
 
     return (
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-end gap-4 w-full lg:w-auto">
-                <div className="w-full sm:w-auto">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fecha Inicio</label>
-                    <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                    />
-                </div>
-                <div className="w-full sm:w-auto">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fecha Fin</label>
-                    <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                    />
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={handleFilter}
-                        className="flex-1 sm:flex-none px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-sm transition-colors"
-                    >
-                        Filtrar
-                    </button>
-                    {(startDate || endDate) && (
+        <div className="rounded-[2rem] border border-slate-200 bg-white/95 p-4 shadow-sm shadow-slate-200/70 backdrop-blur md:p-5">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+                <div className="grid gap-4 md:grid-cols-[minmax(0,220px)_minmax(0,220px)_auto] md:items-end">
+                    <div>
+                        <label className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">Fecha inicio</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="h-12 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 text-sm font-bold text-slate-800 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                        />
+                    </div>
+                    <div>
+                        <label className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">Fecha fin</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="h-12 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 text-sm font-bold text-slate-800 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                        />
+                    </div>
+                    <div className="flex gap-2">
                         <button
-                            onClick={handleClear}
-                            className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors"
-                            title="Limpiar filtros"
+                            type="button"
+                            onClick={handleFilter}
+                            className="h-12 rounded-2xl bg-slate-950 px-7 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800"
                         >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            Filtrar
                         </button>
-                    )}
+                        {(startDate || endDate) && (
+                            <button
+                                type="button"
+                                onClick={handleClear}
+                                className="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-black text-slate-600 transition hover:bg-slate-100"
+                                title="Limpiar filtros"
+                            >
+                                Limpiar
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex gap-3 w-full lg:w-auto">
-                <button
-                    onClick={onExportCSV}
-                    disabled={isExporting}
-                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 border border-slate-300 hover:border-orange-500 text-slate-700 hover:text-orange-600 font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-                >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    CSV
-                </button>
-                <button
-                    onClick={onExportPDF}
-                    disabled={isExporting}
-                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-orange-50 border border-orange-200 hover:border-orange-500 text-orange-700 font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    PDF
-                </button>
+                <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={onExportCSV}
+                        disabled={isExporting}
+                        className="h-12 rounded-2xl border border-slate-300 bg-white px-6 text-sm font-black text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-950 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        CSV
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onExportPDF}
+                        disabled={isExporting}
+                        className="h-12 rounded-2xl border border-orange-200 bg-orange-50 px-6 text-sm font-black text-orange-700 transition hover:-translate-y-0.5 hover:border-orange-500 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        PDF
+                    </button>
+                </div>
             </div>
         </div>
     );

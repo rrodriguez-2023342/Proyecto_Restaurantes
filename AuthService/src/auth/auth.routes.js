@@ -27,6 +27,7 @@ router.post(
 );
 
 router.post('/login', authRateLimit, validateLogin, authController.login);
+router.post('/refresh', requestLimit, authController.refresh);
 
 router.post(
     '/verify-email',

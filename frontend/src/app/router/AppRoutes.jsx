@@ -12,6 +12,7 @@ import { UserHome } from "../../features/home/pages/UserHome.jsx";
 import { RestaurantsPage } from "../../features/restaurants/pages/RestaurantsPage.jsx";
 import { RestaurantDetail } from "../../features/restaurants/pages/RestaurantDetail.jsx";
 import { MenusPage } from "../../features/menus/pages/MenusPage.jsx";
+import { PlatosPage } from "../../features/platos/pages/PlatosPage.jsx";
 import { ReviewsPage } from "../../features/reviews/pages/ReviewsPage.jsx";
 import { UsersPage } from "../../features/users/pages/UsersPage.jsx";
 import { StatisticsPage } from "../../features/dashboard/pages/StatisticsPage.jsx";
@@ -58,6 +59,7 @@ export const AppRoutes = () => {
                 <Route path="/admin/restaurants" element={<RestaurantsPage />} />
                 <Route path="/admin/restaurants/:id" element={<RestaurantDetail />} />
                 <Route path="/admin/menus" element={<MenusPage />} />
+                <Route path="/admin/platos" element={<PlatosPage />} />
                 <Route path="/admin/reviews" element={<ReviewsPage />} />
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/admin/stats" element={<StatisticsPage />} />

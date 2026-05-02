@@ -11,8 +11,8 @@ const services = [
     docsUrl: 'http://localhost:3006/api/v1/docs',
   },
   {
-    name: 'RestaurantesService',
-    path: 'RestaurantesService',
+    name: 'Restaurantes',
+    path: 'Restaurantes',
     port: 3007,
     color: '\x1b[34m',
     healthUrl: 'http://localhost:3007/restaurantes/v1/Health',

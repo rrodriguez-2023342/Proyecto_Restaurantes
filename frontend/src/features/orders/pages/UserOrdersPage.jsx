@@ -33,12 +33,12 @@ export const UserOrdersPage = () => {
         {
             key: "total",
             header: "Total",
-            render: (row) => `$${(row.total || 0).toFixed(2)}`,
+            render: (row) => `Q${Number(row.total ?? row.totalPedido ?? 0).toFixed(2)}`,
         },
         {
             key: "estado",
             header: "Estado",
-            render: (row) => <OrderStatus status={row.estado || "pendiente"} />,
+            render: (row) => <OrderStatus status={row.estado || row.estadoPedido || "Pendiente"} />,
         },
         {
             key: "fecha",
@@ -92,7 +92,7 @@ export const UserOrdersPage = () => {
                     <Card>
                         <div className="text-center">
                             <p className="text-3xl font-bold text-slate-900">
-                                ${userOrders.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(2)}
+                                Q{userOrders.reduce((sum, o) => sum + Number(o.total ?? o.totalPedido ?? 0), 0).toFixed(2)}
                             </p>
                             <p className="text-xs text-slate-600 mt-1">Gasto Total</p>
                         </div>

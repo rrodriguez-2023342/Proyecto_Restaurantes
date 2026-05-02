@@ -25,9 +25,6 @@ export const createPedido = async (req, res) => {
         const pedido = new Pedido(data);
         await pedido.save();
 
-        const restaurante = await Restaurante.findById(data.restaurante).select('nombre').lean();
-        notificar(req.usuario.email, req.usuario.name, 'creado', pedido, restaurante?.nombre ?? 'Restaurante');
-
         res.status(201).json({ success: true, message: 'Pedido creado exitosamente', data: pedido });
     } catch (error) {
         res.status(400).json({ success: false, message: 'Error al crear el pedido', error: error.message });
@@ -36,20 +33,27 @@ export const createPedido = async (req, res) => {
 
 export const getPedidos = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
         let query = {};
 
         if (req.usuario.role === 'USER_ROLE') {
             query.usuario = req.usuario.id;
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            query.restaurante = req.usuario.restaurante;
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para ver pedidos',
+                });
+            }
+            query.restaurante = adminRestaurantId;
         }
 
         const [pedidos, total] = await Promise.all([
             Pedido.find(query)
                 .populate('restaurante', 'nombre')
-                .populate('usuario', 'nombre apellido')
-                .limit(limit * 1)
+                .limit(limit)
                 .skip((page - 1) * limit)
                 .sort({ createdAt: -1 }),
             Pedido.countDocuments(query)
@@ -69,8 +73,7 @@ export const getPedidoById = async (req, res) => {
     try {
         const { id } = req.params;
         const pedido = await Pedido.findById(id)
-            .populate('restaurante', 'nombre')
-            .populate('usuario', 'nombre apellido');
+            .populate('restaurante', 'nombre');
 
         if (!pedido) {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });

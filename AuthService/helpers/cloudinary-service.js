@@ -64,7 +64,7 @@ export const uploadImage = async (filePath, fileName) => {
 
 export const deleteImage = async (imagePath) => {
     try {
-        if (!imagePath || imagePath === config.cloudinary.defaultAvatarPath) {
+        if (!imagePath || imagePath === getDefaultAvatarPath() || imagePath === getDefaultAvatarUrl()) {
         return true;
         }
 
@@ -104,11 +104,18 @@ export const getFullImageUrl = (imagePath) => {
 };
 
 export const getDefaultAvatarUrl = () => {
-    return config.cloudinary.defaultAvatarUrl;
+    if (config.cloudinary.defaultAvatarUrl) {
+        return config.cloudinary.defaultAvatarUrl;
+    }
+
+    const defaultPath = getDefaultAvatarPath();
+    if (!defaultPath) return null;
+
+    return getFullImageUrl(defaultPath);
 };
 
 export const getDefaultAvatarPath = () => {
-    const defaultPath = config.cloudinary.defaultAvatarPath;
+    const defaultPath = config.cloudinary.defaultAvatarPath || config.cloudinary.defaultAvatar;
     // If dotenv didn't expand nested vars, build from env pieces
     if (defaultPath && defaultPath.includes('${')) {
         const folder = process.env.CLOUDINARY_FOLDER;

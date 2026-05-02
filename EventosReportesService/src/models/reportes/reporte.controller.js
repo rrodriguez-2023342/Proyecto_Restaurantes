@@ -1,4 +1,5 @@
 import Reporte from './reporte.model.js';
+import mongoose from 'mongoose';
 import { generateReportePdf } from '../../helpers/reporte-helper.js';
 import { sendReportePdfEmail } from '../../helpers/email-service.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
@@ -27,10 +28,259 @@ const getAdminRestaurantId = async (usuario) => {
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
+const parseDateParam = (dateString) => {
+    if (!dateString) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    }
+    const date = new Date(dateString);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const normalizeStartOfDay = (date) => {
+    const result = new Date(date);
+    result.setHours(0, 0, 0, 0);
+    return result;
+};
+
+const normalizeEndOfDay = (date) => {
+    const result = new Date(date);
+    result.setHours(23, 59, 59, 999);
+    return result;
+};
+
+const buildDateFilter = (startDate, endDate) => {
+    const filter = {};
+    if (startDate) filter.$gte = normalizeStartOfDay(startDate);
+    if (endDate) filter.$lte = normalizeEndOfDay(endDate);
+    return Object.keys(filter).length ? filter : null;
+};
+
 const buildFilename = (reporte) =>
     `reporte-${reporte.tipoReporte.toLowerCase()}-${reporte._id}.pdf`;
 
-// ─── Generadores de data por tipo ────────────────────────────────────────────
+const buildTopPlatosStats = async (pedidoIds) => {
+    if (!pedidoIds || pedidoIds.length === 0) {
+        return [];
+    }
+
+    const detalles = await DetallePedido.find({ pedido: { $in: pedidoIds } })
+        .populate('items.plato', 'nombrePlato tipoPlato')
+        .lean();
+
+    const platoMap = {};
+    detalles.forEach((detalle) => {
+        detalle.items.forEach((item) => {
+            if (!item.plato) return;
+            const id = String(item.plato._id || item.plato);
+            const nombre = item.plato.nombrePlato || 'Plato desconocido';
+            if (!platoMap[id]) {
+                platoMap[id] = { id, nombre, cantidad: 0, ingresos: 0 };
+            }
+            platoMap[id].cantidad += item.cantidad || 0;
+            platoMap[id].ingresos += (item.precio || 0) * (item.cantidad || 0);
+        });
+    });
+
+    const ranking = Object.values(platoMap).sort((a, b) => b.cantidad - a.cantidad);
+    const totalCantidad = ranking.reduce((sum, item) => sum + item.cantidad, 0) || 1;
+
+    return ranking.slice(0, 5).map((item) => ({
+        ...item,
+        ingresos: Number(item.ingresos.toFixed(2)),
+        porcentaje: Number(((item.cantidad / totalCantidad) * 100).toFixed(1)),
+    }));
+};
+
+const buildDashboardStats = async (usuario, startDate, endDate) => {
+    const dateFilter = buildDateFilter(startDate, endDate);
+    const pedidoQuery = {};
+    if (dateFilter) pedidoQuery.createdAt = dateFilter;
+
+    let adminRestaurantId = null;
+    let adminRestaurantName = 'Mi Restaurante';
+
+    if (usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+        adminRestaurantId = await getAdminRestaurantId(usuario);
+        if (!adminRestaurantId) {
+            throw new Error('No tienes un restaurante asignado para ver reportes');
+        }
+        pedidoQuery.restaurante = adminRestaurantId;
+
+        const restaurante = await Restaurante.findById(adminRestaurantId).select('nombre').lean();
+        adminRestaurantName = restaurante?.nombre || adminRestaurantName;
+    }
+
+    const pedidos = await Pedido.find(pedidoQuery)
+        .populate('restaurante', 'nombre')
+        .lean();
+
+    const pedidoIds = pedidos.map((pedido) => pedido._id);
+    const totalPedidos = pedidos.length;
+    const pedidosCompletados = pedidos.filter((pedido) => pedido.estadoPedido === 'Entregado').length;
+    const facturaMatch = { ...(dateFilter ? { createdAt: dateFilter } : {}) };
+    const totalIngresos = await Factura.aggregate([
+        { $match: facturaMatch },
+        { $lookup: {
+            from: 'pedidos',
+            localField: 'pedido',
+            foreignField: '_id',
+            as: 'pedido',
+        } },
+        { $unwind: { path: '$pedido', preserveNullAndEmptyArrays: false } },
+        ...(adminRestaurantId
+            ? [{ $match: { 'pedido.restaurante': new mongoose.Types.ObjectId(adminRestaurantId) } }]
+            : []),
+        { $group: { _id: null, total: { $sum: { $ifNull: ['$total', 0] } }, propinas: { $sum: { $ifNull: ['$propina', 0] } } } },
+    ]);
+
+    const facturaResults = totalIngresos[0] || { total: 0, propinas: 0 };
+    const ingresosTotales = Number((facturaResults.total || 0).toFixed(2));
+    const totalPropinas = Number((facturaResults.propinas || 0).toFixed(2));
+    const divisorTicket = pedidosCompletados || totalPedidos;
+    const ticketPromedio = divisorTicket > 0 ? Number((ingresosTotales / divisorTicket).toFixed(2)) : 0;
+
+    const topPlatos = await buildTopPlatosStats(pedidoIds);
+
+    let ingresosPorRestaurante = [];
+    if (usuario.role === 'ADMIN_ROLE') {
+        const facturas = await Factura.find(facturaMatch)
+            .populate({ path: 'pedido', populate: { path: 'restaurante', select: 'nombre' } })
+            .lean();
+
+        const grouped = facturas.reduce((acc, factura) => {
+            const restaurante = factura.pedido?.restaurante;
+            if (!restaurante) return acc;
+            const restId = String(restaurante._id || restaurante);
+            if (!acc[restId]) {
+                acc[restId] = { restaurante: restaurante.nombre || 'Restaurante', ingresos: 0 };
+            }
+            acc[restId].ingresos += Number(factura.total || 0);
+            return acc;
+        }, {});
+        ingresosPorRestaurante = Object.values(grouped).map((item) => ({
+            restaurante: item.restaurante,
+            ingresos: Number(item.ingresos.toFixed(2)),
+        }));
+    } else {
+        ingresosPorRestaurante = [{
+            restaurante: adminRestaurantName,
+            ingresos: ingresosTotales,
+        }];
+    }
+
+    return {
+        ingresosTotales,
+        pedidosCompletados,
+        ticketPromedio,
+        topPlatos,
+        ingresosPorRestaurante,
+        totalPedidos,
+        totalPropinas,
+        restauranteNombre: usuario.role === 'ADMIN_RESTAURANT_ROLE' ? adminRestaurantName : 'Todos los restaurantes',
+    };
+};
+
+const buildCsvContent = (stats, startDate, endDate) => {
+    const lines = [];
+    lines.push('Metrica,Valor');
+    if (startDate) lines.push(`Fecha inicio,${normalizeStartOfDay(startDate).toISOString().split('T')[0]}`);
+    if (endDate) lines.push(`Fecha fin,${normalizeStartOfDay(endDate).toISOString().split('T')[0]}`);
+    lines.push(`Ingresos Totales,Q ${stats.ingresosTotales.toFixed(2)}`);
+    lines.push(`Pedidos Completados,${stats.pedidosCompletados}`);
+    lines.push(`Ticket Promedio,Q ${stats.ticketPromedio.toFixed(2)}`);
+    lines.push(`Total Pedidos,${stats.totalPedidos}`);
+    lines.push(`Total Propinas,Q ${stats.totalPropinas.toFixed(2)}`);
+    lines.push('');
+    lines.push('Top Platos,Cantidad,Ingresos,Porcentaje');
+    stats.topPlatos.forEach((item) => {
+        lines.push(`${item.nombre},${item.cantidad},Q ${item.ingresos.toFixed(2)},${item.porcentaje}%`);
+    });
+    lines.push('');
+    lines.push('Ingresos por Restaurante,Ingresos');
+    stats.ingresosPorRestaurante.forEach((item) => {
+        lines.push(`${item.restaurante},Q ${item.ingresos.toFixed(2)}`);
+    });
+    return lines.join('\n');
+};
+
+export const getDashboardStats = async (req, res) => {
+    try {
+        const startDate = parseDateParam(req.query.startDate);
+        const endDate = parseDateParam(req.query.endDate);
+
+        const stats = await buildDashboardStats(req.usuario, startDate, endDate);
+        return res.status(200).json({ success: true, data: stats });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Error al obtener las métricas del dashboard',
+            error: error.message,
+        });
+    }
+};
+
+export const exportReportCSV = async (req, res) => {
+    try {
+        const startDate = parseDateParam(req.query.startDate);
+        const endDate = parseDateParam(req.query.endDate);
+        const stats = await buildDashboardStats(req.usuario, startDate, endDate);
+
+        const csvContent = buildCsvContent(stats, startDate, endDate);
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="reporte-dashboard.csv"');
+        return res.send(csvContent);
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Error al exportar el reporte CSV',
+            error: error.message,
+        });
+    }
+};
+
+export const exportReportPDF = async (req, res) => {
+    try {
+        const startDate = parseDateParam(req.query.startDate);
+        const endDate = parseDateParam(req.query.endDate);
+        const stats = await buildDashboardStats(req.usuario, startDate, endDate);
+
+        const reporte = {
+            tipoReporte: 'DASHBOARD',
+            restaurante: { nombre: stats.restauranteNombre || 'Todos los restaurantes' },
+            fechaInicio: startDate,
+            fechaFin: endDate,
+            createdAt: new Date(),
+            generadoPor: {
+                userId: String(req.usuario.id),
+                name: `${req.usuario.name ?? ''} ${req.usuario.surname ?? ''}`.trim(),
+            },
+            data: {
+                ingresosTotales: stats.ingresosTotales,
+                pedidosCompletados: stats.pedidosCompletados,
+                ticketPromedio: stats.ticketPromedio,
+                totalPedidos: stats.totalPedidos,
+                totalPropinas: stats.totalPropinas,
+                topPlatos: stats.topPlatos,
+                ingresosPorRestaurante: stats.ingresosPorRestaurante,
+            },
+        };
+
+        const pdfBuffer = generateReportePdf(reporte);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="reporte-dashboard.pdf"');
+        return res.send(pdfBuffer);
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Error al exportar el reporte PDF',
+            error: error.message,
+        });
+    }
+};
+
+// ─── Dispatcher ──────────────────────────────────────────────────────────────
 
 /**
  * VENTAS
@@ -260,14 +510,16 @@ export const createReporte = async (req, res) => {
         delete data.data; // El data siempre se genera automáticamente
 
         // Validar que fechaInicio sea anterior a fechaFin
-        const fechaInicio = new Date(data.fechaInicio);
-        const fechaFin = new Date(data.fechaFin);
-        if (Number.isNaN(fechaInicio.getTime()) || Number.isNaN(fechaFin.getTime())) {
+        const parsedFechaInicio = parseDateParam(data.fechaInicio);
+        const parsedFechaFin = parseDateParam(data.fechaFin);
+        if (!parsedFechaInicio || !parsedFechaFin) {
             return res.status(400).json({
                 success: false,
                 message: 'Las fechas de inicio y fin deben ser válidas',
             });
         }
+        const fechaInicio = normalizeStartOfDay(parsedFechaInicio);
+        const fechaFin = normalizeEndOfDay(parsedFechaFin);
         if (fechaInicio >= fechaFin) {
             return res.status(400).json({
                 success: false,
@@ -294,11 +546,14 @@ export const createReporte = async (req, res) => {
         };
 
         // Generar data automáticamente según el tipo de reporte
+        data.fechaInicio = fechaInicio;
+        data.fechaFin = fechaFin;
+
         data.data = await generarData(
             data.tipoReporte,
             data.restaurante,
-            new Date(data.fechaInicio),
-            new Date(data.fechaFin)
+            data.fechaInicio,
+            data.fechaFin
         );
 
         const reporte = await new Reporte(data).save();
@@ -418,8 +673,20 @@ export const updateReporte = async (req, res) => {
 
         // No permitir editar campos sensibles: solo fechaInicio y fechaFin
         const updateData = {};
-        if (req.body.fechaInicio != null) updateData.fechaInicio = req.body.fechaInicio;
-        if (req.body.fechaFin != null) updateData.fechaFin = req.body.fechaFin;
+        if (req.body.fechaInicio != null) {
+            const parsedInicio = parseDateParam(req.body.fechaInicio);
+            if (!parsedInicio) {
+                return res.status(400).json({ success: false, message: 'La fecha de inicio debe ser vÃ¡lida' });
+            }
+            updateData.fechaInicio = normalizeStartOfDay(parsedInicio);
+        }
+        if (req.body.fechaFin != null) {
+            const parsedFin = parseDateParam(req.body.fechaFin);
+            if (!parsedFin) {
+                return res.status(400).json({ success: false, message: 'La fecha de fin debe ser vÃ¡lida' });
+            }
+            updateData.fechaFin = normalizeEndOfDay(parsedFin);
+        }
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({
                 success: false,

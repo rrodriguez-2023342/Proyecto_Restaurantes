@@ -126,7 +126,7 @@ export const InvoiceDetail = () => {
                         <div>
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Factura</h2>
                             <p className="text-slate-500 font-medium mt-1">ID: {invoice._id}</p>
-                            <p className="text-slate-500 font-medium mt-1">Fecha: {formatDate(invoice.fechaEmision)}</p>
+                            <p className="text-slate-500 font-medium mt-1">Fecha: {formatDate(invoice.fechaEmision || invoice.createdAt)}</p>
                             <div className="mt-4">
                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                                     invoice.estado === 'PAGADA' ? 'bg-green-100 text-green-700' : 
@@ -138,20 +138,20 @@ export const InvoiceDetail = () => {
                             </div>
                         </div>
                         <div className="text-left md:text-right">
-                            <h3 className="text-lg font-bold text-slate-900">{invoice.restaurante?.nombre || "Kinal Eats"}</h3>
+<h3 className="text-lg font-bold text-slate-900">{invoice.restaurante?.nombre || invoice.pedido?.restaurante?.nombre || "Kinal Eats"}</h3>
                             <p className="text-slate-500 mt-1">{invoice.restaurante?.direccion || "Ciudad"}</p>
-                            <p className="text-slate-500 mt-1 font-medium">Método de pago: {invoice.metodoPago}</p>
+                            <p className="text-slate-500 mt-1 font-medium">Método de pago: {invoice.metodoPago || "No especificado"}</p>
                         </div>
                     </div>
-
+                    
                     <hr className="border-slate-100 mb-8" />
 
                     {/* Client Section */}
                     <div className="mb-12">
                         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Facturado a:</h3>
-                        <p className="text-lg font-bold text-slate-900">{invoice.cliente?.nombre}</p>
+                        <p className="text-lg font-bold text-slate-900">{invoice.cliente?.nombre || invoice.pedido?.usuario?.nombre || invoice.correoCliente || "Cliente"}</p>
                         <p className="text-slate-600">NIT: {invoice.cliente?.nit || "C/F"}</p>
-                        <p className="text-slate-600">{invoice.cliente?.email}</p>
+                        <p className="text-slate-600">{invoice.cliente?.email || invoice.correoCliente || invoice.pedido?.usuario?.email || ""}</p>
                     </div>
 
                     {/* Items Table */}
@@ -183,7 +183,7 @@ export const InvoiceDetail = () => {
                         <div className="w-full md:w-1/2 space-y-3">
                             <div className="flex justify-between text-slate-600">
                                 <span>Subtotal</span>
-                                <span>Q{Number(invoice.subtotal).toFixed(2)}</span>
+                                <span>Q{Number(invoice.subtotal ?? 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-slate-600">
                                 <span>Impuestos</span>
@@ -191,7 +191,7 @@ export const InvoiceDetail = () => {
                             </div>
                             <div className="flex justify-between items-center border-t border-slate-200 pt-3 mt-3">
                                 <span className="text-xl font-bold text-slate-900">Total a Pagar</span>
-                                <span className="text-2xl font-black text-orange-600">Q{Number(invoice.total).toFixed(2)}</span>
+                                <span className="text-2xl font-black text-orange-600">Q{Number(invoice.total ?? invoice.subtotal ?? 0).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

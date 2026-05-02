@@ -2,6 +2,9 @@ import DetallePedido from './detallePedido.model.js';
 import Pedido from '../pedidos/pedido.model.js';
 import Plato from '../platos/plato.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
+import Factura from '../facturas/factura.model.js';
+import { generateFacturaPdf } from '../../helpers/factura-helper.js';
+import { sendFacturaPdfEmail, sendPedidoEmail } from '../../helpers/email-service.js';
 
 const serializeDetallePedido = (detalleDoc) => {
     if (!detalleDoc) return null;
@@ -117,8 +120,47 @@ export const createDetallePedido = async (req, res) => {
         const detalle = new DetallePedido({ pedido, items: itemsConPrecio });
         await detalle.save();
 
+        const existingFactura = await Factura.findOne({ pedido });
+        if (!existingFactura) {
+            const subtotalFactura = parseFloat(
+                itemsConPrecio.reduce((acc, item) => acc + item.precio * item.cantidad, 0).toFixed(2)
+            );
+
+            const pedidoPopulated = await Pedido.findById(pedido).populate('restaurante', 'nombre');
+            const factura = new Factura({
+                pedido,
+                subtotal: subtotalFactura,
+                propina: 0,
+                correoCliente: req.usuario?.email ?? null,
+            });
+            await factura.save();
+
+            const detalleConPlato = await DetallePedido.findById(detalle._id).populate('items.plato', 'nombrePlato');
+            const itemsForPdf = detalleConPlato.items.map((item) => ({
+                nombre: item.plato?.nombrePlato || '',
+                cantidad: item.cantidad,
+                precio: item.precio,
+            }));
+
+            const pdfBuffer = generateFacturaPdf(factura, pedidoPopulated, itemsForPdf);
+            sendFacturaPdfEmail(
+                req.usuario?.email,
+                req.usuario?.name || 'Cliente',
+                pdfBuffer,
+                factura,
+                pedidoPopulated
+            ).catch((err) => console.error('[createDetallePedido] Error al enviar factura por email:', err.message));
+        }
+
         await recalcularTotalPedido(pedido);
-        const pedidoActualizado = await Pedido.findById(pedido);
+        const pedidoActualizado = await Pedido.findById(pedido).populate('restaurante', 'nombre');
+        sendPedidoEmail(
+            req.usuario?.email,
+            req.usuario?.name || 'Cliente',
+            'creado',
+            pedidoActualizado,
+            pedidoActualizado?.restaurante?.nombre ?? 'Restaurante'
+        ).catch((err) => console.error('[createDetallePedido] Error al enviar pedido por email:', err.message));
 
         const { _id, ...detalleData } = detalle.toObject();
 

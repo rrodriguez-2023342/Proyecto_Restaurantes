@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createReporte, getReportes, getReporteById, updateReporte, deleteReporte, generarReporte  } from './reporte.controller.js';
+import { createReporte, getReportes, getReporteById, updateReporte, deleteReporte, generarReporte, getDashboardStats, exportReportCSV, exportReportPDF } from './reporte.controller.js';
 import { 
     validateGenerateReport, 
     validateViewReport,
@@ -13,6 +13,26 @@ router.post(
     '/create',
     validateGenerateReport,
     createReporte
+);
+
+// Dashboard de métricas para reportes
+router.get(
+    '/dashboard',
+    validateViewReport,
+    getDashboardStats
+);
+
+// Exportar reporte de métricas
+router.get(
+    '/export/csv',
+    validateViewReport,
+    exportReportCSV
+);
+
+router.get(
+    '/export/pdf',
+    validateViewReport,
+    exportReportPDF
 );
 
 // Obtener todos los reportes

@@ -2,6 +2,7 @@ import DetallePedido from './detallePedido.model.js';
 import Pedido from '../pedidos/pedido.model.js';
 import Plato from '../platos/plato.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
+import { sendPedidoEmail } from '../../helpers/email-service.js';
 
 const serializeDetallePedido = (detalleDoc) => {
     if (!detalleDoc) return null;
@@ -114,7 +115,14 @@ export const createDetallePedido = async (req, res) => {
         await detalle.save();
 
         await recalcularTotalPedido(pedido);
-        const pedidoActualizado = await Pedido.findById(pedido);
+        const pedidoActualizado = await Pedido.findById(pedido).populate('restaurante', 'nombre');
+        sendPedidoEmail(
+            req.usuario?.email,
+            req.usuario?.name || 'Cliente',
+            'creado',
+            pedidoActualizado,
+            pedidoActualizado?.restaurante?.nombre ?? 'Restaurante'
+        ).catch((err) => console.error('[createDetallePedido] Error al enviar pedido por email:', err.message));
 
         const { _id, ...detalleData } = detalle.toObject();
 

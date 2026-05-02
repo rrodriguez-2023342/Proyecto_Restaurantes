@@ -1,6 +1,7 @@
 import {
     registerUserHelper,
     loginUserHelper,
+    refreshTokenHelper,
     verifyEmailHelper,
     resendVerificationEmailHelper,
     forgotPasswordHelper,
@@ -73,6 +74,23 @@ export const login = asyncHandler(async (req, res) => {
         res.status(statusCode).json({
             success: false,
             message: error.message || 'Error en el login',
+            error: error.message,
+        });
+    }
+});
+
+export const refresh = asyncHandler(async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+        const result = await refreshTokenHelper(refreshToken);
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error in refresh controller:', error);
+
+        res.status(401).json({
+            success: false,
+            message: error.message || 'Error al refrescar la sesion',
             error: error.message,
         });
     }

@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const services = [
   { name: 'AuthService', path: 'AuthService', port: 3006 },
-  { name: 'RestaurantesService', path: 'RestaurantesService', port: 3007 },
+  { name: 'Restaurantes', path: 'Restaurantes', port: 3007 },
   { name: 'PedidosReservacionesService', path: 'PedidosReservacionesService', port: 3008 },
   { name: 'EventosReportesService', path: 'EventosReportesService', port: 3009 },
 ];

@@ -7,6 +7,7 @@ import { PrincipalContainer } from "./PrincipalContainer.jsx";
      { to: "/admin", label: "Dashboard" },
      { to: "/admin/restaurants", label: "Restaurantes" },
      { to: "/admin/menus", label: "Menús" },
+     { to: "/admin/platos", label: "Platos" },
      { to: "/admin/orders", label: "Pedidos" },
      { to: "/admin/detail-orders", label: "Detalles de Pedidos" },
      { to: "/admin/reservaciones", label: "Reservaciones" },
@@ -36,9 +37,9 @@ export const AdminLayout = () => {
     };
 
     return (
-        <PrincipalContainer className="bg-slate-100">
-            <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[260px_1fr]">
-                <aside className="border-r border-slate-200 bg-white/90 backdrop-blur">
+        <PrincipalContainer className="h-screen overflow-hidden bg-slate-100">
+            <div className="grid h-screen min-h-0 grid-cols-1 grid-rows-[auto_1fr] overflow-hidden lg:grid-cols-[260px_1fr] lg:grid-rows-1">
+                <aside className="max-h-[42vh] overflow-y-auto border-b border-slate-200 bg-white/90 backdrop-blur lg:max-h-none lg:border-b-0 lg:border-r">
                     <div className="px-5 py-6">
                         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
                             Kinal Eats
@@ -82,8 +83,8 @@ export const AdminLayout = () => {
                     </div>
                 </aside>
 
-                <section className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
-                    <header className="sticky top-0 z-10 border-b border-slate-200 bg-gradient-to-r from-white via-white to-orange-50/80 backdrop-blur">
+                <section className="flex min-h-0 flex-col overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100">
+                    <header className="shrink-0 border-b border-slate-200 bg-gradient-to-r from-white via-white to-orange-50/80 backdrop-blur">
                         <div className="px-6 py-4 flex flex-col gap-1">
                             <h2 className="text-lg font-semibold text-slate-900">Panel administrativo</h2>
                             <p className="text-sm text-slate-500">
@@ -91,7 +92,7 @@ export const AdminLayout = () => {
                             </p>
                         </div>
                     </header>
-                    <div className="p-6">
+                    <div className="min-h-0 flex-1 overflow-y-auto p-6">
                         <Outlet />
                     </div>
                 </section>

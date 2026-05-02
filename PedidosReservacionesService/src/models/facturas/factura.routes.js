@@ -19,10 +19,10 @@ import { requireRoles } from '../../../middlewares/validate-role.js';
 const router = Router();
 
 router.post('/',         validateCreateFactura,                                          createFactura);
-router.get('/',          validateJWT, requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'), getFacturas);
-router.get('/:id',       validateJWT, requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'), getFacturaById);
+router.get('/',          validateJWT,                                                    getFacturas);
+router.get('/:id',       validateJWT,                                                    getFacturaById);
 router.put('/:id',       validateUpdateFactura,                                          updateFactura);
 router.delete('/:id',    validateDeleteFactura,                                          deleteFactura);
-router.get('/:id/pdf',   validateDescargarFacturaPdf,                                    descargarFacturaPdf);
+router.get('/:id/pdf',   validateJWT, validateDescargarFacturaPdf,                          descargarFacturaPdf);
 
 export default router;

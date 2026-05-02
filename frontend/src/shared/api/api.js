@@ -18,7 +18,7 @@ const axiosAdmin = axios.create({
 })
 
 axiosAuth.interceptors.request.use((config) => {
-    config.axiosClient = "auth";
+    config._axiosClient = "auth";
     const token = useAuthStore.getState().token;
     if( token ) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -27,7 +27,7 @@ axiosAuth.interceptors.request.use((config) => {
 })
 
 axiosAdmin.interceptors.request.use((config) => {
-    config.axiosClient = "admin";
+    config._axiosClient = "admin";
     const token = useAuthStore.getState().token;
     if( token ) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -93,13 +93,14 @@ const handleRefreshToken = async function (_error) {
             const {
                 accessToken,
                 refreshToken: newRefreshToken,
+                expiresAt,
                 expiresIn,
                 userDetails,
             } = response.data;
             useAuthStore.setState({
                 token: accessToken,
                 refreshToken: newRefreshToken,
-                expiresAt: expiresIn,
+                expiresAt: expiresAt || expiresIn,
                 user: userDetails || useAuthStore.getState().user,
                 isAuthenticated: true,
             });

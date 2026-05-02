@@ -42,6 +42,14 @@ export const validateViewReport = [
         .optional()
         .isInt({ min: 1 })
         .withMessage('El límite debe ser un número positivo'),
+    query('startDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Fecha de inicio no válida (formato AAAA-MM-DD)'),
+    query('endDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Fecha de fin no válida (formato AAAA-MM-DD)'),
     checkValidators
 ];
 

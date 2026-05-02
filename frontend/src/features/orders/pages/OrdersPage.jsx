@@ -20,6 +20,13 @@ const ORDER_STATUS_OPTIONS = [
     "Cancelado",
 ];
 
+const getOrderTotal = (order) => Number(order.total ?? order.totalPedido ?? 0);
+const getOrderStatus = (order) => order.estado || order.estadoPedido || "Pendiente";
+const normalizeStatus = (status) => String(status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const isOrderInProcess = (order) => ["pendiente", "en preparacion"].includes(normalizeStatus(getOrderStatus(order)));
+const isOrderDelivered = (order) => normalizeStatus(getOrderStatus(order)) === "entregado";
+const formatCurrency = (value) => `Q${Number(value || 0).toFixed(2)}`;
+
 export const OrdersPage = () => {
     const navigate = useNavigate();
     const {
@@ -199,7 +206,7 @@ export const OrdersPage = () => {
         {
             key: "total",
             header: "Total",
-            render: (row) => `$${(row.total || row.totalPedido || 0).toFixed(2)}`,
+            render: (row) => formatCurrency(getOrderTotal(row)),
         },
         {
             key: "estado",
@@ -271,7 +278,7 @@ export const OrdersPage = () => {
                     <Card>
                         <div className="text-center">
                             <p className="text-3xl font-bold text-amber-600">
-                                {orders.filter((o) => o.estado === "Pendiente" || o.estado === "En preparación").length}
+                                {orders.filter(isOrderInProcess).length}
                             </p>
                             <p className="mt-1 text-xs text-slate-600">En Proceso</p>
                         </div>
@@ -279,7 +286,7 @@ export const OrdersPage = () => {
                     <Card>
                         <div className="text-center">
                             <p className="text-3xl font-bold text-emerald-600">
-                                {orders.filter((o) => o.estado === "Entregado").length}
+                                {orders.filter(isOrderDelivered).length}
                             </p>
                             <p className="mt-1 text-xs text-slate-600">Entregados</p>
                         </div>
@@ -287,7 +294,7 @@ export const OrdersPage = () => {
                     <Card>
                         <div className="text-center">
                             <p className="text-3xl font-bold text-slate-900">
-                                ${orders.reduce((sum, o) => sum + (o.total || o.totalPedido || 0), 0).toFixed(2)}
+                                {formatCurrency(orders.reduce((sum, o) => sum + getOrderTotal(o), 0))}
                             </p>
                             <p className="mt-1 text-xs text-slate-600">Ingresos Totales</p>
                         </div>

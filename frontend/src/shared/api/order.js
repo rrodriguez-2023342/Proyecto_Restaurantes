@@ -4,7 +4,7 @@ const BASE_URL =
     import.meta.env.VITE_PEDIDOS_URL || "http://localhost:3008/restaurantes/v1";
 
 export const getOrders = async (params = {}) => {
-    return axiosAdmin.get("/pedidos", { baseURL: BASE_URL, params });
+    return axiosAdmin.get("/pedidos", { baseURL: BASE_URL, params: { limit: 500, ...params } });
 };
 
 export const getOrderById = async (id) => {

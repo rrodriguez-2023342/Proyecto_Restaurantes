@@ -29,6 +29,47 @@ const approxWidth = (text, fs) => String(text).length * fs * CHAR_W;
 const centerX     = (text, fs) => MARGIN_X + (CONTENT_W - approxWidth(text, fs)) / 2;
 const rightX      = (text, fs) => RIGHT_X - approxWidth(text, fs);
 
+const fitText = (text, maxWidth, fontSize) => {
+    const value = normalizeText(String(text ?? ''));
+    if (approxWidth(value, fontSize) <= maxWidth) return value;
+
+    const maxChars = Math.max(8, Math.floor(maxWidth / (fontSize * CHAR_W)));
+    if (value.length <= maxChars) return value;
+    if (maxChars <= 12) return `${value.slice(0, maxChars - 3)}...`;
+    return `${value.slice(0, Math.ceil((maxChars - 3) / 2))}...${value.slice(-(Math.floor((maxChars - 3) / 2)))}`;
+};
+
+const formatDateOnly = (dateValue) => {
+    if (!dateValue) return '-';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '-';
+
+    const wasParsedAsUtcMidnight =
+        date.getUTCHours() === 0 &&
+        date.getUTCMinutes() === 0 &&
+        date.getUTCSeconds() === 0 &&
+        date.getUTCMilliseconds() === 0;
+
+    const year = wasParsedAsUtcMidnight ? date.getUTCFullYear() : date.getFullYear();
+    const month = (wasParsedAsUtcMidnight ? date.getUTCMonth() : date.getMonth()) + 1;
+    const day = wasParsedAsUtcMidnight ? date.getUTCDate() : date.getDate();
+
+    return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+};
+
+const MONEY_FIELDS = new Set([
+    'ingresosTotales',
+    'totalIngresos',
+    'ticketPromedio',
+    'totalPropinas',
+]);
+
+const formatFieldValue = (field, value) => {
+    if (value === undefined || value === null || value === '') return '-';
+    if (MONEY_FIELDS.has(field)) return `Q ${Number(value || 0).toFixed(2)}`;
+    return normalizeText(String(value));
+};
+
 const opText = (x, y, font, size, text) =>
     `BT /${font} ${size} Tf ${x.toFixed(1)} ${y.toFixed(1)} Td (${escapePdfText(text)}) Tj ET`;
 
@@ -63,6 +104,7 @@ const WHITE   = [1, 1, 1];
 // Constantes de dominio
 
 const TIPO_LABEL = {
+    DASHBOARD:        'Reporte del Panel',
     VENTAS:           'Reporte de Ventas',
     RESERVACIONES:    'Reporte de Reservaciones',
     INVENTARIO:       'Reporte de Inventario',
@@ -70,6 +112,31 @@ const TIPO_LABEL = {
 };
 
 const SECCIONES_REPORTE = {
+    DASHBOARD: [
+        {
+            titulo: 'a. Métricas principales',
+            campos: [
+                { key: 'Ingresos totales (Q)',    field: 'ingresosTotales' },
+                { key: 'Total de pedidos',        field: 'totalPedidos' },
+                { key: 'Pedidos completados',     field: 'pedidosCompletados' },
+                { key: 'Ticket promedio (Q)',     field: 'ticketPromedio' },
+                { key: 'Total propinas (Q)',      field: 'totalPropinas' },
+            ],
+        },
+        {
+            titulo: 'b. Platos más vendidos',
+            list: 'topPlatos',
+        },
+        {
+            titulo: 'c. Ingresos por restaurante',
+            list: 'ingresosPorRestaurante',
+        },
+        {
+            titulo: 'd. Exportación',
+            campos: [],
+            nota: 'Reporte exportado en formato PDF. Para Excel utilice el endpoint /excel.',
+        },
+    ],
 
     VENTAS: [
         {
@@ -227,9 +294,11 @@ const buildPages = (commands) => {
             case 'keyvalue': {
                 const h = 16;
                 need(h);
+                const key = fitText(cmd.key, CONTENT_W * 0.46, 8.5);
+                const value = fitText(cmd.value, CONTENT_W * 0.48, 8.5);
                 if (cmd.zebra) ops.push(...opRect(MARGIN_X - 4, y - h + 4, CONTENT_W + 8, h, ...GREY_L));
-                ops.push(opText(MARGIN_X + 4,           y - 2, 'F1', 8.5, cmd.key));
-                ops.push(opText(rightX(cmd.value, 8.5), y - 2, 'F1', 8.5, cmd.value));
+                ops.push(opText(MARGIN_X + 4,       y - 2, 'F1', 8.5, key));
+                ops.push(opText(rightX(value, 8.5), y - 2, 'F1', 8.5, value));
                 drop(h);
                 break;
             }
@@ -237,9 +306,11 @@ const buildPages = (commands) => {
             case 'dataRow': {
                 const h = 16;
                 need(h);
+                const key = fitText(cmd.key, CONTENT_W * 0.48, 8.5);
+                const value = fitText(cmd.value, CONTENT_W * 0.48, 8.5);
                 if (cmd.index % 2 === 0) ops.push(...opRect(MARGIN_X - 4, y - h + 4, CONTENT_W + 8, h, ...GREY_L));
-                ops.push(opText(MARGIN_X + 4,           y - 2, 'F1', 8.5, cmd.key));
-                ops.push(opText(rightX(cmd.value, 8.5), y - 2, 'F1', 8.5, String(cmd.value)));
+                ops.push(opText(MARGIN_X + 4,       y - 2, 'F1', 8.5, key));
+                ops.push(opText(rightX(value, 8.5), y - 2, 'F1', 8.5, value));
                 drop(h);
                 break;
             }
@@ -383,14 +454,40 @@ const buildDataCommands = (tipoReporte, data) => {
         if (seccion.nota) {
             // Sección c: solo nota de exportación
             commands.push({ type: 'text', text: normalizeText(seccion.nota) });
+        } else if (seccion.list) {
+            const items = Array.isArray(data?.[seccion.list]) ? data[seccion.list] : [];
+            if (items.length === 0) {
+                commands.push({ type: 'text', text: 'Sin datos.' });
+            } else {
+                items.forEach((item, i) => {
+                    let key   = '';
+                    let value = '';
+
+                    if (seccion.list === 'topPlatos') {
+                        key   = `${item.nombre || 'Plato'} (${item.porcentaje != null ? item.porcentaje + '%' : '0%'})`;
+                        value = `Vendidos: ${item.cantidad ?? 0} | Ingresos: Q ${Number(item.ingresos ?? 0).toFixed(2)}`;
+                    } else if (seccion.list === 'ingresosPorRestaurante') {
+                        key   = item.restaurante || 'Restaurante';
+                        value = `Q ${Number(item.ingresos ?? 0).toFixed(2)}`;
+                    } else {
+                        key   = normalizeText(item.nombre ?? String(i + 1));
+                        value = normalizeText(JSON.stringify(item));
+                    }
+
+                    commands.push({
+                        type:  'dataRow',
+                        key:   normalizeText(key),
+                        value: normalizeText(value),
+                        index: i,
+                    });
+                });
+            }
         } else if (seccion.campos.length === 0) {
             commands.push({ type: 'text', text: 'Sin datos.' });
         } else {
             seccion.campos.forEach((campo, i) => {
                 const rawValue = data?.[campo.field];
-                const value    = rawValue !== undefined && rawValue !== null
-                    ? normalizeText(String(rawValue))
-                    : '—';
+                const value = formatFieldValue(campo.field, rawValue);
                 commands.push({
                     type:  'dataRow',
                     key:   normalizeText(campo.key),
@@ -407,12 +504,11 @@ const buildDataCommands = (tipoReporte, data) => {
 // Export público 
 
 export const generateReportePdf = (reporte) => {
-    const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-GT') : '—';
     const titulo  = normalizeText(TIPO_LABEL[reporte.tipoReporte] ?? reporte.tipoReporte);
 
     const restauranteNombre = normalizeText(reporte.restaurante?.nombre ?? 'Restaurante');
-    const generadoPorName   = normalizeText(reporte.generadoPor?.name ?? reporte.generadoPor?.userId ?? '—');
-    const generadoPorId     = reporte.generadoPor?.userId ?? '—';
+    const generadoPorName   = normalizeText(reporte.generadoPor?.name ?? reporte.generadoPor?.userId ?? '-');
+    const generadoPorId     = fitText(reporte.generadoPor?.userId ?? '-', CONTENT_W * 0.48, 8.5);
 
     const commands = [
         // Encabezado 
@@ -427,11 +523,11 @@ export const generateReportePdf = (reporte) => {
         { type: 'sectionHeader', text: 'Informacion del reporte' },
         { type: 'keyvalue', key: 'Restaurante',      value: restauranteNombre,              zebra: false },
         { type: 'keyvalue', key: 'Tipo de reporte',  value: titulo,                         zebra: true  },
-        { type: 'keyvalue', key: 'Fecha de inicio',  value: fmtDate(reporte.fechaInicio),   zebra: false },
-        { type: 'keyvalue', key: 'Fecha de fin',     value: fmtDate(reporte.fechaFin),      zebra: true  },
+        { type: 'keyvalue', key: 'Fecha de inicio',  value: formatDateOnly(reporte.fechaInicio),   zebra: false },
+        { type: 'keyvalue', key: 'Fecha de fin',     value: formatDateOnly(reporte.fechaFin),      zebra: true  },
         { type: 'keyvalue', key: 'Generado por ID',  value: generadoPorId,                  zebra: false },
         { type: 'keyvalue', key: 'Generado por',     value: generadoPorName,                zebra: true  },
-        { type: 'keyvalue', key: 'Fecha generacion', value: fmtDate(reporte.createdAt),     zebra: false },
+        { type: 'keyvalue', key: 'Fecha generacion', value: formatDateOnly(reporte.createdAt),     zebra: false },
         { type: 'spacer', h: 6 },
 
         // Datos del reporte (secciones a, b, c)

@@ -22,6 +22,7 @@ export const TablesPage = () => {
     const [editing, setEditing] = useState(null);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
+        numeroMesa: "",
         capacidad: "",
         disponibilidad: true,
     });
@@ -40,11 +41,18 @@ export const TablesPage = () => {
         setEditing(table);
         if (table) {
             setFormData({
+                numeroMesa: table.numeroMesa || "",
                 capacidad: table.capacidad,
                 disponibilidad: table.disponibilidad,
             });
         } else {
+            const nextTableNumber =
+                restaurantTables.length > 0
+                    ? Math.max(...restaurantTables.map((t) => Number(t.numeroMesa) || 0)) + 1
+                    : 1;
+
             setFormData({
+                numeroMesa: nextTableNumber,
                 capacidad: "",
                 disponibilidad: true,
             });
@@ -56,6 +64,7 @@ export const TablesPage = () => {
         setOpenModal(false);
         setEditing(null);
         setFormData({
+            numeroMesa: "",
             capacidad: "",
             disponibilidad: true,
         });
@@ -64,6 +73,10 @@ export const TablesPage = () => {
     const handleSubmit = async () => {
         if (!selectedRestaurant) {
             showError("Selecciona un restaurante");
+            return;
+        }
+        if (!editing && (!formData.numeroMesa || formData.numeroMesa < 1)) {
+            showError("El numero de mesa debe ser al menos 1");
             return;
         }
         if (!formData.capacidad || formData.capacidad < 1) {
@@ -87,12 +100,15 @@ export const TablesPage = () => {
                 await updateTable(editing._id || editing.id, payload);
                 showSuccess("Mesa actualizada exitosamente");
             } else {
-                await createTable(payload);
+                await createTable({
+                    ...payload,
+                    numeroMesa: parseInt(formData.numeroMesa),
+                });
                 showSuccess("Mesa creada exitosamente");
             }
             handleCloseModal();
         } catch (err) {
-            showError(err.message || "Error al procesar la mesa");
+            showError(err.response?.data?.message || err.message || "Error al procesar la mesa");
         } finally {
             setSaving(false);
         }
@@ -246,6 +262,22 @@ export const TablesPage = () => {
                 </DialogHeader>
                 <DialogBody>
                     <div className="space-y-4">
+                        {!editing && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Numero de Mesa
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.numeroMesa}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, numeroMesa: e.target.value })
+                                    }
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                />
+                            </div>
+                        )}
                         {editing && (
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">

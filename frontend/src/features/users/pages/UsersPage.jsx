@@ -25,7 +25,9 @@ export const UsersPage = () => {
     const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
-        fetchUsers().catch(() => showError("No se pudieron cargar los usuarios"));
+        fetchUsers().catch((err) =>
+            showError(err.response?.data?.message || "No se pudieron cargar los usuarios")
+        );
     }, [fetchUsers]);
 
     const filteredUsers = useMemo(() => {
@@ -52,13 +54,6 @@ export const UsersPage = () => {
         return filteredUsers.slice(start, start + PAGE_SIZE);
     }, [filteredUsers, currentPage]);
 
-    const stats = useMemo(() => {
-        const total = users.length;
-        const admins = users.filter((user) => user.role === "ADMIN_ROLE").length;
-        const clients = users.filter((user) => user.role === "USER_ROLE").length;
-        return { total, admins, clients };
-    }, [users]);
-
     const handleCreate = async (payload) => {
         try {
             await storeCreate(payload);
@@ -75,7 +70,7 @@ export const UsersPage = () => {
             await storeUpdateRole(user.id || user._id, newRole);
             showSuccess("Rol actualizado correctamente");
             setSelectedUser(null);
-        } catch (err) {
+        } catch {
             showError("No se pudo actualizar el rol");
         }
     };
@@ -102,7 +97,7 @@ export const UsersPage = () => {
         try {
             await storeDelete(userId);
             showSuccess("Usuario eliminado");
-        } catch (err) {
+        } catch {
             showError("No se pudo eliminar el usuario");
         }
     };

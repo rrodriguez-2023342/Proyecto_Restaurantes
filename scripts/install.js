@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const services = [
   { name: 'AuthService', path: 'AuthService' },
-  { name: 'RestaurantesService', path: 'RestaurantesService' },
+  { name: 'Restaurantes', path: 'Restaurantes' },
   { name: 'PedidosReservacionesService', path: 'PedidosReservacionesService' },
   { name: 'EventosReportesService', path: 'EventosReportesService' },
 ];

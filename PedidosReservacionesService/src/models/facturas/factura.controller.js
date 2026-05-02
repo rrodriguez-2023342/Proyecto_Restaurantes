@@ -68,8 +68,12 @@ export const getFacturas = async (req, res) => {
                 });
             }
 
-            const pedidosDelRestaurante = await Pedido.find({ restaurante: adminRestaurantId }).select('_id');
+            const pedidosDelRestaurante = await Pedido.find({ restaurante: adminRestaurantId }).select('_id').lean();
             const pedidoIds = pedidosDelRestaurante.map(p => p._id);
+            query.pedido = { $in: pedidoIds };
+        } else if (req.usuario.role === 'USER_ROLE') {
+            const pedidosDelUsuario = await Pedido.find({ usuario: String(req.usuario.id) }).select('_id').lean();
+            const pedidoIds = pedidosDelUsuario.map(p => p._id);
             query.pedido = { $in: pedidoIds };
         }
 
@@ -111,6 +115,25 @@ export const getFacturaById = async (req, res) => {
                 success: false,
                 message: 'Factura no encontrada',
             });
+        }
+
+        if (req.usuario.role === 'USER_ROLE') {
+            if (String(factura.pedido?.usuario) !== String(req.usuario.id)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para ver esta factura',
+                });
+            }
+        }
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(factura.pedido?.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para ver esta factura',
+                });
+            }
         }
 
         res.status(200).json({
@@ -213,14 +236,23 @@ export const descargarFacturaPdf = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const factura = await Factura.findById(id);
+        const factura = await Factura.findById(id).populate('pedido');
         if (!factura) {
             return res.status(404).json({ success: false, message: 'Factura no encontrada' });
         }
 
-        const pedido = await Pedido.findById(factura.pedido).populate('restaurante', 'nombre');
+        const pedido = await Pedido.findById(factura.pedido._id || factura.pedido).populate('restaurante', 'nombre');
         if (!pedido) {
             return res.status(404).json({ success: false, message: 'Pedido asociado no encontrado' });
+        }
+
+        if (req.usuario.role === 'USER_ROLE') {
+            if (String(pedido.usuario) !== String(req.usuario.id)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para descargar el PDF de esta factura',
+                });
+            }
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {

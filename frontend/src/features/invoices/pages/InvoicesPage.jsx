@@ -22,11 +22,7 @@ export const InvoicesPage = () => {
             setLoading(true);
             const res = await getInvoices();
             const data = res.data?.data || res.data || [];
-            if (data.length > 0) {
-                setInvoices(data);
-            } else {
-                setInvoices(demoInvoices);
-            }
+            setInvoices(data);
         } catch {
             console.debug("Invoices API not available, using demo data");
             setInvoices(demoInvoices);
@@ -39,10 +35,13 @@ export const InvoicesPage = () => {
         fetchInvoices();
     }, []);
 
-    const filteredInvoices = invoices.filter(inv => 
-        inv._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (inv.cliente?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredInvoices = invoices.filter(inv => {
+        const clienteNombre = inv.cliente?.nombre || inv.pedido?.usuario?.nombre || inv.correoCliente || "";
+        return (
+            String(inv._id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            clienteNombre.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    });
 
     const getStatusBadge = (status) => {
         switch (status?.toUpperCase()) {
@@ -58,8 +57,9 @@ export const InvoicesPage = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        return new Date(dateString).toLocaleDateString("es-GT", {
+        const date = dateString ? new Date(dateString) : null;
+        if (!date || Number.isNaN(date.getTime())) return "N/A";
+        return date.toLocaleDateString("es-GT", {
             year: "numeric",
             month: "short",
             day: "numeric",
@@ -135,15 +135,15 @@ export const InvoicesPage = () => {
                                             {invoice._id.substring(0, 8)}...
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                            {formatDate(invoice.fechaEmision)}
+                                            {formatDate(invoice.fechaEmision || invoice.createdAt)}
                                         </td>
                                         {isAdmin && (
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
-                                                {invoice.cliente?.nombre || "N/A"}
+                                                {invoice.cliente?.nombre || invoice.pedido?.usuario?.nombre || invoice.correoCliente || "N/A"}
                                             </td>
                                         )}
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                                            Q{Number(invoice.total).toFixed(2)}
+                                            Q{Number(invoice.total ?? invoice.totalPedido ?? invoice.subtotal ?? 0).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {getStatusBadge(invoice.estado)}
