@@ -2,7 +2,7 @@ export const FormField = ({ label, error, hint, children, className = "" }) => {
     return (
         <label className={`block ${className}`}>
             {label && (
-                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-widest text-slate-700">
                     {label}
                 </span>
             )}

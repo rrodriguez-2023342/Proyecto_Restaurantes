@@ -14,6 +14,7 @@ import eventoRoutes from '../src/models/eventos/evento.routes.js';
 import reporteRoutes from '../src/models/reportes/reporte.routes.js';
 
 const BASE_PATH = '/restaurantes/v1';
+const LEGACY_BASE_PATH = '/eventos/v1';
 const SERVICE_NAME = 'EventosReportesService';
 
 const middlewares = (app) => {
@@ -27,19 +28,26 @@ const middlewares = (app) => {
 const routes = (app) => {
     app.use(`${BASE_PATH}/eventos`, eventoRoutes);
     app.use(`${BASE_PATH}/reportes`, reporteRoutes);
+    app.use(`${LEGACY_BASE_PATH}/eventos`, eventoRoutes);
+    app.use(`${LEGACY_BASE_PATH}/reportes`, reporteRoutes);
 
-    app.get(`${BASE_PATH}/Health`, (request, response) => {
+    const healthHandler = (request, response) => {
         response.status(200).json({
             status: 'Healthy',
             timestamp: new Date().toISOString(),
             service: SERVICE_NAME
         });
-    });
+    };
+
+    app.get(`${BASE_PATH}/Health`, healthHandler);
+    app.get(`${BASE_PATH}/health`, healthHandler);
+    app.get(`${LEGACY_BASE_PATH}/Health`, healthHandler);
+    app.get(`${LEGACY_BASE_PATH}/health`, healthHandler);
 
     app.use((req, res) => {
         res.status(404).json({
             success: false,
-            message: 'Enpoint no encontrado'
+            message: 'Endpoint no encontrado'
         });
     });
 };
@@ -47,7 +55,7 @@ const routes = (app) => {
 export const initServer = async () => {
     const app = express();
     const PORT = process.env.PORT;
-    app.set('trus proxy', 1);
+    app.set('trust proxy', 1);
 
     try {
         await dbConnection();

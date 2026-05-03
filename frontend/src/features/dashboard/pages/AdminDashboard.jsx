@@ -1,54 +1,70 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card } from "../../../shared/components";
-import { getMenus, getRestaurants, getReviews } from "../../../shared/api";
+import { Card, DataTable } from "../../../shared/components";
+import { getMenus, getOrders, getRestaurants, getReviews, getUsers } from "../../../shared/api";
+import { adminTheme } from "../../../constants/theme";
+import { OrderStatus } from "../../orders/components/OrderStatus.jsx";
 
-const quickLinks = [
-    { label: "Restaurantes", to: "/admin/restaurants", description: "Gestion completa" },
-    { label: "Menús", to: "/admin/menus", description: "Menús y platos" },
-    { label: "Reseñas", to: "/admin/reviews", description: "Control de feedback" },
-    { label: "Pedidos", to: "/admin/orders", description: "Flujo de pedidos" },
-    { label: "Reservas", to: "/admin/reservations", description: "Agenda y mesas" },
-    { label: "Facturas", to: "/admin/invoices", description: "Pagos y reportes" },
-    { label: "Reportes", to: "/admin/reports", description: "Métricas del negocio" },
-];
+const getItems = (res, key) => {
+    const data = res?.value?.data || res?.data || {};
+    if (Array.isArray(data)) return data;
+    return data?.data || data?.[key] || data?.items || [];
+};
+
+const getCount = (res, key) => {
+    const data = res?.value?.data || {};
+    if (data?.total !== undefined) return data.total;
+    if (data?.pagination?.totalItems !== undefined) return data.pagination.totalItems;
+    return getItems(res, key).length || 0;
+};
+
+const formatCurrency = (value) => `Q${Number(value || 0).toLocaleString("es-GT", { minimumFractionDigits: 2 })}`;
+
+const StatIcon = ({ path }) => (
+    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={path} />
+        </svg>
+    </span>
+);
 
 export const AdminDashboard = () => {
     const [stats, setStats] = useState({
-        restaurants: null,
-        menus: null,
-        reviews: null,
+        orders: 0,
+        restaurants: 0,
+        users: 0,
+        revenue: 0,
+        menus: 0,
+        reviews: 0,
     });
+    const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const [restaurantsRes, menusRes, reviewsRes] = await Promise.allSettled([
+            const [restaurantsRes, menusRes, reviewsRes, ordersRes, usersRes] = await Promise.allSettled([
                 getRestaurants({ isActive: true }),
                 getMenus({ isActive: true }),
                 getReviews(),
+                getOrders(),
+                getUsers(),
             ]);
 
-            const getCount = (res, key) => {
-                if (res.status === 'fulfilled') {
-                    const data = res.value.data;
-                    if (data?.total !== undefined) return data.total;
-                    if (data?.pagination?.totalItems !== undefined) return data.pagination.totalItems;
-                    const arr = data?.data || data?.[key] || data || [];
-                    return arr.length || 0;
-                }
-                return 0;
-            };
+            const orders = ordersRes.status === "fulfilled" ? getItems(ordersRes, "pedidos") : [];
+            const users = usersRes.status === "fulfilled" ? getItems(usersRes, "users") : [];
 
             setStats({
-                restaurants: getCount(restaurantsRes, 'restaurantes'),
-                menus: getCount(menusRes, 'menus'),
-                reviews: getCount(reviewsRes, 'resenas'),
+                orders: getCount(ordersRes, "pedidos"),
+                restaurants: getCount(restaurantsRes, "restaurantes"),
+                users: users.length || getCount(usersRes, "users"),
+                revenue: orders.reduce((sum, order) => sum + Number(order.total ?? order.totalPedido ?? 0), 0),
+                menus: getCount(menusRes, "menus"),
+                reviews: getCount(reviewsRes, "resenas"),
             });
+            setRecentOrders(orders.slice(0, 6));
         } catch (err) {
             console.error(err);
-            setStats({ restaurants: null, menus: null, reviews: null });
         } finally {
             setLoading(false);
         }
@@ -59,81 +75,91 @@ export const AdminDashboard = () => {
         fetchStats();
     }, []);
 
-    const statCards = [
+    const statCards = useMemo(() => [
+        { label: "Total pedidos", value: stats.orders, icon: "M9 5h6m-8 4h10m-11 4h12m-9 4h6M5 3h14v18H5z" },
+        { label: "Restaurantes", value: stats.restaurants, icon: "M4 10h16M6 10v10h12V10M8 10V7a4 4 0 0 1 8 0v3" },
+        { label: "Usuarios", value: stats.users, icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
+        { label: "Ingresos", value: formatCurrency(stats.revenue), icon: "M12 8c-2.5 0-4 1.2-4 3s1.5 3 4 3 4 1.2 4 3-1.5 3-4 3m0-12V5m0 16v-3" },
+    ], [stats]);
+
+    const columns = [
         {
-            label: "Restaurantes activos",
-            value: stats.restaurants,
-            helper: "Se actualiza cuando crees restaurantes.",
+            key: "numeroPedido",
+            header: "Pedido",
+            render: (row) => `#${row.numeroPedido || row._id?.slice(-6) || row.id?.slice(-6) || "N/A"}`,
         },
         {
-            label: "Menús publicados",
-            value: stats.menus,
-            helper: "Se actualiza cuando agregues menús.",
+            key: "cliente",
+            header: "Cliente",
+            render: (row) => row.usuario?.nombre || row.usuario?.id || row.cliente || "N/A",
         },
         {
-            label: "Reseñas recientes",
-            value: stats.reviews,
-            helper: "Se actualiza cuando entren nuevas reseñas.",
+            key: "restaurante",
+            header: "Restaurante",
+            render: (row) => row.restaurante?.nombre || row.restaurante?.id || row.restaurante || "N/A",
+        },
+        {
+            key: "estado",
+            header: "Estado",
+            render: (row) => <OrderStatus status={row.estado || row.estadoPedido || "Pendiente"} />,
+        },
+        {
+            key: "total",
+            header: "Total",
+            render: (row) => formatCurrency(row.total ?? row.totalPedido),
         },
     ];
+
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-8">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Bienvenido al Panel Admin</h1>
-                        <p className="mt-2 text-slate-600">
-                            Controla restaurantes, menús, reseñas y la operación completa de tu plataforma.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={fetchStats}
-                        className="w-fit rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2 text-white font-medium hover:shadow-lg transition-shadow"
-                    >
-                        🔄 Actualizar datos
-                    </button>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 className={adminTheme.pageTitle}>Dashboard</h2>
+                    <p className="mt-1 text-sm text-slate-600">Resumen operativo de pedidos, restaurantes y ventas.</p>
                 </div>
+                <button type="button" onClick={fetchStats} className={adminTheme.primaryButton}>
+                    {loading ? "Actualizando..." : "Actualizar datos"}
+                </button>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {statCards.map((item) => (
-                    <div
-                        key={item.label}
-                        className="rounded-2xl border border-orange-100 bg-white p-6 shadow-sm hover:shadow-md transition"
-                    >
-                        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                            {item.label}
-                        </p>
-                        <p className="mt-3 text-4xl font-bold text-orange-600">
-                            {loading ? "⟳" : item.value ?? "0"}
-                        </p>
-                        <p className="mt-2 text-sm text-slate-600">{item.helper}</p>
-                    </div>
+                    <Card key={item.label}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-sm text-slate-500">{item.label}</p>
+                                <p className="mt-2 text-2xl font-bold text-slate-900">{loading ? "..." : item.value}</p>
+                            </div>
+                            <StatIcon path={item.icon} />
+                        </div>
+                    </Card>
                 ))}
             </div>
 
-            {/* Quick Access */}
-            <div className="rounded-2xl border border-slate-100 bg-white p-6">
-                <h3 className="mb-4 text-lg font-semibold text-slate-900">Accesos Rápidos</h3>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {quickLinks.map((item) => (
-                        <Link
-                            key={item.to}
-                            to={item.to}
-                            className="group rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 hover:border-orange-300 hover:shadow-md transition"
-                        >
-                            <p className="font-semibold text-slate-900 group-hover:text-orange-600 transition">
-                                {item.label}
-                            </p>
-                            <p className="mt-1 text-sm text-slate-600">{item.description}</p>
-                            <p className="mt-2 text-xs font-semibold text-orange-600">Abrir →</p>
-                        </Link>
-                    ))}
-                </div>
+            <div className="grid gap-4 md:grid-cols-3">
+                {[
+                    ["Menus publicados", stats.menus, "/admin/menus"],
+                    ["Resenas recientes", stats.reviews, "/admin/reviews"],
+                    ["Reportes", "Ver metricas", "/admin/reports"],
+                ].map(([label, value, to]) => (
+                    <Link key={label} to={to} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40">
+                        <p className="text-sm font-semibold text-slate-900">{label}</p>
+                        <p className="mt-2 text-sm text-slate-500">{value}</p>
+                    </Link>
+                ))}
             </div>
+
+            <Card title="Pedidos recientes">
+                {loading ? (
+                    <div className="space-y-3">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-200" />
+                        ))}
+                    </div>
+                ) : (
+                    <DataTable columns={columns} rows={recentOrders} rowKey="_id" emptyLabel="No hay pedidos recientes" />
+                )}
+            </Card>
         </div>
     );
 };

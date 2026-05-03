@@ -1,15 +1,17 @@
-export const Card = ({ title, action, children, footer, className = "", accent = true }) => {
+import { adminTheme } from "../../constants/theme";
+
+export const Card = ({ title, action, children, footer, className = "", accent = false }) => {
     return (
         <div
-            className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
+            className={`relative overflow-hidden ${adminTheme.card} ${className}`}
         >
             {accent && (
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-400 via-orange-500 to-amber-300" />
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-500 to-orange-600" />
             )}
             {(title || action) && (
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                     {title ? (
-                        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+                        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
                     ) : (
                         <span />
                     )}

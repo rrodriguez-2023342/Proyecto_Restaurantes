@@ -31,8 +31,8 @@ const services = [
     path: 'EventosReportesService',
     port: 3009,
     color: '\x1b[33m',
-    healthUrl: 'http://localhost:3009/eventos/v1/Health',
-    docsUrl: 'http://localhost:3009/eventos/v1/api-docs',
+    healthUrl: 'http://localhost:3009/restaurantes/v1/Health',
+    docsUrl: 'http://localhost:3009/restaurantes/v1/api-docs',
   },
 ];
 
