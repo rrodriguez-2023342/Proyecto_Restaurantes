@@ -43,6 +43,7 @@ router.get(
 // Actualizar: Solo ADMIN_ROLE y ADMIN_RESTAURANT_ROLE
 router.put(
     '/:id',
+    uploadPlatoImage.single('fotosPlato'),
     validateUpdatePlato,
     editarPlato
 );

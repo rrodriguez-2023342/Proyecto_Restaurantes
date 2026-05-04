@@ -32,8 +32,11 @@ export const validateCreateMenu = [
         .withMessage('La descripcion debe tener entre 10 y 500 caracteres'),
     body('isActive')
         .optional()
-        .isBoolean()
-        .withMessage('isActive debe ser un valor booleano'),
+        .custom(value => {
+            if (typeof value === 'boolean') return true;
+            if (typeof value === 'string' && ['true', 'false'].includes(value)) return true;
+            throw new Error('isActive debe ser true o false');
+        }),
     checkValidators,
 ];
 
@@ -62,8 +65,11 @@ export const validateUpdateMenu = [
         .withMessage('La descripcion debe tener entre 10 y 500 caracteres'),
     body('isActive')
         .optional()
-        .isBoolean()
-        .withMessage('isActive debe ser un valor booleano'),
+        .custom(value => {
+            if (typeof value === 'boolean') return true;
+            if (typeof value === 'string' && ['true', 'false'].includes(value)) return true;
+            throw new Error('isActive debe ser true o false');
+        }),
     checkValidators,
 ];
 

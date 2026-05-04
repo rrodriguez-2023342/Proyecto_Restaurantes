@@ -86,6 +86,11 @@ export const createPlato = async (req, res) => {
             platoData.fotosPlato = req.file.path;
         }
 
+        // Normalizar disponible si viene como string (desde multipart/form-data)
+        if (typeof platoData.disponible === 'string') {
+            platoData.disponible = platoData.disponible === 'true';
+        }
+
         const plato = new Plato(platoData);
         await plato.save();
 
@@ -178,6 +183,11 @@ export const editarPlato = async (req, res) => {
             if (!ownershipNuevoMenu.valid) {
                 return res.status(ownershipNuevoMenu.status).json({ success: false, message: ownershipNuevoMenu.message });
             }
+        }
+
+        // Normalizar disponible si viene como string
+        if (typeof platoData.disponible === 'string') {
+            platoData.disponible = platoData.disponible === 'true';
         }
 
         const platoUpdated = await Plato.findByIdAndUpdate(id, platoData, { new: true, runValidators: true });

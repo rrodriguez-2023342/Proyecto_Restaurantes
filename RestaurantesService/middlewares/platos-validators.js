@@ -8,7 +8,7 @@ import { attachRestaurant } from './attach-restaurante.js';
 
 // Validaciones para CREAR platos (Solo Admins)
 export const validateCreatePlato = [
-    validateJWT, 
+    validateJWT,
     attachRestaurant,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     body('menu')
@@ -17,13 +17,17 @@ export const validateCreatePlato = [
         .isMongoId()
         .withMessage('ID de menú no válido'),
     body('nombrePlato')
+        .trim()
         .notEmpty()
         .withMessage('El nombre del plato es obligatorio')
-        .isLength({ max: 100 })
-        .withMessage('El nombre no puede exceder los 100 caracteres'),
+        .isLength({ min: 2, max: 100 })
+        .withMessage('El nombre debe tener entre 2 y 100 caracteres'),
     body('descripcionPlato')
+        .trim()
         .notEmpty()
-        .withMessage('La descripción es obligatoria'),
+        .withMessage('La descripción es obligatoria')
+        .isLength({ min: 10, max: 500 })
+        .withMessage('La descripción debe tener entre 10 y 500 caracteres'),
     body('precio')
         .notEmpty()
         .withMessage('El precio es obligatorio')
@@ -34,6 +38,13 @@ export const validateCreatePlato = [
         .withMessage('El tipo de plato es obligatorio')
         .isIn(['ENTRADA', 'PLATO_FUERTE', 'POSTRE', 'BEBIDA'])
         .withMessage('Tipo de plato no válido'),
+    body('disponible')
+        .optional()
+        .custom(value => {
+            if (typeof value === 'boolean') return true;
+            if (typeof value === 'string' && ['true', 'false'].includes(value)) return true;
+            throw new Error('disponible debe ser true o false');
+        }),
     checkValidators
 ];
 
@@ -45,9 +56,31 @@ export const validateUpdatePlato = [
     param('id')
         .isMongoId()
         .withMessage('ID de plato no válido'),
-    body('nombrePlato').optional().notEmpty(),
-    body('precio').optional().isFloat({ min: 0 }),
-    body('disponible').optional().isBoolean(),
+    body('nombrePlato')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('El nombre debe tener entre 2 y 100 caracteres'),
+    body('descripcionPlato')
+        .optional()
+        .trim()
+        .isLength({ min: 10, max: 500 })
+        .withMessage('La descripción debe tener entre 10 y 500 caracteres'),
+    body('precio')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('El precio debe ser un número mayor o igual a 0'),
+    body('tipoPlato')
+        .optional()
+        .isIn(['ENTRADA', 'PLATO_FUERTE', 'POSTRE', 'BEBIDA'])
+        .withMessage('Tipo de plato no válido'),
+    body('disponible')
+        .optional()
+        .custom(value => {
+            if (typeof value === 'boolean') return true;
+            if (typeof value === 'string' && ['true', 'false'].includes(value)) return true;
+            throw new Error('disponible debe ser true o false');
+        }),
     checkValidators
 ];
 
