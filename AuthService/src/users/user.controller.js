@@ -210,19 +210,22 @@ export const createUser = [
     }),
 ];
 
-// update user - solo admin
+// update user - admin puede editar cualquiera; cada usuario puede editar su propio perfil
 export const updateUser = [
     validateJWT,
     asyncHandler(async (req, res) => {
-        const auth = await ensureAdmin(req);
-        if (!auth.allowed) {
-            return res.status(403).json({ success: false, message: auth.reason });
-        }
-
         const { userId } = req.params;
         const { name, surname, phone, roleName } = req.body;
+        const isOwnProfile = userId === req.userId;
 
-        if (!name && !surname && !phone && !roleName) {
+        if (!isOwnProfile) {
+            const auth = await ensureAdmin(req);
+            if (!auth.allowed) {
+                return res.status(403).json({ success: false, message: auth.reason });
+            }
+        }
+
+        if (!name && !surname && !phone && !roleName && !req.file) {
             return res.status(400).json({
                 success: false,
                 message: 'Debes proporcionar al menos un campo para actualizar',
@@ -235,7 +238,7 @@ export const updateUser = [
         }
 
         // Si viene un rol y no es el suyo propio, actualizarlo
-        if (roleName && userId !== req.userId) {
+        if (roleName && !isOwnProfile) {
             const normalized = roleName.trim().toUpperCase();
             if (ALLOWED_ROLES.includes(normalized)) {
                 await setUserSingleRole(user, normalized, sequelize);

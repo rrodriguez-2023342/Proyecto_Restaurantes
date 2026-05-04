@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo1.png";
 import { useAuthStore } from "../../features/auth/store/authStore";
-import { Avatar } from "../../shared/components";
+import { UserProfileDropdown } from "../../shared/components";
 import { PrincipalContainer } from "./PrincipalContainer.jsx";
 
 const Icon = ({ path }) => (
@@ -42,7 +42,6 @@ const linkClass = ({ isActive }) => {
 };
 
 export const AdminLayout = () => {
-    const user = useAuthStore((state) => state.user);
     const logout = useAuthStore((state) => state.logout);
     const navigate = useNavigate();
     const { pathname } = useLocation();
@@ -94,19 +93,7 @@ export const AdminLayout = () => {
                     </nav>
 
                     <div className="border-t border-slate-100 p-4">
-                        <div className="flex items-center gap-3">
-                            <Avatar
-                                src={user?.profilePicture}
-                                name={user?.name || user?.username || "Administrador"}
-                                size={40}
-                            />
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-slate-900">
-                                    {user?.name || user?.username || "Administrador"}
-                                </p>
-                                <p className="truncate text-xs text-slate-500">{user?.role || "ADMIN_ROLE"}</p>
-                            </div>
-                        </div>
+                        <UserProfileDropdown align="left" placement="up" />
                         <button
                             type="button"
                             onClick={handleLogout}
@@ -128,11 +115,7 @@ export const AdminLayout = () => {
                                 <button className="hidden rounded-xl border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 sm:inline-flex" title="Notificaciones">
                                     <Icon path="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0" />
                                 </button>
-                                <Avatar
-                                    src={user?.profilePicture}
-                                    name={user?.name || user?.username || "Administrador"}
-                                    size={36}
-                                />
+                                <UserProfileDropdown compact />
                             </div>
                         </div>
                     </header>

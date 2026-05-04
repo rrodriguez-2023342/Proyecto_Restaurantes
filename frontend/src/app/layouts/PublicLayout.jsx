@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/store/authStore";
-import { Avatar } from "../../shared/components";
+import { UserProfileDropdown } from "../../shared/components";
 import { PrincipalContainer } from "./PrincipalContainer.jsx";
 
  const navItems = [
@@ -18,7 +18,6 @@ const linkClass = ({ isActive }) => {
 };
 
 export const PublicLayout = () => {
-    const user = useAuthStore((state) => state.user);
     const logout = useAuthStore((state) => state.logout);
     const navigate = useNavigate();
 
@@ -48,14 +47,7 @@ export const PublicLayout = () => {
                         ))}
                     </nav>
                     <div className="flex items-center gap-3">
-                        <Avatar
-                            src={user?.profilePicture}
-                            name={user?.name || user?.username || "Usuario"}
-                            size={36}
-                        />
-                        <span className="text-sm text-slate-600">
-                            {user?.name || user?.username || "Usuario"}
-                        </span>
+                        <UserProfileDropdown />
                         <button
                             type="button"
                             onClick={handleLogout}

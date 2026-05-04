@@ -4,7 +4,8 @@ import {
     login as loginRequest,
     register as registerRequest,
     forgotPassword as forgotPasswordRequest,
-    resetPassword as resetPasswordRequest
+    resetPassword as resetPasswordRequest,
+    updateUser as updateUserRequest,
 } from "../../../shared/api"
 
 export const useAuthStore = create(
@@ -99,6 +100,38 @@ export const useAuthStore = create(
                     }
                 } catch (err) {
                     const message = err.response?.data?.message || "Error al cambiar la contraseña";
+                    set({ error: message, loading: false });
+                    return { success: false, error: message };
+                }
+            },
+
+            updateProfile: async (payload) => {
+                const currentUser = get().user;
+                const userId = currentUser?.id || currentUser?._id;
+
+                if (!userId) {
+                    const message = "No se encontro el usuario autenticado";
+                    set({ error: message });
+                    return { success: false, error: message };
+                }
+
+                try {
+                    set({ loading: true, error: null });
+                    const { data } = await updateUserRequest(userId, payload);
+                    const updatedUser = data?.data || data?.user || data;
+
+                    set({
+                        user: {
+                            ...currentUser,
+                            ...(updatedUser || {}),
+                        },
+                        loading: false,
+                        error: null,
+                    });
+
+                    return { success: true, user: updatedUser };
+                } catch (err) {
+                    const message = err.response?.data?.message || "Error al actualizar perfil";
                     set({ error: message, loading: false });
                     return { success: false, error: message };
                 }
