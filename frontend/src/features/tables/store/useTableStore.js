@@ -46,6 +46,7 @@ export const useTableStore = create((set, get) => ({
             const tables = getTableList(data);
             const restaurantTables = tables.filter((table) => {
                 const restaurant = table.restaurante?._id || table.restaurante || table.restaurant;
+                if (!restaurant) return true;
                 return restaurant?.toString() === restaurantId?.toString();
             });
             set({ restaurantTables, loading: false });

@@ -89,6 +89,7 @@ export const AppRoutes = () => {
                 <Route path="/home" element={<UserHome />} />
                 <Route path="/home/restaurants" element={<UserHome />} />
                 <Route path="/home/restaurants/:id" element={<RestaurantDetail />} />
+                <Route path="/home/restaurants/:restaurantId/reservar" element={<CreateReservationPage />} />
                 <Route path="/home/reviews" element={<ReviewsPage />} />
                 <Route path="/home/orders" element={<UserOrdersPage />} />
                 <Route path="/reservaciones" element={<ReservationsPage />} />

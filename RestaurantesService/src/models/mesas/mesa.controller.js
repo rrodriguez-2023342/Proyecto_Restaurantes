@@ -48,7 +48,7 @@ export const getMesas = async (req, res) => {
         const { page = 1, limit = 10, restaurante } = req.query;
         let query = { disponibilidad: true };
 
-        if (req.usuario.role === 'ADMIN_ROLE' && restaurante) {
+        if ((req.usuario.role === 'ADMIN_ROLE' || req.usuario.role === 'USER_ROLE') && restaurante) {
             query.restaurante = restaurante;
         }
 

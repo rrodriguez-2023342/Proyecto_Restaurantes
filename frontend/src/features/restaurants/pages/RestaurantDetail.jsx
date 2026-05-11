@@ -1,13 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { getRestaurantById, getMenus, getPlatos, getReviews } from "../../../shared/api";
-import { Card, EmptyState } from "../../../shared/components";
+import { EmptyState } from "../../../shared/components";
 import { showError } from "../../../shared/utils/toast";
 import { useCartStore } from "../../orders/store/useCartStore";
 import toast from "react-hot-toast";
 
 export const RestaurantDetail = () => {
     const { id } = useParams();
+    const location = useLocation();
     const [restaurant, setRestaurant] = useState(null);
     const [menus, setMenus] = useState([]);
     const [platos, setPlatos] = useState([]);
@@ -16,6 +17,7 @@ export const RestaurantDetail = () => {
     const [activeMenuId, setActiveMenuId] = useState(null);
     
     const addItem = useCartStore((state) => state.addItem);
+    const isUserView = location.pathname.startsWith("/home/");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -64,7 +66,7 @@ export const RestaurantDetail = () => {
         try {
             const { data } = await getPlatos(menuId);
             setPlatos(data?.data || data?.platos || data || []);
-        } catch (err) {
+        } catch {
             showError("No se pudieron cargar los platos de este menú");
         }
     };
@@ -141,7 +143,15 @@ export const RestaurantDetail = () => {
                                     {restaurant?.descripcion || "Una experiencia culinaria única diseñada para los paladares más exigentes."}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-4 border-t border-white/10 pt-4 md:border-none md:pt-0">
+                            <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-4 md:justify-end md:border-none md:pt-0">
+                                {isUserView && (
+                                    <Link
+                                        to={`/home/restaurants/${id}/reservar`}
+                                        className="rounded-2xl bg-orange-500 px-5 py-3 text-xs font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-orange-900/20 transition hover:bg-orange-400 active:scale-95"
+                                    >
+                                        Reservar mesa
+                                    </Link>
+                                )}
                                 <div className="text-center md:text-right">
                                     <div className="flex items-center gap-1 justify-center md:justify-end">
                                         <span className="text-xl md:text-2xl font-black text-orange-400">4.9</span>

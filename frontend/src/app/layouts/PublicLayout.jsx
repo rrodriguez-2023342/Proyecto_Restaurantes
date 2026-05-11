@@ -11,6 +11,8 @@ import logo from "../../assets/images/logo1.png";
      { to: "/home", label: "Inicio" },
      { to: "/home/restaurants", label: "Restaurantes" },
      { to: "/home/reviews", label: "Reseñas" },
+     { to: "/home/orders", label: "Pedidos" },
+     { to: "/reservaciones", label: "Reservaciones" },
      { to: "/home/invoices", label: "Facturas" },
  ];
 

@@ -63,6 +63,6 @@ export const validateViewMesa = validateDeleteMesa;
 export const validateListMesas = [
     validateJWT,
     attachRestaurant,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     checkValidators
 ];
