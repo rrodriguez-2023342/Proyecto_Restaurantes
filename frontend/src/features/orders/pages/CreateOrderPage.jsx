@@ -14,6 +14,7 @@ export const CreateOrderPage = () => {
     const { createOrder } = useOrderStore();
     const { createDetailOrder } = useDetailOrderStore();
     const [restaurants, setRestaurants] = useState([]);
+    const [menus, setMenus] = useState([]);
     const [platos, setPlatos] = useState([]);
     const [selectedRestaurant, setSelectedRestaurant] = useState("");
     const [saving, setSaving] = useState(false);
@@ -57,55 +58,55 @@ export const CreateOrderPage = () => {
     }, [watchItems]);
 
     useEffect(() => {
-        const loadData = async () => {
+        const loadRestaurants = async () => {
             try {
                 setLoadingData(true);
-                const [restRes, menusRes] = await Promise.all([
-                    getRestaurants(),
-                    getMenus({ limit: 1000, isActive: true }),
-                ]);
-
-                const restData = restRes?.data?.data || restRes?.data?.restaurantes || restRes?.data || [];
-                const menuData = menusRes?.data?.data || menusRes?.data?.menus || menusRes?.data || [];
-                const platoData = Array.isArray(menuData)
-                    ? menuData.flatMap((menu) =>
-                        (menu?.platos || []).map((plato) => ({
-                            ...plato,
-                            restauranteId:
-                                menu?.restaurante?._id ||
-                                menu?.restaurante?.id ||
-                                menu?.restaurante ||
-                                plato?.restaurante?._id ||
-                                plato?.restaurante?.id ||
-                                plato?.restaurante ||
-                                "",
-                            menu: {
-                                ...(typeof plato?.menu === "object" ? plato.menu : {}),
-                                _id: plato?.menu?._id || plato?.menu || menu?._id || menu?.id,
-                                restaurante:
-                                    plato?.menu?.restaurante ||
-                                    menu?.restaurante,
-                            },
-                        }))
-                    )
-                    : [];
-                
+                const { data } = await getRestaurants();
+                const restData = data?.data || data?.restaurantes || data || [];
                 setRestaurants(Array.isArray(restData) ? restData : []);
-                setPlatos(platoData);
-
                 if (!restData || restData.length === 0) {
                     showError("No hay restaurantes disponibles");
                 }
             } catch (err) {
-                const errorMsg = err.response?.data?.message || err.message || "Error al cargar datos";
-                showError(errorMsg);
-                console.error("Error cargando datos:", err);
+                showError("Error al cargar restaurantes");
             } finally {
                 setLoadingData(false);
             }
         };
-        loadData();
+        loadRestaurants();
     }, []);
+
+    useEffect(() => {
+        if (!selectedRestaurant) {
+            setMenus([]);
+            setPlatos([]);
+            return;
+        }
+
+        const loadMenusAndPlatos = async () => {
+            try {
+                setLoadingData(true);
+                const { data } = await getMenus({ 
+                    restaurante: selectedRestaurant, 
+                    limit: 1000, 
+                    isActive: true 
+                });
+                const loadedMenus = data?.data || data?.menus || data || [];
+                setMenus(loadedMenus);
+                
+                // Extraer todos los platos de todos los menús del restaurante
+                const allPlatos = Array.isArray(loadedMenus)
+                    ? loadedMenus.flatMap(m => (m.platos || []).map(p => ({ ...p, menuId: m._id || m.id })))
+                    : [];
+                setPlatos(allPlatos);
+            } catch (err) {
+                showError("No se pudieron cargar los datos del restaurante");
+            } finally {
+                setLoadingData(false);
+            }
+        };
+        loadMenusAndPlatos();
+    }, [selectedRestaurant]);
 
     const handleAddItem = () => {
         if (!selectedRestaurant) {
@@ -113,6 +114,7 @@ export const CreateOrderPage = () => {
             return;
         }
         append({
+            menu: "",
             plato: "",
             cantidad: 1,
             precioUnitario: 0,
@@ -121,17 +123,19 @@ export const CreateOrderPage = () => {
 
     const handleUpdateItem = (index, plato) => {
         const selected = platos.find((p) => (p._id || p.id) === plato);
+        const currentItem = watchItems[index];
         update(index, {
+            ...currentItem,
             plato,
-            cantidad: watchItems[index]?.cantidad || 1,
             precioUnitario: selected?.precio || 0,
         });
     };
 
     const handleUpdateQuantity = (index, quantity) => {
         if (quantity < 1) return;
+        const currentItem = watchItems[index];
         update(index, {
-            ...itemFields[index],
+            ...currentItem,
             cantidad: quantity,
         });
     };
@@ -148,12 +152,17 @@ export const CreateOrderPage = () => {
             // Crear pedido
             const orderPayload = {
                 restaurante: values.restaurante,
+                cliente: values.cliente,
+                email: values.email || "",
+                telefono: values.telefono || "",
+                direccionEntrega: values.direccionEntrega,
+                notas: values.notas || "",
                 tipoPedido: "Domicilio",
                 estadoPedido: "Pendiente",
             };
 
             const newOrder = await createOrder(orderPayload);
-            const orderId = newOrder._id || newOrder.id;
+            const orderId = newOrder._id || newOrder.id || newOrder.data?._id;
 
             const detailPayload = {
                 pedido: orderId,
@@ -181,21 +190,21 @@ export const CreateOrderPage = () => {
         : [];
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6">
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
             <div className="mx-auto max-w-5xl space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">
+                        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                             Crear Nuevo Pedido
                         </h1>
-                        <p className="mt-1 text-slate-600">
+                        <p className="mt-1 text-sm text-slate-600 sm:text-base">
                             Completa el formulario para crear un pedido
                         </p>
                     </div>
                     <button
                         onClick={() => navigate("/admin/orders")}
-                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                        className="w-full sm:w-auto rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                     >
                         ← Volver
                     </button>
@@ -251,7 +260,7 @@ export const CreateOrderPage = () => {
                                         />
                                     </FormField>
 
-                                    <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="grid gap-4 sm:grid-cols-2">
                                         <FormField
                                             label="Email"
                                             error={errors.email?.message}
@@ -314,11 +323,40 @@ export const CreateOrderPage = () => {
                                     {itemFields.map((field, index) => (
                                         <div
                                             key={field.id}
-                                            className="rounded-lg bg-slate-50 p-4 border border-slate-200 space-y-3"
+                                            className="rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-4"
                                         >
-                                            <div className="flex items-end gap-3">
-                                                <div className="flex-1">
-                                                    <label className="text-xs font-semibold text-slate-600 uppercase">
+                                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
+                                                <div className="sm:col-span-1 lg:col-span-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                        Menú
+                                                    </label>
+                                                    <select
+                                                        {...register(`items.${index}.menu`, {
+                                                            required: "Selecciona un menú",
+                                                        })}
+                                                        onChange={(e) => {
+                                                            const menuId = e.target.value;
+                                                            update(index, {
+                                                                ...watchItems[index],
+                                                                menu: menuId,
+                                                                plato: "",
+                                                                precioUnitario: 0
+                                                            });
+                                                        }}
+                                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-400 focus:outline-none mt-1"
+                                                        disabled={!selectedRestaurant}
+                                                    >
+                                                        <option value="">Selecciona un menú</option>
+                                                        {menus.map((m) => (
+                                                            <option key={m._id || m.id} value={m._id || m.id}>
+                                                                {m.nombreMenu || m.nombre}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                <div className="sm:col-span-1 lg:col-span-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                                         Plato
                                                     </label>
                                                     <select
@@ -329,54 +367,55 @@ export const CreateOrderPage = () => {
                                                             handleUpdateItem(index, e.target.value)
                                                         }
                                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-400 focus:outline-none mt-1"
-                                                        disabled={!selectedRestaurant}
+                                                        disabled={!watchItems[index]?.menu}
                                                     >
                                                         <option value="">
-                                                            Selecciona un plato
+                                                            {watchItems[index]?.menu ? "Selecciona un plato" : "Primero elige un menú"}
                                                         </option>
-                                                        {restaurantPlatos.map((plato) => (
-                                                            <option
-                                                                key={plato._id || plato.id}
-                                                                value={
-                                                                    plato._id || plato.id
-                                                                }
-                                                            >
-                                                                {plato.nombrePlato} - $
-                                                                {plato.precio?.toFixed(
-                                                                    2
-                                                                )}
-                                                            </option>
-                                                        ))}
+                                                        {platos
+                                                            .filter(p => p.menuId === watchItems[index]?.menu)
+                                                            .map((plato) => (
+                                                                <option
+                                                                    key={plato._id || plato.id}
+                                                                    value={plato._id || plato.id}
+                                                                >
+                                                                    {plato.nombrePlato} - Q{plato.precio?.toFixed(2)}
+                                                                </option>
+                                                            ))}
                                                     </select>
                                                 </div>
 
-                                                <div className="w-24">
-                                                    <label className="text-xs font-semibold text-slate-600 uppercase">
-                                                        Cantidad
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        min={1}
-                                                        {...register(`items.${index}.cantidad`, {
-                                                            min: 1,
-                                                        })}
-                                                        onChange={(e) =>
-                                                            handleUpdateQuantity(
-                                                                index,
-                                                                parseInt(e.target.value)
-                                                            )
-                                                        }
-                                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-400 focus:outline-none mt-1"
-                                                    />
+                                                <div className="flex items-end gap-2 lg:col-span-1">
+                                                    <div className="flex-1">
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                            Cant.
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            {...register(`items.${index}.cantidad`, {
+                                                                min: 1,
+                                                            })}
+                                                            onChange={(e) =>
+                                                                handleUpdateQuantity(
+                                                                    index,
+                                                                    parseInt(e.target.value)
+                                                                )
+                                                            }
+                                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-400 focus:outline-none mt-1"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => remove(index)}
+                                                        className="rounded-lg bg-rose-50 p-2.5 text-rose-600 hover:bg-rose-100 transition"
+                                                        title="Eliminar artículo"
+                                                    >
+                                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => remove(index)}
-                                                    className="rounded-lg bg-rose-100 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-200 transition"
-                                                >
-                                                    Eliminar
-                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -384,13 +423,13 @@ export const CreateOrderPage = () => {
                                     <button
                                         type="button"
                                         onClick={handleAddItem}
-                                        disabled={!selectedRestaurant || restaurantPlatos.length === 0}
-                                        className="w-full rounded-lg border-2 border-dashed border-orange-400 bg-orange-50 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-100 transition disabled:opacity-50 disabled:border-slate-300 disabled:bg-slate-50 disabled:text-slate-400"
+                                        disabled={!selectedRestaurant || (platos.length === 0 && !loadingData)}
+                                        className="w-full rounded-xl border-2 border-dashed border-orange-400 bg-orange-50/50 py-4 text-sm font-bold text-orange-600 hover:bg-orange-100/50 transition disabled:opacity-50 disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                                     >
-                                        + Agregar Artículo
+                                        + Agregar Artículo al Pedido
                                     </button>
-                                    {selectedRestaurant && restaurantPlatos.length === 0 && (
-                                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                                    {selectedRestaurant && platos.length === 0 && !loadingData && (
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                                             No hay platos registrados para este restaurante.
                                         </div>
                                     )}
@@ -400,41 +439,43 @@ export const CreateOrderPage = () => {
 
                         {/* Carrito/Resumen */}
                         <div className="space-y-6">
-                            <Cart
-                                items={itemFields.map((field, index) => ({
-                                    ...field,
-                                    nombrePlato:
-                                        platos.find(
-                                            (plato) =>
-                                                (plato._id || plato.id) === watchItems[index]?.plato
-                                        )?.nombrePlato || "",
-                                    precioUnitario: watchItems[index]?.precioUnitario,
-                                    cantidad: watchItems[index]?.cantidad,
-                                    subtotal:
-                                        watchItems[index]?.cantidad *
-                                        watchItems[index]?.precioUnitario,
-                                }))}
-                                subtotal={subtotal}
-                                tax={tax}
-                                total={total}
-                                isEditable={false}
-                            />
+                            <div className="sticky top-6">
+                                <Cart
+                                    items={itemFields.map((field, index) => ({
+                                        ...field,
+                                        nombrePlato:
+                                            platos.find(
+                                                (plato) =>
+                                                    (plato._id || plato.id) === watchItems[index]?.plato
+                                            )?.nombrePlato || "",
+                                        precioUnitario: watchItems[index]?.precioUnitario,
+                                        cantidad: watchItems[index]?.cantidad,
+                                        subtotal:
+                                            watchItems[index]?.cantidad *
+                                            watchItems[index]?.precioUnitario,
+                                    }))}
+                                    subtotal={subtotal}
+                                    tax={tax}
+                                    total={total}
+                                    isEditable={false}
+                                />
 
-                            <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => navigate("/admin/orders")}
-                                    className="flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-orange-400 hover:to-orange-500 transition disabled:opacity-50"
-                                >
-                                    {saving ? "Creando..." : "Crear Pedido"}
-                                </button>
+                                <div className="mt-6 flex flex-col gap-3">
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 py-4 text-sm font-bold text-white shadow-lg shadow-orange-100 hover:shadow-orange-200 transition disabled:opacity-50"
+                                    >
+                                        {saving ? "Procesando..." : "Finalizar y Crear Pedido"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate("/admin/orders")}
+                                        className="w-full rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-600 hover:bg-slate-50 transition"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

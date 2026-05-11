@@ -44,10 +44,18 @@ const recalcularPrecioPromedio = async (menuId) => {
 
 // ─── Helpers internos ─────────────────────────────────────────────────────────
 const getRestauranteFromUser = async (usuario) => {
-    if (!usuario || usuario.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return null;
     if (usuario.restaurante) return usuario.restaurante;
 
-    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    const userId = usuario.id;
+    // Buscar por string (exacto)
+    let restaurante = await Restaurante.findOne({ dueño: String(userId) }).select('_id').lean();
+    
+    // Si no lo encuentra y el ID parece un número, intentar buscar por número
+    if (!restaurante && !isNaN(Number(userId))) {
+        restaurante = await Restaurante.findOne({ dueño: Number(userId) }).select('_id').lean();
+    }
+
     return restaurante?._id || null;
 };
 
@@ -162,6 +170,10 @@ export const editarPlato = async (req, res) => {
     try {
         const { id } = req.params;
         const platoData = { ...req.body };
+
+        if (req.file && req.file.path) {
+            platoData.fotosPlato = req.file.path;
+        }
 
         const platoExistente = await Plato.findById(id).populate('menu', 'restaurante');
         if (!platoExistente) {

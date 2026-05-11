@@ -43,16 +43,22 @@ export const InvoicesPage = () => {
         );
     });
 
-    const getStatusBadge = (status) => {
-        switch (status?.toUpperCase()) {
+    const getStatusBadge = (statusObj) => {
+        const status = (statusObj?.estado || statusObj?.pedido?.estadoPedido || "PENDIENTE").toUpperCase();
+        
+        switch (status) {
+            case "ENTREGADO":
             case "PAGADA":
-                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Pagada</span>;
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{status}</span>;
             case "PENDIENTE":
-                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pendiente</span>;
+            case "EN PREPARACIÓN":
+            case "LISTO PARA ENTREGA":
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">{status}</span>;
+            case "CANCELADO":
             case "ANULADA":
-                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Anulada</span>;
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{status}</span>;
             default:
-                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">{status || "Desconocido"}</span>;
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">{status}</span>;
         }
     };
 
@@ -146,7 +152,7 @@ export const InvoicesPage = () => {
                                             Q{Number(invoice.total ?? invoice.totalPedido ?? invoice.subtotal ?? 0).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            {getStatusBadge(invoice.estado)}
+                                            {getStatusBadge(invoice)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <Link 

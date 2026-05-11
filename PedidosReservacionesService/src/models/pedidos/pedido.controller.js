@@ -1,6 +1,10 @@
+import mongoose from 'mongoose';
 import Pedido from './pedido.model.js';
 import DetallePedido from '../detallePedidos/detallePedido.model.js';
+import Factura from '../facturas/factura.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
+import Plato from '../platos/plato.model.js';
+import Inventario from '../inventario/inventario.model.js';
 import { sendPedidoEmail } from '../../helpers/email-service.js';
 
 const notificar = (email, name, accion, pedido, restaurante) => {
@@ -9,24 +13,130 @@ const notificar = (email, name, accion, pedido, restaurante) => {
 };
 
 const getAdminRestaurantId = async (usuario) => {
-    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return null;
     if (usuario.restaurante) return String(usuario.restaurante);
 
-    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    const userId = usuario.id;
+    // Intentar buscar por string
+    let restaurante = await Restaurante.findOne({ dueño: String(userId) }).select('_id').lean();
+    
+    // Si no, intentar por número si aplica
+    if (!restaurante && !isNaN(Number(userId))) {
+        restaurante = await Restaurante.findOne({ dueño: Number(userId) }).select('_id').lean();
+    }
+    
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
 export const createPedido = async (req, res) => {
     try {
-        const data = req.body;
-        data.usuario     = String(req.usuario.id || req.usuario._id);
-        data.totalPedido = 0;
+        const { restaurante, items, direccionEntrega, notas, tipoPedido, cliente, email, telefono, metodoPago } = req.body;
+        const usuarioId = String(req.usuario.id || req.usuario._id);
 
-        const pedido = new Pedido(data);
-        await pedido.save();
+        if (!items || items.length === 0) {
+            return res.status(400).json({ success: false, message: 'El pedido debe tener al menos un item' });
+        }
 
-        res.status(201).json({ success: true, message: 'Pedido creado exitosamente', data: pedido });
+        // 1. Calcular total y preparar items del detalle
+        let total = 0;
+        const formattedItems = items.map(item => {
+            const precio = Number(item.precio || item.precioUnitario || 0);
+            const cantidad = Number(item.cantidad || 1);
+            total += precio * cantidad;
+            return {
+                plato: item.plato || item.id,
+                cantidad: cantidad,
+                precio: precio
+            };
+        });
+
+        // 2. Crear el Pedido
+        const nuevoPedido = new Pedido({
+            restaurante,
+            usuario: usuarioId,
+            tipoPedido: tipoPedido || 'Domicilio',
+            cliente: cliente || req.usuario.name || 'Cliente',
+            email: email || req.usuario.email || '',
+            telefono: telefono || '',
+            direccionEntrega: direccionEntrega || 'Dirección no especificada',
+            notas: notas || '',
+            totalPedido: total
+        });
+
+        const pedidoGuardado = await nuevoPedido.save();
+
+        // 3. Crear el DetallePedido
+        const nuevoDetalle = new DetallePedido({
+            pedido: pedidoGuardado._id,
+            items: formattedItems
+        });
+
+        await nuevoDetalle.save();
+
+        // 4. Crear la Factura automáticamente
+        const nuevaFactura = new Factura({
+            pedido: pedidoGuardado._id,
+            subtotal: total,
+            propina: 0,
+            correoCliente: email || req.usuario.email || null,
+            metodoPago: metodoPago || null
+        });
+        await nuevaFactura.save();
+
+        // 5. Restar inventario automáticamente
+        try {
+            for (const item of formattedItems) {
+                // Leemos directamente desde la colección de MongoDB para evitar que Mongoose borre los datos en modo estricto
+                const rawPlato = await Plato.collection.findOne({ _id: new mongoose.Types.ObjectId(item.plato) });
+                
+                if (rawPlato && rawPlato.ingredientes) {
+                    let ingredientesList = rawPlato.ingredientes;
+                    
+                    // Si viene como un string (texto gigante) lo convertimos a array real
+                    if (typeof ingredientesList === 'string') {
+                        try {
+                            ingredientesList = JSON.parse(ingredientesList);
+                        } catch (e) {
+                            ingredientesList = [];
+                        }
+                    }
+
+                    if (Array.isArray(ingredientesList)) {
+                        for (const ing of ingredientesList) {
+                            // Extraemos el ID ya sea que venga como objeto populado o texto
+                            const itemId = ing.itemInventario?._id || ing.itemInventario;
+                            
+                            if (itemId) {
+                                const inventarioItem = await Inventario.findById(itemId);
+                                if (inventarioItem) {
+                                    inventarioItem.cantidad -= (Number(ing.cantidad) * Number(item.cantidad));
+                                    if (inventarioItem.cantidad < 0) inventarioItem.cantidad = 0; // Evitar negativos
+                                    await inventarioItem.save();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (invError) {
+            console.error('[createPedido] Error al restar inventario:', invError.message);
+        }
+
+        // 6. Notificar
+        try {
+            const rest = await Restaurante.findById(restaurante).select('nombre').lean();
+            notificar(req.usuario.email, req.usuario.name, 'creado', pedidoGuardado, rest?.nombre || 'Restaurante');
+        } catch (mailErr) {
+            console.error('[createPedido] Error en notificación:', mailErr.message);
+        }
+
+        res.status(201).json({ 
+            success: true, 
+            message: 'Pedido creado exitosamente', 
+            data: pedidoGuardado 
+        });
     } catch (error) {
+        console.error('[createPedido] Error:', error);
         res.status(400).json({ success: false, message: 'Error al crear el pedido', error: error.message });
     }
 };

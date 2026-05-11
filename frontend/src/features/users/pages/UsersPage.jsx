@@ -126,41 +126,48 @@ export const UsersPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className={adminTheme.pageTitle}>Usuarios</h2>
-                    <p className="mt-1 text-sm text-slate-600">Administra usuarios, revisa su informacion y cambia roles.</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">Gestión de Usuarios</h2>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-500">Administra usuarios, revisa su información y cambia roles.</p>
                 </div>
-                <button type="button" onClick={() => setOpenCreate(true)} className={adminTheme.primaryButton}>
-                    Agregar usuario
+                <button 
+                    type="button" 
+                    onClick={() => setOpenCreate(true)} 
+                    className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm"
+                >
+                    + Agregar usuario
                 </button>
             </div>
 
-            <Card title="Filtros">
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-center">
-                    <input
-                        value={search}
-                        onChange={(event) => {
-                            setSearch(event.target.value);
-                            setPage(1);
-                        }}
-                        placeholder="Buscar por nombre, usuario o email"
-                        className={adminTheme.input}
-                    />
-                    <select
-                        value={roleFilter}
-                        onChange={(event) => {
-                            setRoleFilter(event.target.value);
-                            setPage(1);
-                        }}
-                        className={adminTheme.select}
-                    >
-                        <option value="ALL">Todos los roles</option>
-                        <option value="ADMIN_ROLE">ADMIN_ROLE</option>
-                        <option value="ADMIN_RESTAURANT_ROLE">ADMIN_RESTAURANT_ROLE</option>
-                        <option value="USER_ROLE">USER_ROLE</option>
-                    </select>
-                    <p className="text-sm text-slate-500">Total: {filteredUsers.length}</p>
+            <Card title="Búsqueda y Filtros">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex-1">
+                        <input
+                            value={search}
+                            onChange={(event) => {
+                                setSearch(event.target.value);
+                                setPage(1);
+                            }}
+                            placeholder="Nombre, usuario o email..."
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
+                        />
+                    </div>
+                    <div className="w-full sm:w-64">
+                        <select
+                            value={roleFilter}
+                            onChange={(event) => {
+                                setRoleFilter(event.target.value);
+                                setPage(1);
+                            }}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
+                        >
+                            <option value="ALL">Todos los roles</option>
+                            <option value="ADMIN_ROLE">Super Admin</option>
+                            <option value="ADMIN_RESTAURANT_ROLE">Admin Restaurante</option>
+                            <option value="USER_ROLE">Usuario Cliente</option>
+                        </select>
+                    </div>
                 </div>
             </Card>
 
@@ -176,16 +183,26 @@ export const UsersPage = () => {
                 <EmptyState title="No hay usuarios" description="Crea el primer usuario desde el boton superior." />
             )}
 
-            <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
                     Mostrando {paginatedUsers.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0} -
                     {(currentPage - 1) * PAGE_SIZE + paginatedUsers.length} de {filteredUsers.length}
                 </span>
-                <div className="flex gap-2">
-                    <button type="button" onClick={() => setPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className={adminTheme.neutralButton}>
+                <div className="flex w-full sm:w-auto gap-2">
+                    <button 
+                        type="button" 
+                        onClick={() => setPage((prev) => Math.max(1, prev - 1))} 
+                        disabled={currentPage === 1} 
+                        className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
                         Anterior
                     </button>
-                    <button type="button" onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className={adminTheme.neutralButton}>
+                    <button 
+                        type="button" 
+                        onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} 
+                        disabled={currentPage === totalPages} 
+                        className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
                         Siguiente
                     </button>
                 </div>

@@ -7,8 +7,7 @@ export const validateCreatePedido = [
     validateJWT,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     body('restaurante')
-        .notEmpty().withMessage('El ID del restaurante es requerido')
-        .isMongoId().withMessage('El ID del restaurante debe ser válido'),
+        .notEmpty().withMessage('El ID del restaurante es requerido'),
     body('tipoPedido')
         .notEmpty().withMessage('El tipo de pedido es requerido')
         .isIn(['Domicilio', 'Para llevar', 'En el restaurante'])
@@ -23,8 +22,7 @@ export const validateUpdatePedido = [
         .notEmpty().withMessage('El ID del pedido es requerido')
         .isMongoId().withMessage('El ID del pedido debe ser válido'),
     body('restaurante')
-        .optional()
-        .isMongoId().withMessage('El ID del restaurante debe ser válido'),
+        .optional(),
     body('tipoPedido')
         .optional()
         .isIn(['Domicilio', 'Para llevar', 'En el restaurante'])
@@ -49,7 +47,6 @@ export const validateViewPedido = [
     validateJWT,
     requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     param('id')
-        .optional()
-        .isMongoId().withMessage('El ID del pedido debe ser valido'),
+        .optional(),
     checkValidators,
 ];

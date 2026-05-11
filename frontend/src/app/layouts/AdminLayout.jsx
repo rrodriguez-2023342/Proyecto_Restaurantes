@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo1.png";
 import { useAuthStore } from "../../features/auth/store/authStore";
@@ -17,6 +18,7 @@ const navItems = [
     { to: "/admin/users", label: "Usuarios", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
     { to: "/admin/menus", label: "Menu", icon: "M4 6h16M4 12h16M4 18h10" },
     { to: "/admin/platos", label: "Productos", icon: "M12 3v18M5 7h14M7 7v4a5 5 0 0 0 10 0V7" },
+    { to: "/admin/inventory", label: "Inventarios", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
     { to: "/admin/reports", label: "Reportes", icon: "M4 19V5m5 14V9m5 10V7m5 12v-6" },
 ];
 
@@ -45,6 +47,8 @@ export const AdminLayout = () => {
     const logout = useAuthStore((state) => state.logout);
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     const pageTitle =
         pageTitles[pathname] ||
         Object.entries(pageTitles).find(([path]) => path !== "/admin" && pathname.startsWith(path))?.[1] ||
@@ -55,16 +59,35 @@ export const AdminLayout = () => {
         navigate("/");
     };
 
+    const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
     return (
         <PrincipalContainer className="h-screen overflow-hidden bg-slate-50">
             <div className="flex h-screen min-h-0 overflow-hidden">
-                <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-                    <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5">
-                        <img src={logo} alt="KinalEats logo" className="h-11 w-11 rounded-full object-cover shadow-sm" />
-                        <div>
-                            <p className="text-lg font-extrabold tracking-tight text-orange-600">KinalEats</p>
-                            <p className="text-xs font-medium text-slate-500">Admin Panel</p>
+                {/* Overlay para móvil */}
+                {isMobileMenuOpen && (
+                    <div 
+                        className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+                        onClick={toggleMobileMenu}
+                    />
+                )}
+
+                {/* Sidebar */}
+                <aside className={`
+                    fixed inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:flex lg:flex-col lg:translate-x-0
+                    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}>
+                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5">
+                        <div className="flex items-center gap-3">
+                            <img src={logo} alt="KinalEats logo" className="h-11 w-11 rounded-full object-cover shadow-sm" />
+                            <div>
+                                <p className="text-lg font-extrabold tracking-tight text-orange-600">KinalEats</p>
+                                <p className="text-xs font-medium text-slate-500">Admin Panel</p>
+                            </div>
                         </div>
+                        <button onClick={toggleMobileMenu} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
+                            ✕
+                        </button>
                     </div>
 
                     <nav className="custom-scrollbar flex-1 space-y-6 overflow-y-auto py-5">
@@ -72,7 +95,13 @@ export const AdminLayout = () => {
                             <p className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Principal</p>
                             <div className="space-y-1">
                                 {navItems.map((item) => (
-                                    <NavLink key={item.to} to={item.to} className={linkClass} end={item.to === "/admin"}>
+                                    <NavLink 
+                                        key={item.to} 
+                                        to={item.to} 
+                                        className={linkClass} 
+                                        end={item.to === "/admin"}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
                                         <Icon path={item.icon} />
                                         {item.label}
                                     </NavLink>
@@ -83,7 +112,12 @@ export const AdminLayout = () => {
                             <p className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Operacion</p>
                             <div className="space-y-1">
                                 {secondaryNavItems.map((item) => (
-                                    <NavLink key={item.to} to={item.to} className={linkClass}>
+                                    <NavLink 
+                                        key={item.to} 
+                                        to={item.to} 
+                                        className={linkClass}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
                                         <Icon path={item.icon} />
                                         {item.label}
                                     </NavLink>
@@ -106,12 +140,20 @@ export const AdminLayout = () => {
 
                 <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-50">
                     <header className="shrink-0 border-b border-slate-200 bg-white">
-                        <div className="flex items-center justify-between gap-4 px-5 py-4 sm:px-6">
-                            <div>
-                                <h1 className="text-xl font-semibold text-slate-900">{pageTitle}</h1>
-                                <p className="text-sm text-slate-500">Gestion centralizada con datos en tiempo real.</p>
-                            </div>
+                        <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
                             <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={toggleMobileMenu}
+                                    className="rounded-xl border border-slate-200 p-2 text-slate-500 lg:hidden"
+                                >
+                                    <Icon path="M4 6h16M4 12h16M4 18h16" />
+                                </button>
+                                <div>
+                                    <h1 className="text-lg font-semibold text-slate-900 sm:text-xl leading-none">{pageTitle}</h1>
+                                    <p className="hidden sm:block text-xs text-slate-500 mt-1">Gestion centralizada en tiempo real.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 sm:gap-3">
                                 <button className="hidden rounded-xl border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 sm:inline-flex" title="Notificaciones">
                                     <Icon path="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0" />
                                 </button>

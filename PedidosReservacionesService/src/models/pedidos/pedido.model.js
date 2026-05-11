@@ -25,6 +25,26 @@ const pedidoSchema = new mongoose.Schema(
         totalPedido: {
             type: Number,
             default: 0
+        },
+        cliente: {
+            type: String,
+            required: [true, 'El nombre del cliente es obligatorio']
+        },
+        email: {
+            type: String,
+            default: ''
+        },
+        telefono: {
+            type: String,
+            default: ''
+        },
+        direccionEntrega: {
+            type: String,
+            required: [true, 'La dirección de entrega es obligatoria']
+        },
+        notas: {
+            type: String,
+            default: ''
         }
     },
     {

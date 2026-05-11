@@ -19,11 +19,19 @@ const platoSchema = new mongoose.Schema(
             required: [true, 'La descripción del plato es obligatoria'],
             maxlength: [500, 'La descripción del plato no puede exceder los 500 caracteres']
         },
-        ingredientes: {
-            type: String,
-            maxlength: [500, 'Los ingredientes no pueden exceder los 500 caracteres'],
-            default: null
-        },
+        ingredientes: [
+            {
+                itemInventario: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'Inventario',
+                    default: null
+                },
+                cantidad: {
+                    type: Number,
+                    default: 0
+                }
+            }
+        ],
         precio: {
             type: Number,
             required: [true, 'El precio del plato es obligatorio'],

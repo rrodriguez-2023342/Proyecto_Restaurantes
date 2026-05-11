@@ -26,6 +26,10 @@ const facturaSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        metodoPago: {
+            type: String,
+            default: null,
+        },
     },
     {
         timestamps: true,

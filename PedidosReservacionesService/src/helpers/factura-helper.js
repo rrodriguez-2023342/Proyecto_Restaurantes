@@ -304,6 +304,7 @@ export const generateFacturaPdf = (factura, pedido, items) => {
         { type: 'keyvalue', key: 'Tipo de pedido', value: normalizeText(pedido?.tipoPedido ?? '—'),                zebra: false },
         { type: 'keyvalue', key: 'Estado',         value: normalizeText(pedido?.estadoPedido ?? '—'),              zebra: true  },
         { type: 'keyvalue', key: 'Fecha',          value: fmtDate(pedido?.createdAt),                             zebra: false },
+        { type: 'keyvalue', key: 'Metodo de pago', value: normalizeText(factura.metodoPago ?? 'No especificado'),  zebra: true  },
         { type: 'spacer', h: 16 },
 
         // Tabla de items

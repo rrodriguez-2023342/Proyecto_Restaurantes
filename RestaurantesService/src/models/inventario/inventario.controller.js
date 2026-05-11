@@ -11,11 +11,18 @@ const getAdminRestaurantId = async (usuario) => {
 
 export const createInventario = async (req, res) => {
     try {
-        const inventarioData = req.body;
+        const inventarioData = { ...req.body };
 
         // si es admin de restaurante, forzar restaurante
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            inventarioData.restaurante = req.usuario.restaurante;
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para crear inventario',
+                });
+            }
+            inventarioData.restaurante = adminRestaurantId;
         }
 
         const inventario = new Inventario(inventarioData);

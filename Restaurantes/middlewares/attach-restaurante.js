@@ -12,10 +12,16 @@ export const attachRestaurant = async (req, res, next) => {
     try {
         if (
             req.usuario &&
-            req.usuario.role === 'ADMIN_RESTAURANT_ROLE' &&
+            (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' || req.usuario.role === 'ADMIN_ROLE') &&
             !req.usuario.restaurante
         ) {
-            const restaurante = await Restaurante.findOne({ dueño: req.usuario.id }).lean();
+            const userId = req.usuario.id;
+            let restaurante = await Restaurante.findOne({ dueño: String(userId) }).lean();
+            
+            if (!restaurante && !isNaN(Number(userId))) {
+                restaurante = await Restaurante.findOne({ dueño: Number(userId) }).lean();
+            }
+
             if (restaurante) {
                 req.usuario.restaurante = restaurante._id;
             }

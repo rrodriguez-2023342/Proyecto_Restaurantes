@@ -3,10 +3,18 @@ import Restaurante from '../restaurantes/restaurante.model.js';
 import Plato from '../platos/plato.model.js';
 
 const getRestauranteFromUser = async (usuario) => {
-    if (!usuario || usuario.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return null;
     if (usuario.restaurante) return usuario.restaurante;
 
-    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    const userId = usuario.id;
+    // Buscar por string (exacto)
+    let restaurante = await Restaurante.findOne({ dueño: String(userId) }).select('_id').lean();
+    
+    // Si no lo encuentra y el ID parece un número, intentar buscar por número
+    if (!restaurante && !isNaN(Number(userId))) {
+        restaurante = await Restaurante.findOne({ dueño: Number(userId) }).select('_id').lean();
+    }
+
     return restaurante?._id || null;
 };
 
@@ -56,8 +64,9 @@ export const getMenus = async (req, res) => {
         if (req.usuario.role === 'USER_ROLE') {
             filter.isActive = true;
         } else if (isActive !== undefined) {
-            filter.isActive = isActive === 'true';
+            filter.isActive = isActive === true || isActive === 'true';
         }
+        // Si es Admin y no especifica isActive, no filtramos por isActive (muestra todos)
         
         if (restaurante) {
             filter.restaurante = restaurante;

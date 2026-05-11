@@ -2,20 +2,40 @@ import Inventario from './inventario.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
 
 const getAdminRestaurantId = async (usuario) => {
-    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE') return null;
+    if (usuario?.role !== 'ADMIN_RESTAURANT_ROLE' && usuario?.role !== 'ADMIN_ROLE') return null;
     if (usuario.restaurante) return String(usuario.restaurante);
 
-    const restaurante = await Restaurante.findOne({ dueño: usuario.id }).select('_id').lean();
+    const userId = usuario.id;
+    // Buscar por string (exacto)
+    let restaurante = await Restaurante.findOne({ dueño: String(userId) }).select('_id').lean();
+    
+    // Si no lo encuentra y el ID parece un número, intentar buscar por número
+    if (!restaurante && !isNaN(Number(userId))) {
+        restaurante = await Restaurante.findOne({ dueño: Number(userId) }).select('_id').lean();
+    }
+
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
 export const createInventario = async (req, res) => {
     try {
-        const inventarioData = req.body;
+        const inventarioData = { ...req.body };
 
-        // si es admin de restaurante, forzar restaurante
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            inventarioData.restaurante = req.usuario.restaurante;
+        // Forzar asignación de restaurante si es admin de restaurante
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' || req.usuario.role === 'ADMIN_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            
+            // Si el body ya trae un restaurante (elegido por el admin), lo usamos.
+            // Si no trae nada, intentamos usar el asignado automáticamente.
+            if (!inventarioData.restaurante) {
+                if (!adminRestaurantId) {
+                    return res.status(403).json({
+                        success: false,
+                        message: `No se encontró un restaurante asociado a tu cuenta. (ID: ${req.usuario.id}, Rol: ${req.usuario.role}). Si eres Super Admin, debes seleccionar un restaurante.`,
+                    });
+                }
+                inventarioData.restaurante = adminRestaurantId;
+            }
         }
 
         const inventario = new Inventario(inventarioData);
@@ -29,7 +49,7 @@ export const createInventario = async (req, res) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            message: 'Error al crear el inventario',
+            message: `Error al crear el inventario: ${error.message}`,
             error: error.message
         })
     }
@@ -37,7 +57,7 @@ export const createInventario = async (req, res) => {
 
 export const getInventarios = async (req, res) => {
     try {
-        const { page = 1, limit = 10} = req.query;
+        const { page = 1, limit = 10, restaurante } = req.query;
         let query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
@@ -49,6 +69,8 @@ export const getInventarios = async (req, res) => {
                 });
             }
             query.restaurante = adminRestaurantId;
+        } else if (restaurante) {
+            query.restaurante = restaurante;
         }
 
         const [inventarios, total] = await Promise.all([
@@ -72,7 +94,7 @@ export const getInventarios = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error al obtener los inventarios',
+            message: `Error al obtener los inventarios: ${error.message}`,
             error: error.message
         })
     }

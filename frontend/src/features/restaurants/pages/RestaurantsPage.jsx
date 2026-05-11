@@ -136,11 +136,11 @@ export const RestaurantsPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-6">
-                <div className="flex items-center justify-between">
+            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-4 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="text-2xl font-semibold text-slate-900">Gestión de restaurantes</h2>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">Gestión de restaurantes</h2>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-600">
                             Crea y administra restaurantes activos dentro de la plataforma.
                         </p>
                     </div>
@@ -149,7 +149,7 @@ export const RestaurantsPage = () => {
                             setEditing(null);
                             setOpenModal(true);
                         }}
-                        className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2 text-white font-medium hover:shadow-lg transition-shadow"
+                        className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm sm:text-base"
                     >
                         + Agregar nuevo
                     </button>
@@ -158,8 +158,8 @@ export const RestaurantsPage = () => {
 
             {/* Modal */}
             {openModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="rounded-2xl bg-white shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                    <div className="rounded-3xl bg-white shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
                         <div className="sticky top-0 flex items-center justify-between border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 p-6">
                             <h3 className="text-lg font-semibold text-slate-900">
                                 {editing ? "Editar restaurante" : "Nuevo restaurante"}
@@ -211,44 +211,30 @@ export const RestaurantsPage = () => {
                             <p className="mt-1 text-sm text-slate-600">
                                 {shortText(restaurant?.descripcion, 80)}
                             </p>
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                                <span className="rounded-full bg-orange-100 px-2 py-1 text-orange-700">
-                                    {restaurant?.categoria || "Categoría"}
-                                </span>
-                                <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
-                                    {restaurant?.direccion?.ciudad || "Ciudad"}
-                                </span>
-                                <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
-                                    📞 {restaurant?.telefono || "Teléfono"}
-                                </span>
-                            </div>
-                            <div className="mt-3">
-                                <BadgeEstado value={restaurant?.isActive ? "Activo" : "Inactivo"} />
-                            </div>
-                            <div className="mt-4 flex flex-wrap gap-2">
+                            <div className="mt-5 grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setEditing(restaurant);
                                         setOpenModal(true);
                                     }}
-                                    className="flex-1 min-w-[80px] rounded-lg border border-orange-200 bg-orange-50 py-2 text-xs font-semibold text-orange-600 hover:bg-orange-100 transition"
+                                    className="flex-1 rounded-xl border border-orange-100 bg-orange-50 py-2.5 text-xs font-bold text-orange-600 hover:bg-orange-100 transition"
                                 >
                                     Editar
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleToggleStatus(restaurant)}
-                                    className="flex-1 min-w-[80px] rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                                    className="flex-1 rounded-xl border border-slate-100 bg-slate-50 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
                                 >
                                     {restaurant?.isActive ? "Desactivar" : "Activar"}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleDelete(restaurant)}
-                                    className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition"
+                                    className="col-span-2 sm:flex-initial rounded-xl border border-rose-100 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition"
                                 >
-                                    ✕
+                                    Eliminar
                                 </button>
                             </div>
                             <button

@@ -32,14 +32,14 @@ export const AuthPage = () => {
             />
             <div className="absolute inset-0 bg-slate-950/50" />
 
-            <div className="relative z-10 flex items-center justify-center p-4 md:p-8 min-h-screen">
-                <div className="w-full max-w-3xl flex rounded-2xl overflow-hidden shadow-2xl shadow-slate-900/15 min-h-[540px] bg-white/95 border border-white/30 backdrop-blur-sm">
-                    {/* Panel izquierdo — visual */}
-                    <div className="hidden md:flex w-[42%] bg-orange-100 flex-col justify-end p-8 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_30%,rgba(249,115,22,0.18)_0%,transparent_60%)]" />
+            <div className="relative z-10 flex items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen">
+                <div className="w-full max-w-4xl flex flex-col md:flex-row rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/20 bg-white/95 border border-white/30 backdrop-blur-md">
+                    {/* Panel izquierdo — visual (oculto en móvil) */}
+                    <div className="hidden md:flex w-[40%] bg-orange-50 flex-col justify-end p-10 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_30%,rgba(249,115,22,0.15)_0%,transparent_70%)]" />
 
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-[0_0_60px_rgba(255,100,0,0.35)]">
+                            <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-orange-200/50 border border-orange-50">
                                 <img 
                                     src={logo} 
                                     alt="KinalEats logo" 
@@ -49,52 +49,58 @@ export const AuthPage = () => {
                         </div>
 
                         <div className="relative z-10">
-                            <span className="inline-flex items-center gap-2 bg-orange-500/15 border border-orange-200 rounded-full px-3 py-1 text-[11px] font-semibold text-orange-600 uppercase tracking-widest mb-3">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                Panel de restaurante
+                            <span className="inline-flex items-center gap-2 bg-orange-100/50 border border-orange-200/50 rounded-full px-3 py-1 text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-4">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                Sistema Premium
                             </span>
-                            <h2 className="text-slate-900 font-extrabold text-2xl leading-tight mb-2">
-                                Gestiona cada
+                            <h2 className="text-slate-900 font-black text-3xl leading-tight mb-3">
+                                Gestiona tu
                                 <br />
-                                <span className="text-orange-600">orden al instante</span>
+                                <span className="text-orange-600">restaurante</span>
                             </h2>
-                            <p className="text-slate-600 text-sm leading-relaxed">
-                                Pedidos, reservas y métricas en un solo lugar.
+                            <p className="text-slate-500 text-sm leading-relaxed font-medium">
+                                Pedidos, inventarios y reportes en la palma de tu mano.
                             </p>
                         </div>
                     </div>
 
                     {/* Panel derecho — formulario */}
-                    <div className="flex-1 bg-white px-8 py-10 flex flex-col justify-center">
-                        <p className="text-orange-600 font-extrabold text-lg mb-7 tracking-tight">
-                            ● KinalEats
+                    <div className="flex-1 bg-white p-6 sm:p-10 flex flex-col justify-center min-h-[500px]">
+                        <div className="md:hidden flex justify-center mb-8">
+                             <img src={logo} alt="KinalEats" className="h-16 w-16 rounded-full shadow-lg" />
+                        </div>
+
+                        <p className="hidden md:block text-orange-600 font-black text-xl mb-8 tracking-tighter">
+                            KinalEats
                         </p>
 
-                        <h1 className="text-slate-900 text-2xl font-bold mb-1">
+                        <h1 className="text-slate-900 text-2xl sm:text-3xl font-black mb-1 tracking-tight">
                             {title}
                         </h1>
-                        <p className="text-slate-600 text-sm mb-7">
+                        <p className="text-slate-500 text-sm sm:text-base mb-8 font-medium">
                             {subtitle}
                         </p>
 
-                        {view === 'forgot' ? (
-                            <ForgotPasswordForm onSwitch={() => setView('login')} />
-                        ) : view === 'register' ? (
-                            <RegisterForm onBack={() => setView('login')} onSuccess={() => setView('login')} />
-                        ) : (
-                            <LoginForm onForgot={() => setView('forgot')} onRegister={() => setView('register')} />
-                        )}
+                        <div className="w-full">
+                            {view === 'forgot' ? (
+                                <ForgotPasswordForm onSwitch={() => setView('login')} />
+                            ) : view === 'register' ? (
+                                <RegisterForm onBack={() => setView('login')} onSuccess={() => setView('login')} />
+                            ) : (
+                                <LoginForm onForgot={() => setView('forgot')} onRegister={() => setView('register')} />
+                            )}
+                        </div>
 
                         {view === 'login' && (
-                            <div className="flex gap-6 mt-7 pt-5 border-t border-slate-200">
+                            <div className="grid grid-cols-3 gap-4 mt-10 pt-6 border-t border-slate-100">
                                 {[
-                                    ["2,400+", "Restaurantes activos"],
-                                    ["98.5%", "Uptime garantizado"],
-                                    ["4.9★", "Calificación promedio"],
+                                    ["2K+", "Locales"],
+                                    ["99%", "Uptime"],
+                                    ["5★", "Rating"],
                                 ].map(([v, l]) => (
-                                    <div key={l}>
-                                        <p className="text-slate-900 font-bold text-sm">{v}</p>
-                                        <p className="text-slate-500 text-[11px]">{l}</p>
+                                    <div key={l} className="text-center md:text-left">
+                                        <p className="text-slate-900 font-black text-sm">{v}</p>
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-tighter">{l}</p>
                                     </div>
                                 ))}
                             </div>

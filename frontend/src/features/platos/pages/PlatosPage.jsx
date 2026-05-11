@@ -4,6 +4,7 @@ import { getMenus } from "../../../shared/api";
 import { showError, showSuccess } from "../../../shared/utils/toast";
 import { DishForm } from "../components/DishForm.jsx";
 import { usePlatoStore } from "../store/usePlatoStore";
+import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 
 const typeLabels = {
     ENTRADA: "Entrada",
@@ -23,22 +24,46 @@ const resolveImageSrc = (src) => {
 
 export const PlatosPage = () => {
     const { platos, loading, fetchPlatos, createPlato: storeCreate, updatePlato: storeUpdate, deletePlato: storeDelete } = usePlatoStore();
+    const { restaurants, fetchRestaurants } = useRestaurantStore();
     const [menus, setMenus] = useState([]);
+    const [selectedRestaurant, setSelectedRestaurant] = useState("");
     const [selectedMenu, setSelectedMenu] = useState("");
     const [openModal, setOpenModal] = useState(false);
     const [editing, setEditing] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [menuLoading, setMenuLoading] = useState(false);
+    const [restLoading, setRestLoading] = useState(false);
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                setRestLoading(true);
+                await fetchRestaurants();
+            } catch (err) {
+                showError("No se pudieron cargar los restaurantes");
+            } finally {
+                setRestLoading(false);
+            }
+        };
+        loadInitialData();
+    }, [fetchRestaurants]);
 
     useEffect(() => {
         const loadMenus = async () => {
+            if (!selectedRestaurant) {
+                setMenus([]);
+                setSelectedMenu("");
+                return;
+            }
             try {
                 setMenuLoading(true);
-                const { data } = await getMenus();
+                const { data } = await getMenus({ restaurante: selectedRestaurant });
                 const loadedMenus = data?.data || data?.menus || data || [];
                 setMenus(loadedMenus);
                 if (loadedMenus.length) {
                     setSelectedMenu(loadedMenus[0]._id || loadedMenus[0].id);
+                } else {
+                    setSelectedMenu("");
                 }
             } catch (err) {
                 showError("No se pudieron cargar los menús");
@@ -48,7 +73,7 @@ export const PlatosPage = () => {
         };
 
         loadMenus();
-    }, []);
+    }, [selectedRestaurant]);
 
     useEffect(() => {
         if (!selectedMenu) return;
@@ -66,32 +91,18 @@ export const PlatosPage = () => {
         try {
             setModalLoading(true);
             const targetMenu = values.menuId || selectedMenu;
-            let payload;
-
-            if (editing) {
-                payload = {
-                    nombrePlato: values.name,
-                    descripcionPlato: values.description || "",
-                    precio: values.price,
-                    tipoPlato: values.type,
-                    menu: targetMenu,
-                };
-                if (values.ingredients) {
-                    payload.ingredientes = values.ingredients;
-                }
-            } else {
-                payload = new FormData();
-                payload.append("nombrePlato", values.name);
-                payload.append("descripcionPlato", values.description || "");
-                payload.append("precio", values.price);
-                payload.append("tipoPlato", values.type);
-                payload.append("menu", targetMenu);
-                if (values.ingredients) {
-                    payload.append("ingredientes", values.ingredients);
-                }
-                if (values.photo?.length) {
-                    payload.append("fotosPlato", values.photo[0]);
-                }
+            const payload = new FormData();
+            payload.append("nombrePlato", values.name);
+            payload.append("descripcionPlato", values.description || "");
+            payload.append("precio", values.price);
+            payload.append("tipoPlato", values.type);
+            payload.append("menu", targetMenu);
+            
+            if (values.ingredients) {
+                payload.append("ingredientes", values.ingredients);
+            }
+            if (values.photo?.length) {
+                payload.append("fotosPlato", values.photo[0]);
             }
 
             if (editing) {
@@ -141,25 +152,40 @@ export const PlatosPage = () => {
                             Crea, edita y administra platos por menú con la misma experiencia visual del resto.
                         </p>
                     </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <select
-                            value={selectedMenu}
-                            onChange={(event) => setSelectedMenu(event.target.value)}
-                            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-orange-400 focus:outline-none"
-                        >
-                            <option value="">Selecciona un menú</option>
-                            {menus.map((menu) => (
-                                <option key={menu._id || menu.id} value={menu._id || menu.id}>
-                                    {menu.nombreMenu || menu.nombre}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                            <select
+                                value={selectedRestaurant}
+                                onChange={(event) => setSelectedRestaurant(event.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-orange-400 focus:outline-none"
+                            >
+                                <option value="">Restaurante...</option>
+                                {restaurants.map((rest) => (
+                                    <option key={rest._id || rest.id} value={rest._id || rest.id}>
+                                        {rest.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                value={selectedMenu}
+                                onChange={(event) => setSelectedMenu(event.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-orange-400 focus:outline-none"
+                                disabled={!selectedRestaurant || menuLoading}
+                            >
+                                <option value="">{menuLoading ? "Cargando..." : "Selecciona un menú"}</option>
+                                {menus.map((menu) => (
+                                    <option key={menu._id || menu.id} value={menu._id || menu.id}>
+                                        {menu.nombreMenu || menu.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <button
                             onClick={() => {
                                 setEditing(null);
                                 setOpenModal(true);
                             }}
-                            className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2 text-white font-medium hover:shadow-lg transition-shadow"
+                            className="w-full lg:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm"
                         >
                             + Agregar plato
                         </button>
@@ -168,8 +194,8 @@ export const PlatosPage = () => {
             </div>
 
             {openModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex items-center justify-between border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 p-6">
                             <h3 className="text-lg font-semibold text-slate-900">
                                 {editing ? "Editar plato" : "Nuevo plato"}
@@ -245,18 +271,18 @@ export const PlatosPage = () => {
                                     </span>
                                 )}
                             </div>
-                            <div className="mt-4 flex gap-2">
+                            <div className="mt-5 grid grid-cols-2 gap-2">
                                 <button
                                     type="button"
                                     onClick={() => handleEdit(plato)}
-                                    className="flex-1 rounded-lg border border-orange-200 bg-orange-50 py-2 text-xs font-semibold text-orange-600 hover:bg-orange-100 transition"
+                                    className="rounded-xl border border-orange-100 bg-orange-50 py-2.5 text-xs font-bold text-orange-600 hover:bg-orange-100 transition"
                                 >
                                     Editar
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleDelete(plato)}
-                                    className="flex-1 rounded-lg border border-rose-200 bg-rose-50 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition"
+                                    className="rounded-xl border border-rose-100 bg-rose-50 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition"
                                 >
                                     Eliminar
                                 </button>

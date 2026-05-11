@@ -11,22 +11,31 @@ const createTransporter = () => {
         return null;
     }
 
+    console.log('Intentando crear transportador SMTP con:', config.smtp.username);
+    
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        service: 'gmail', // Usar el servicio directo de Gmail es más fiable
         auth: {
-            user: 'restaurantein6bm@gmail.com',
-            pass: 'athhxuqctbsudgxv',
+            user: config.smtp.username,
+            pass: config.smtp.password,
         },
-        connectionTimeout: 10_000,
-        greetingTimeout:   10_000,
-        socketTimeout:     10_000,
-        tls: { rejectUnauthorized: false },
+        tls: { 
+            rejectUnauthorized: false 
+        },
     });
 };
 
 const transporter = createTransporter();
+
+if (transporter) {
+    transporter.verify((error, success) => {
+        if (error) {
+            console.error('Error en la verificación del transportador SMTP:', error);
+        } else {
+            console.log('Servidor de correo listo para enviar mensajes');
+        }
+    });
+}
 
 // Bloque de soporte reutilizable
 

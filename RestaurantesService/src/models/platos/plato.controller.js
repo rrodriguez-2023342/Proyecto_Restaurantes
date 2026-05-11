@@ -91,6 +91,15 @@ export const createPlato = async (req, res) => {
             platoData.disponible = platoData.disponible === 'true';
         }
 
+        // Parsear ingredientes si vienen como string (JSON) desde multipart
+        if (typeof platoData.ingredientes === 'string') {
+            try {
+                platoData.ingredientes = JSON.parse(platoData.ingredientes);
+            } catch (e) {
+                console.warn('Error parsing ingredientes:', e.message);
+            }
+        }
+
         const plato = new Plato(platoData);
         await plato.save();
 
@@ -122,6 +131,7 @@ export const getPlatos = async (req, res) => {
         const [platos, total] = await Promise.all([
             Plato.find(filter)
                 .populate('menu', 'nombreMenu')
+                .populate('ingredientes.itemInventario', 'nombreItem')
                 .limit(numericLimit)
                 .skip((numericPage - 1) * numericLimit)
                 .sort({ createdAt: -1 }),
@@ -146,7 +156,9 @@ export const getPlatos = async (req, res) => {
 export const getPlatoById = async (req, res) => {
     try {
         const { id } = req.params;
-        const plato = await Plato.findById(id).populate('menu');
+        const plato = await Plato.findById(id)
+            .populate('menu')
+            .populate('ingredientes.itemInventario', 'nombreItem');
 
         if (!plato || !plato.disponible) {
             return res.status(404).json({ success: false, message: 'Plato no encontrado o no disponible' });
@@ -188,6 +200,15 @@ export const editarPlato = async (req, res) => {
         // Normalizar disponible si viene como string
         if (typeof platoData.disponible === 'string') {
             platoData.disponible = platoData.disponible === 'true';
+        }
+
+        // Parsear ingredientes si vienen como string (JSON) desde multipart
+        if (typeof platoData.ingredientes === 'string') {
+            try {
+                platoData.ingredientes = JSON.parse(platoData.ingredientes);
+            } catch (e) {
+                console.warn('Error parsing ingredientes:', e.message);
+            }
         }
 
         const platoUpdated = await Plato.findByIdAndUpdate(id, platoData, { new: true, runValidators: true });

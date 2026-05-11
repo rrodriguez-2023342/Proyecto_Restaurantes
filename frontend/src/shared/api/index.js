@@ -10,3 +10,4 @@ export * from "./reservation";
 export * from "./table";
 export * from "./invoice";
 export * from "./report";
+export * from "./inventory";

@@ -3,6 +3,7 @@ import Pedido from '../pedidos/pedido.model.js';
 import Plato from '../platos/plato.model.js';
 import Restaurante from '../restaurantes/restaurante.model.js';
 import Factura from '../facturas/factura.model.js';
+import Inventario from '../inventario/inventario.model.js';
 import { generateFacturaPdf } from '../../helpers/factura-helper.js';
 import { sendFacturaPdfEmail, sendPedidoEmail } from '../../helpers/email-service.js';
 
@@ -102,6 +103,8 @@ export const createDetallePedido = async (req, res) => {
         }
 
         const itemsConPrecio = [];
+        const stockRequirements = new Map(); // Para rastrear el total de ingredientes necesarios
+
         for (const item of items) {
             const platoObj = await Plato.findById(item.plato).lean();
             if (!platoObj) {
@@ -110,11 +113,56 @@ export const createDetallePedido = async (req, res) => {
                     message: `Plato con id ${item.plato} no encontrado`,
                 });
             }
+
+            // Recopilar requerimientos de inventario
+            let ingredientes = [];
+            try {
+                if (typeof platoObj.ingredientes === 'string') {
+                    ingredientes = JSON.parse(platoObj.ingredientes);
+                } else if (Array.isArray(platoObj.ingredientes)) {
+                    ingredientes = platoObj.ingredientes;
+                }
+            } catch (e) {
+                console.error("Error parsing ingredients for plato:", platoObj._id, e);
+            }
+
+            if (ingredientes && ingredientes.length > 0) {
+                for (const ing of ingredientes) {
+                    if (ing.itemInventario) {
+                        const key = String(ing.itemInventario);
+                        const totalNeeded = parseFloat(ing.cantidad) * item.cantidad;
+                        stockRequirements.set(key, (stockRequirements.get(key) || 0) + totalNeeded);
+                    }
+                }
+            }
+
             itemsConPrecio.push({
                 plato: item.plato,
                 cantidad: item.cantidad,
                 precio: platoObj.precio,
             });
+        }
+
+        // Verificar stock de todos los ingredientes
+        for (const [itemId, needed] of stockRequirements.entries()) {
+            const itemInv = await Inventario.findById(itemId);
+            if (!itemInv) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Ítem de inventario con ID ${itemId} no encontrado`,
+                });
+            }
+            if (itemInv.cantidad < needed) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Stock insuficiente para ${itemInv.nombreItem}. Requerido: ${needed}, Disponible: ${itemInv.cantidad}`,
+                });
+            }
+        }
+
+        // Descontar stock (si llegamos aquí, todo el stock está verificado)
+        for (const [itemId, needed] of stockRequirements.entries()) {
+            await Inventario.findByIdAndUpdate(itemId, { $inc: { cantidad: -needed } });
         }
 
         const detalle = new DetallePedido({ pedido, items: itemsConPrecio });

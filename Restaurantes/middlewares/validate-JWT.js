@@ -79,7 +79,7 @@ export const validateJWT = (req, res, next) => {
 
         return res.status(500).json({
             success: false,
-            message: 'Error al validar el token',
+            message: `Error al validar el token: ${error.message}`,
             error: error.message
         })
     }
