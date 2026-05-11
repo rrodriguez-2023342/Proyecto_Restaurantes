@@ -88,7 +88,7 @@ export const validateDeleteMenu = [
 export const validateViewMenu = [
     validateJWT,
     attachRestaurant,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE', 'USER_ROLE'),
     param('id')
         .optional()
         .isMongoId()

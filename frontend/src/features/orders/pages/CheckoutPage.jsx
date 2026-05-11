@@ -38,7 +38,7 @@ export const CheckoutPage = () => {
                 telefono: data.phone || ''
             };
 
-            const response = await createOrder(payload);
+            await createOrder(payload);
             
             toast.success("¡Pedido realizado con éxito!", {
                 icon: '🎉',

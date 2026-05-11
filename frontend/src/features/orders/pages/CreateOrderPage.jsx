@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useForm, useWatch, useFieldArray } from "react-hook-form";
 import { Card, FormField } from "../../../shared/components";
 import { useOrderStore } from "../store/useOrderStore";
-import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
 import { getRestaurants } from "../../../shared/api";
 import { getMenus } from "../../../shared/api";
 import { Cart } from "../components/Cart.jsx";
@@ -12,7 +11,6 @@ import { showError, showSuccess } from "../../../shared/utils/toast";
 export const CreateOrderPage = () => {
     const navigate = useNavigate();
     const { createOrder } = useOrderStore();
-    const { createDetailOrder } = useDetailOrderStore();
     const [restaurants, setRestaurants] = useState([]);
     const [menus, setMenus] = useState([]);
     const [platos, setPlatos] = useState([]);
@@ -42,7 +40,8 @@ export const CreateOrderPage = () => {
         name: "items",
     });
 
-    const watchItems = useWatch({ control, name: "items" }) || [];
+    const watchedItems = useWatch({ control, name: "items" });
+    const watchItems = useMemo(() => watchedItems || [], [watchedItems]);
 
     const { subtotal, tax, total } = useMemo(() => {
         const sub = watchItems.reduce(
@@ -67,7 +66,7 @@ export const CreateOrderPage = () => {
                 if (!restData || restData.length === 0) {
                     showError("No hay restaurantes disponibles");
                 }
-            } catch (err) {
+            } catch {
                 showError("Error al cargar restaurantes");
             } finally {
                 setLoadingData(false);
@@ -78,8 +77,6 @@ export const CreateOrderPage = () => {
 
     useEffect(() => {
         if (!selectedRestaurant) {
-            setMenus([]);
-            setPlatos([]);
             return;
         }
 
@@ -99,7 +96,7 @@ export const CreateOrderPage = () => {
                     ? loadedMenus.flatMap(m => (m.platos || []).map(p => ({ ...p, menuId: m._id || m.id })))
                     : [];
                 setPlatos(allPlatos);
-            } catch (err) {
+            } catch {
                 showError("No se pudieron cargar los datos del restaurante");
             } finally {
                 setLoadingData(false);
@@ -149,7 +146,6 @@ export const CreateOrderPage = () => {
 
             setSaving(true);
 
-            // Crear pedido
             const orderPayload = {
                 restaurante: values.restaurante,
                 cliente: values.cliente,
@@ -159,20 +155,14 @@ export const CreateOrderPage = () => {
                 notas: values.notas || "",
                 tipoPedido: "Domicilio",
                 estadoPedido: "Pendiente",
-            };
-
-            const newOrder = await createOrder(orderPayload);
-            const orderId = newOrder._id || newOrder.id || newOrder.data?._id;
-
-            const detailPayload = {
-                pedido: orderId,
                 items: values.items.map((item) => ({
                     plato: item.plato,
-                    cantidad: item.cantidad,
-                    precio: item.precioUnitario,
+                    cantidad: Number(item.cantidad) || 1,
+                    precio: Number(item.precioUnitario) || 0,
                 })),
             };
-            await createDetailOrder(detailPayload);
+
+            await createOrder(orderPayload);
 
             showSuccess("Pedido creado correctamente");
             navigate("/admin/orders");
@@ -184,10 +174,6 @@ export const CreateOrderPage = () => {
             setSaving(false);
         }
     };
-
-    const restaurantPlatos = selectedRestaurant
-        ? platos.filter((p) => String(p.restauranteId || "") === String(selectedRestaurant))
-        : [];
 
     return (
         <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
