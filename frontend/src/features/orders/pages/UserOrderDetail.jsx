@@ -6,7 +6,7 @@ import { getOrderById } from "../../../shared/api";
 import { useOrderStore } from "../store/useOrderStore";
 import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
 import { OrderStatus } from "../components/OrderStatus.jsx";
-import { showError } from "../../../shared/utils/toast";
+import { showError, showSuccess } from "../../../shared/utils/toast";
 
 const currency = new Intl.NumberFormat("es-GT", {
     style: "currency",
@@ -57,10 +57,15 @@ const getTrackingStep = (status) => {
 export const UserOrderDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { orders, fetchOrders } = useOrderStore();
+    const { orders, fetchOrders, updateOrder } = useOrderStore();
     const { detailOrders, fetchDetailOrdersByOrderId } = useDetailOrderStore();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [deliveryAddress, setDeliveryAddress] = useState("");
+    const [deliveryPhone, setDeliveryPhone] = useState("");
+    const [deliveryNotes, setDeliveryNotes] = useState("");
+    const [savingDelivery, setSavingDelivery] = useState(false);
+    const [confirmingDelivery, setConfirmingDelivery] = useState(false);
 
     useEffect(() => {
         const loadOrderDetail = async () => {
@@ -76,6 +81,12 @@ export const UserOrderDetail = () => {
                 if (!foundOrder) {
                     const { data } = await getOrderById(id);
                     foundOrder = normalizeOrderPayload(data?.data || data?.pedido || data);
+                }
+
+                if (foundOrder) {
+                    setDeliveryAddress(foundOrder.direccionEntrega || "");
+                    setDeliveryPhone(foundOrder.telefono || "");
+                    setDeliveryNotes(foundOrder.notas || "");
                 }
 
                 if (!foundOrder) {
@@ -139,6 +150,54 @@ export const UserOrderDetail = () => {
     }, [order]);
 
     const isCancelled = normalizeStatus(order?.estado || order?.estadoPedido) === "cancelado";
+    const isDelivered = normalizeStatus(order?.estado || order?.estadoPedido) === "entregado";
+    const canUpdateDelivery = !isCancelled && !isDelivered;
+    const canConfirmDelivery = ["en camino", "listo para entrega", "listo", "en preparacion"].includes(normalizeStatus(order?.estado || order?.estadoPedido));
+
+    const handleSaveDelivery = async () => {
+        try {
+            setSavingDelivery(true);
+            await updateOrder(order._id || order.id, {
+                direccionEntrega: deliveryAddress,
+                telefono: deliveryPhone,
+                notas: deliveryNotes,
+            });
+            showSuccess("Datos de entrega actualizados");
+            setOrder((prev) => ({
+                ...prev,
+                direccionEntrega: deliveryAddress,
+                telefono: deliveryPhone,
+                notas: deliveryNotes,
+            }));
+        } catch (err) {
+            showError(err.response?.data?.message || "Error al actualizar datos de entrega");
+        } finally {
+            setSavingDelivery(false);
+        }
+    };
+
+    const handleConfirmDelivery = async () => {
+        if (!window.confirm("¿Confirmas que el pedido fue entregado? Esta acción no se puede deshacer.")) {
+            return;
+        }
+
+        try {
+            setConfirmingDelivery(true);
+            await updateOrder(order._id || order.id, {
+                estadoPedido: "Entregado",
+            });
+            showSuccess("Pedido marcado como entregado");
+            setOrder((prev) => ({
+                ...prev,
+                estado: "Entregado",
+                estadoPedido: "Entregado",
+            }));
+        } catch (err) {
+            showError(err.response?.data?.message || "Error al confirmar entrega");
+        } finally {
+            setConfirmingDelivery(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -341,6 +400,73 @@ export const UserOrderDetail = () => {
                                 </div>
                             </Card>
                         )}
+
+                        <Card title="Editar entrega">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700">Dirección de entrega</label>
+                                    <textarea
+                                        rows={3}
+                                        value={deliveryAddress}
+                                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                                        disabled={!canUpdateDelivery}
+                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-70"
+                                        placeholder="Escribe una dirección clara para la entrega"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700">Teléfono de contacto</label>
+                                    <input
+                                        type="tel"
+                                        value={deliveryPhone}
+                                        onChange={(e) => setDeliveryPhone(e.target.value)}
+                                        disabled={!canUpdateDelivery}
+                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-70"
+                                        placeholder="Ej: 41234567"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700">Notas para el repartidor</label>
+                                    <textarea
+                                        rows={2}
+                                        value={deliveryNotes}
+                                        onChange={(e) => setDeliveryNotes(e.target.value)}
+                                        disabled={!canUpdateDelivery}
+                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-70"
+                                        placeholder="Agrega instrucciones especiales de entrega"
+                                    />
+                                </div>
+                                {canUpdateDelivery ? (
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <button
+                                            onClick={handleSaveDelivery}
+                                            disabled={savingDelivery}
+                                            className="inline-flex items-center justify-center rounded-full bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {savingDelivery ? "Guardando..." : "Guardar cambios de entrega"}
+                                        </button>
+                                        {canConfirmDelivery && (
+                                            <button
+                                                onClick={handleConfirmDelivery}
+                                                disabled={confirmingDelivery}
+                                                className="inline-flex items-center justify-center rounded-full border border-emerald-600 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {confirmingDelivery ? "Confirmando..." : "Marcar como entregado"}
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                        Este pedido ya fue entregado o cancelado, no se pueden cambiar los datos de entrega.
+                                    </div>
+                                )}
+                                {isDelivered && (
+                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                                        El pedido está marcado como entregado. No se puede revertir a pendiente.
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
                     </div>
                 </div>
             </div>

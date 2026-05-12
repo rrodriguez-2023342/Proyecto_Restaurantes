@@ -30,6 +30,11 @@ const facturaSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        estado: {
+            type: String,
+            enum: ['PENDIENTE', 'ENTREGADO', 'PAGADA', 'ANULADA'],
+            default: 'PENDIENTE',
+        },
     },
     {
         timestamps: true,
@@ -39,6 +44,9 @@ const facturaSchema = new mongoose.Schema(
 
 facturaSchema.pre('save', async function () {
     this.total = parseFloat(((this.subtotal ?? 0) + (this.propina ?? 0)).toFixed(2));
+    if (!this.estado) {
+        this.estado = 'PENDIENTE';
+    }
 });
 
 facturaSchema.index({ pedido: 1 });

@@ -4,6 +4,7 @@ import { useAuthStore } from "../../features/auth/store/authStore";
 import { showError, showSuccess } from "../utils/toast";
 import { Avatar } from "./Avatar.jsx";
 import { FormField } from "./FormField.jsx";
+import { ProfileCardModal } from "./ProfileCardModal.jsx";
 
 const getFullName = (user) =>
     [user?.name, user?.surname].filter(Boolean).join(" ") || user?.username || "Usuario";
@@ -22,6 +23,7 @@ export const UserProfileDropdown = ({ compact = false, align = "right", placemen
     const updateProfile = useAuthStore((state) => state.updateProfile);
     const [isOpen, setIsOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
     const {
         register,
@@ -102,12 +104,12 @@ export const UserProfileDropdown = ({ compact = false, align = "right", placemen
         <div ref={wrapperRef} className="relative">
             <button
                 type="button"
-                onClick={() => setIsOpen((open) => !open)}
+                onClick={() => setIsCardModalOpen(true)}
                 className={`flex items-center gap-3 rounded-full transition hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300 ${
                     compact ? "p-1" : "px-2 py-1"
                 }`}
                 aria-label="Abrir perfil de usuario"
-                aria-expanded={isOpen}
+                aria-expanded={isCardModalOpen}
             >
                 <Avatar
                     src={user.profilePicture}
@@ -124,99 +126,11 @@ export const UserProfileDropdown = ({ compact = false, align = "right", placemen
                 )}
             </button>
 
-            {isOpen && (
-                <div className={`absolute ${panelPosition} ${panelPlacement} z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl`}>
-                    <div className="border-b border-slate-100 bg-orange-50 px-4 py-4">
-                        <div className="flex items-center gap-3">
-                            <Avatar
-                                src={previewUrl || user.profilePicture}
-                                name={getFullName(user)}
-                                size={56}
-                            />
-                            <div className="min-w-0">
-                                <p className="truncate text-base font-bold text-slate-900">{getFullName(user)}</p>
-                                <p className="truncate text-xs font-medium text-orange-700">@{user.username}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form onSubmit={handleSubmit(submit)} className="space-y-4 p-4">
-                        {isEditing ? (
-                            <>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <FormField label="Nombre" error={errors.name?.message}>
-                                        <input
-                                            {...register("name", { required: "El nombre es obligatorio" })}
-                                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-orange-400"
-                                        />
-                                    </FormField>
-                                    <FormField label="Apellido" error={errors.surname?.message}>
-                                        <input
-                                            {...register("surname", { required: "El apellido es obligatorio" })}
-                                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-orange-400"
-                                        />
-                                    </FormField>
-                                </div>
-                                <FormField label="Telefono" error={errors.phone?.message}>
-                                    <input
-                                        {...register("phone", {
-                                            required: "El telefono es obligatorio",
-                                            pattern: {
-                                                value: /^\d{8}$/,
-                                                message: "El telefono debe tener 8 digitos",
-                                            },
-                                        })}
-                                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-orange-400"
-                                    />
-                                </FormField>
-                                <FormField label="Foto de perfil">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        {...register("profilePicture")}
-                                        className="w-full rounded-lg border border-dashed border-orange-200 bg-orange-50/40 px-3 py-2 text-sm text-slate-600"
-                                    />
-                                </FormField>
-                            </>
-                        ) : (
-                            <div className="grid gap-3">
-                                <InfoItem label="Email" value={user.email} />
-                                <InfoItem label="Telefono" value={user.phone} />
-                                <InfoItem label="Rol" value={user.role} />
-                            </div>
-                        )}
-
-                        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-                            {isEditing ? (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={cancelEdit}
-                                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="rounded-full bg-orange-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-orange-400 disabled:opacity-60"
-                                    >
-                                        {loading ? "Guardando..." : "Guardar"}
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditing(true)}
-                                    className="rounded-full bg-orange-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-orange-400"
-                                >
-                                    Editar perfil
-                                </button>
-                            )}
-                        </div>
-                    </form>
-                </div>
-            )}
+            {/* Profile Card Modal */}
+            <ProfileCardModal
+                isOpen={isCardModalOpen}
+                onClose={() => setIsCardModalOpen(false)}
+            />
         </div>
     );
 };

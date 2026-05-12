@@ -246,9 +246,19 @@ export const OrdersPage = () => {
                             </label>
                             <label className="block">
                                 <span className={adminTheme.label}>Estado</span>
-                                <select value={editValues.estadoPedido} onChange={(e) => setEditValues((current) => ({ ...current, estadoPedido: e.target.value }))} className={`mt-1 w-full ${adminTheme.select}`}>
+                                <select
+                                    value={editValues.estadoPedido}
+                                    onChange={(e) => setEditValues((current) => ({ ...current, estadoPedido: e.target.value }))}
+                                    disabled={normalizeStatus(editingOrder.estado || editingOrder.estadoPedido) === 'entregado'}
+                                    className={`mt-1 w-full ${adminTheme.select}`}
+                                >
                                     {ORDER_STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
                                 </select>
+                                {normalizeStatus(editingOrder.estado || editingOrder.estadoPedido) === 'entregado' && (
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        Este pedido ya está entregado y su estado no se puede revertir.
+                                    </p>
+                                )}
                             </label>
                         </div>
 

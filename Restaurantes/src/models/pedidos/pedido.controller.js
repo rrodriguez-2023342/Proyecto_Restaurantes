@@ -19,6 +19,7 @@ export const createPedido = async (req, res) => {
     try {
         const data = req.body;
         data.usuario     = String(req.usuario.id || req.usuario._id);
+        data.email       = data.email || req.usuario.email || '';
         data.totalPedido = 0;
 
         const pedido = new Pedido(data);

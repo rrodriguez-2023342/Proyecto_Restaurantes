@@ -13,6 +13,16 @@ const getAdminRestaurantId = async (usuario) => {
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
+const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const userPedidoQuery = (usuario) => {
+    const conditions = [{ usuario: String(usuario.id) }];
+    if (usuario.email) {
+        conditions.push({ email: { $regex: new RegExp(`^${escapeRegExp(String(usuario.email).trim())}$`, 'i') } });
+    }
+    return { $or: conditions };
+};
+
 export const createFactura = async (req, res) => {
     try {
         const { pedido, propina = 0, correoCliente } = req.body;
@@ -31,7 +41,7 @@ export const createFactura = async (req, res) => {
             detalle.items.reduce((acc, item) => acc + item.precio * item.cantidad, 0).toFixed(2)
         );
 
-        const factura = new Factura({ pedido, subtotal, propina, correoCliente: correoCliente ?? null });
+        const factura = new Factura({ pedido, subtotal, propina, correoCliente: correoCliente ?? null, estado: 'PENDIENTE' });
         await factura.save();
 
         const { _id, ...facturaData } = factura.toObject();
@@ -58,6 +68,9 @@ export const getFacturas = async (req, res) => {
 
         let query = {};
 
+        const estado = String(req.query.estado || '').trim();
+        let pedidoQuery = {};
+
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const adminRestaurantId = await getAdminRestaurantId(req.usuario);
 
@@ -68,14 +81,18 @@ export const getFacturas = async (req, res) => {
                 });
             }
 
-            const pedidosDelRestaurante = await Pedido.find({ restaurante: adminRestaurantId }).select('_id').lean();
-            const pedidoIds = pedidosDelRestaurante.map(p => p._id);
-            query.pedido = { $in: pedidoIds };
+            pedidoQuery.restaurante = adminRestaurantId;
         } else if (req.usuario.role === 'USER_ROLE') {
-            const pedidosDelUsuario = await Pedido.find({ usuario: String(req.usuario.id) }).select('_id').lean();
-            const pedidoIds = pedidosDelUsuario.map(p => p._id);
-            query.pedido = { $in: pedidoIds };
+            pedidoQuery = userPedidoQuery(req.usuario);
         }
+
+        if (estado) {
+            pedidoQuery.estadoPedido = { $regex: new RegExp(`^${escapeRegExp(estado)}$`, 'i') };
+        }
+
+        const pedidosDelUsuario = await Pedido.find(pedidoQuery).select('_id').lean();
+        const pedidoIds = pedidosDelUsuario.map(p => p._id);
+        query.pedido = { $in: pedidoIds };
 
         const [facturas, total] = await Promise.all([
             Factura.find(query)
@@ -118,7 +135,9 @@ export const getFacturaById = async (req, res) => {
         }
 
         if (req.usuario.role === 'USER_ROLE') {
-            if (String(factura.pedido?.usuario) !== String(req.usuario.id)) {
+            const sameUserId = String(factura.pedido?.usuario) === String(req.usuario.id);
+            const sameEmail = String(factura.correoCliente || '').toLowerCase() === String(req.usuario.email || '').toLowerCase();
+            if (!sameUserId && !sameEmail) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes permiso para ver esta factura',
@@ -247,7 +266,10 @@ export const descargarFacturaPdf = async (req, res) => {
         }
 
         if (req.usuario.role === 'USER_ROLE') {
-            if (String(pedido.usuario) !== String(req.usuario.id)) {
+            const sameUserId = String(pedido.usuario) === String(req.usuario.id);
+            const sameEmail = String(factura.correoCliente || '').toLowerCase() === String(req.usuario.email || '').toLowerCase();
+            const samePedidoEmail = String(pedido.email || '').toLowerCase() === String(req.usuario.email || '').toLowerCase();
+            if (!sameUserId && !sameEmail && !samePedidoEmail) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes permiso para descargar el PDF de esta factura',

@@ -32,6 +32,7 @@ import { InvoiceDetail } from "../../features/invoices/pages/InvoiceDetail.jsx";
 import { ReportsDashboard } from "../../features/reports/pages/ReportsDashboard.jsx";
 import { InventoryPage } from "../../features/inventory/pages/InventoryPage.jsx";
 import { CheckoutPage } from "../../features/orders/pages/CheckoutPage.jsx";
+import { AccountSettings } from "../../features/auth/pages/AccountSettings.jsx";
 export const AppRoutes = () => {
     return (
         <Routes>
@@ -75,6 +76,7 @@ export const AppRoutes = () => {
                 <Route path="/admin/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/admin/reports" element={<ReportsDashboard />} />
                 <Route path="/admin/inventory" element={<InventoryPage />} />
+                <Route path="/admin/account-settings" element={<AccountSettings />} />
             </Route>
 
             <Route
@@ -99,6 +101,7 @@ export const AppRoutes = () => {
                 <Route path="/home/invoices" element={<InvoicesPage />} />
                 <Route path="/home/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/home/checkout" element={<CheckoutPage />} />
+                <Route path="/home/account-settings" element={<AccountSettings />} />
             </Route>
         </Routes>
     )

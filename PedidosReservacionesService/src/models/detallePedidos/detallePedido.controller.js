@@ -35,11 +35,24 @@ const recalcularTotalPedido = async (pedidoId) => {
     });
 };
 
-const getAuthUserId = (usuario) => String(usuario?.id || usuario?._id || '');
+const getAuthUserId = (usuario) => String(usuario?.id || usuario?._id || usuario?.sub || '');
+
+const isOrderOwner = (pedido, usuario) => {
+    const usuarioId = getAuthUserId(usuario).trim();
+    const usuarioEmail = String(usuario?.email || '').toLowerCase().trim();
+    const pedidoUsuarioId = String(pedido?.usuario || pedido?.user || '').trim();
+    const pedidoEmail = String(pedido?.email || pedido?.correoCliente || pedido?.userEmail || '').toLowerCase().trim();
+    
+    const sameUserId = usuarioId && pedidoUsuarioId && usuarioId === pedidoUsuarioId;
+    const sameEmail = usuarioEmail && pedidoEmail && usuarioEmail === pedidoEmail;
+    const emailMatchesPedidoUsuario = usuarioEmail && pedidoUsuarioId && usuarioEmail === pedidoUsuarioId.toLowerCase();
+    const userIdMatchesPedidoEmail = usuarioId && pedidoEmail && usuarioId === pedidoEmail;
+    
+    return sameUserId || sameEmail || emailMatchesPedidoUsuario || userIdMatchesPedidoEmail;
+};
 
 const canViewDetallePedido = async (usuario, pedidoDoc) => {
     const authUserId = getAuthUserId(usuario);
-    const pedidoUserId = String(pedidoDoc?.usuario || '');
     const pedidoRestaurantId = String(pedidoDoc?.restaurante || '');
 
     if (usuario?.role === 'ADMIN_ROLE') {
@@ -47,7 +60,7 @@ const canViewDetallePedido = async (usuario, pedidoDoc) => {
     }
 
     if (usuario?.role === 'USER_ROLE') {
-        if (pedidoUserId !== authUserId) {
+        if (!isOrderOwner(pedidoDoc, usuario)) {
             return { allowed: false, message: 'No tienes permiso para ver este detalle de pedido' };
         }
         return { allowed: true };
@@ -87,7 +100,7 @@ export const createDetallePedido = async (req, res) => {
             });
         }
 
-        if (String(pedidoExistente.usuario) !== authUserId) {
+        if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(pedidoExistente, req.usuario)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo el usuario que creo el pedido puede crear el detalle-pedido',
@@ -277,7 +290,7 @@ export const getDetallePedidoById = async (req, res) => {
     try {
         const { id } = req.params;
         const detalle = await DetallePedido.findById(id)
-            .populate('pedido', 'tipoPedido estadoPedido totalPedido restaurante usuario')
+            .populate('pedido', 'tipoPedido estadoPedido totalPedido restaurante usuario email')
             .populate('items.plato', 'nombrePlato precio');
 
         if (!detalle || !detalle.pedido) {
@@ -316,7 +329,7 @@ export const getDetallePedidoByPedido = async (req, res) => {
     try {
         const { pedidoId } = req.params;
         const detalle = await DetallePedido.findOne({ pedido: pedidoId })
-            .populate('pedido', 'tipoPedido estadoPedido totalPedido restaurante usuario')
+            .populate('pedido', 'tipoPedido estadoPedido totalPedido restaurante usuario email')
             .populate('items.plato', 'nombrePlato precio');
 
         if (!detalle || !detalle.pedido) {
@@ -364,7 +377,7 @@ export const updateDetallePedido = async (req, res) => {
         }
 
         const authUserId = getAuthUserId(req.usuario);
-        if (String(detalle.pedido.usuario) !== authUserId) {
+        if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(detalle.pedido, req.usuario)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo el usuario que creo el pedido puede editar el detalle',
@@ -424,7 +437,7 @@ export const deleteDetallePedido = async (req, res) => {
         }
 
         const authUserId = getAuthUserId(req.usuario);
-        if (String(detalle.pedido.usuario) !== authUserId) {
+        if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(detalle.pedido, req.usuario)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo el usuario que creo el pedido puede eliminar el detalle',

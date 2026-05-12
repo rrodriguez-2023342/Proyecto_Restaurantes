@@ -3,12 +3,23 @@ import { Link } from "react-router-dom";
 import { getInvoices } from "../../../shared/api/invoice";
 import { useAuthStore } from "../../auth/store/authStore";
 
+const STATUS_FILTERS = {
+    Todos: [],
+    Pendientes: ["pendiente", "en preparacion", "listo para entrega"],
+    Entregadas: ["entregado"],
+    Canceladas: ["cancelado", "anulada"],
+};
+
+const normalizeStatus = (value = "") =>
+    String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 export const InvoicesPage = () => {
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-     const role = useAuthStore((state) => state.user?.role);
-     const isAdmin = role === "ADMIN_ROLE" || role === "ADMIN_RESTAURANT_ROLE";
+    const [statusFilter, setStatusFilter] = useState("Todos");
+    const role = useAuthStore((state) => state.user?.role);
+    const isAdmin = role === "ADMIN_ROLE" || role === "ADMIN_RESTAURANT_ROLE";
 
     const demoInvoices = [
         { _id: "INV-1001", fechaEmision: "2026-05-01T10:30:00Z", cliente: { nombre: "Juan Perez" }, total: 145.50, estado: "PAGADA" },
@@ -35,12 +46,17 @@ export const InvoicesPage = () => {
         fetchInvoices();
     }, []);
 
-    const filteredInvoices = invoices.filter(inv => {
+    const filteredInvoices = invoices.filter((inv) => {
         const clienteNombre = inv.cliente?.nombre || inv.pedido?.usuario?.nombre || inv.correoCliente || "";
-        return (
+        const searchMatch =
             String(inv._id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-            clienteNombre.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+            clienteNombre.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const invoiceStatus = normalizeStatus(inv.estado || inv.pedido?.estadoPedido || "pendiente");
+        const selectedStatuses = STATUS_FILTERS[statusFilter] || [];
+        const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes(invoiceStatus);
+
+        return searchMatch && statusMatch;
     });
 
     const getStatusBadge = (statusObj) => {
@@ -87,7 +103,7 @@ export const InvoicesPage = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full sm:max-w-md">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,8 +118,19 @@ export const InvoicesPage = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="text-sm text-slate-500 font-medium">
-                    Mostrando <span className="font-bold text-slate-900">{filteredInvoices.length}</span> facturas
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:w-auto"
+                    >
+                        {Object.keys(STATUS_FILTERS).map((label) => (
+                            <option key={label} value={label}>{label}</option>
+                        ))}
+                    </select>
+                    <div className="text-sm text-slate-500 font-medium">
+                        Mostrando <span className="font-bold text-slate-900">{filteredInvoices.length}</span> facturas
+                    </div>
                 </div>
             </div>
 

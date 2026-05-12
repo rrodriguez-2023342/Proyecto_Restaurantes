@@ -22,6 +22,31 @@ const resolveImageSrc = (src) => {
     return base ? `${base}${src}` : src;
 };
 
+const parseIngredients = (ingredients) => {
+    if (!ingredients) return [];
+    if (Array.isArray(ingredients)) return ingredients;
+    if (typeof ingredients === "string") {
+        try {
+            return JSON.parse(ingredients);
+        } catch {
+            return [ingredients];
+        }
+    }
+    return [];
+};
+
+const formatIngredientLabel = (ingredient) => {
+    if (!ingredient) return "";
+    if (typeof ingredient === "string") return ingredient;
+
+    const name = ingredient?.itemInventario?.nombreItem || ingredient?.itemInventario?.nombre || ingredient?.itemInventario || ingredient?.nombreItem || ingredient?.nombre || "";
+    const amount = ingredient?.cantidad;
+    if (name && amount != null && amount !== "") {
+        return `${name} x${amount}`;
+    }
+    return name || String(amount || "");
+};
+
 export const PlatosPage = () => {
     const { platos, loading, fetchPlatos, createPlato: storeCreate, updatePlato: storeUpdate, deletePlato: storeDelete } = usePlatoStore();
     const { restaurants, fetchRestaurants } = useRestaurantStore();
@@ -32,17 +57,13 @@ export const PlatosPage = () => {
     const [editing, setEditing] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [menuLoading, setMenuLoading] = useState(false);
-    const [restLoading, setRestLoading] = useState(false);
 
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                setRestLoading(true);
                 await fetchRestaurants();
-            } catch (err) {
+            } catch {
                 showError("No se pudieron cargar los restaurantes");
-            } finally {
-                setRestLoading(false);
             }
         };
         loadInitialData();
@@ -65,7 +86,7 @@ export const PlatosPage = () => {
                 } else {
                     setSelectedMenu("");
                 }
-            } catch (err) {
+            } catch {
                 showError("No se pudieron cargar los menús");
             } finally {
                 setMenuLoading(false);
@@ -132,7 +153,7 @@ export const PlatosPage = () => {
         try {
             await storeDelete(plato._id || plato.id);
             showSuccess("Plato eliminado");
-        } catch (err) {
+        } catch {
             showError("No se pudo eliminar el plato");
         }
     };
@@ -265,11 +286,14 @@ export const PlatosPage = () => {
                             <p className="mt-3 text-sm text-slate-600">{plato.descripcionPlato || "Sin descripción"}</p>
                             <div className="mt-3 flex flex-wrap gap-2 text-xs">
                                 <BadgeEstado value={plato.menu?.nombreMenu || selectedMenuData?.nombreMenu || "Menú"} />
-                                {plato.ingredientes && (
-                                    <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
-                                        {plato.ingredientes}
-                                    </span>
-                                )}
+                                {parseIngredients(plato.ingredientes).map((ingredient, idx) => {
+                                    const label = formatIngredientLabel(ingredient);
+                                    return label ? (
+                                        <span key={`${plato._id || plato.id}-ingredient-${idx}`} className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+                                            {label}
+                                        </span>
+                                    ) : null;
+                                })}
                             </div>
                             <div className="mt-5 grid grid-cols-2 gap-2">
                                 <button

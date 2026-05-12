@@ -28,6 +28,12 @@ const getAdminRestaurantId = async (usuario) => {
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
+const isOrderOwner = (pedido, usuario) => {
+    const sameUserId = String(pedido.usuario) === String(usuario.id);
+    const sameEmail = pedido.email && usuario.email && String(pedido.email).toLowerCase() === String(usuario.email).toLowerCase();
+    return sameUserId || sameEmail;
+};
+
 export const createPedido = async (req, res) => {
     try {
         const { restaurante, items, direccionEntrega, notas, tipoPedido, cliente, email, telefono, metodoPago } = req.body;
@@ -51,12 +57,15 @@ export const createPedido = async (req, res) => {
         });
 
         // 2. Crear el Pedido
+        const clienteEmail = email || req.usuario.email || '';
+        const clienteNombre = cliente || req.usuario.name || 'Cliente';
+
         const nuevoPedido = new Pedido({
             restaurante,
             usuario: usuarioId,
             tipoPedido: tipoPedido || 'Domicilio',
-            cliente: cliente || req.usuario.name || 'Cliente',
-            email: email || req.usuario.email || '',
+            cliente: clienteNombre,
+            email: clienteEmail,
             telefono: telefono || '',
             direccionEntrega: direccionEntrega || 'Dirección no especificada',
             notas: notas || '',
@@ -78,8 +87,9 @@ export const createPedido = async (req, res) => {
             pedido: pedidoGuardado._id,
             subtotal: total,
             propina: 0,
-            correoCliente: email || req.usuario.email || null,
-            metodoPago: metodoPago || null
+            correoCliente: clienteEmail || null,
+            metodoPago: metodoPago || null,
+            estado: 'PENDIENTE'
         });
         await nuevaFactura.save();
 
@@ -125,7 +135,7 @@ export const createPedido = async (req, res) => {
         // 6. Notificar
         try {
             const rest = await Restaurante.findById(restaurante).select('nombre').lean();
-            notificar(req.usuario.email, req.usuario.name, 'creado', pedidoGuardado, rest?.nombre || 'Restaurante');
+            notificar(clienteEmail, clienteNombre, 'creado', pedidoGuardado, rest?.nombre || 'Restaurante');
         } catch (mailErr) {
             console.error('[createPedido] Error en notificación:', mailErr.message);
         }
@@ -148,7 +158,15 @@ export const getPedidos = async (req, res) => {
         let query = {};
 
         if (req.usuario.role === 'USER_ROLE') {
-            query.usuario = req.usuario.id;
+            query = { usuario: String(req.usuario.id) };
+            if (req.usuario.email) {
+                query = {
+                    $or: [
+                        { usuario: String(req.usuario.id) },
+                        { email: { $regex: new RegExp(`^${String(req.usuario.email).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
+                    ]
+                };
+            }
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const adminRestaurantId = await getAdminRestaurantId(req.usuario);
             if (!adminRestaurantId) {
@@ -189,7 +207,7 @@ export const getPedidoById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario.id.toString()) {
+        if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(pedido, req.usuario)) {
             return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
         }
 
@@ -209,7 +227,7 @@ export const editarPedido = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedidoExistente.usuario.toString() !== req.usuario.id.toString()) {
+        if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(pedidoExistente, req.usuario)) {
             return res.status(403).json({ success: false, message: 'No puedes editar un pedido ajeno' });
         }
 
@@ -231,9 +249,43 @@ export const editarPedido = async (req, res) => {
             }
         }
 
+        const currentStatus = String(pedidoExistente.estadoPedido || '').toLowerCase();
+        const requestedStatus = pedidoData.estadoPedido ? String(pedidoData.estadoPedido).toLowerCase() : null;
+
+        if (currentStatus === 'entregado' && requestedStatus && requestedStatus !== 'entregado') {
+            return res.status(400).json({ success: false, message: 'No puedes cambiar el estado de un pedido ya entregado' });
+        }
+
+        if (req.usuario.role === 'USER_ROLE') {
+            const allowedFields = ['direccionEntrega', 'notas', 'telefono'];
+            const updatePayload = {};
+
+            for (const key of allowedFields) {
+                if (key in pedidoData) {
+                    updatePayload[key] = pedidoData[key];
+                }
+            }
+
+            if (requestedStatus === 'entregado' && currentStatus !== 'entregado') {
+                updatePayload.estadoPedido = 'Entregado';
+            } else if (requestedStatus && requestedStatus !== 'entregado') {
+                return res.status(400).json({ success: false, message: 'No puedes cambiar el estado del pedido a ese valor' });
+            }
+
+            Object.assign(pedidoData, updatePayload);
+        }
+
         delete pedidoData.totalPedido;
 
         const pedidoEditado = await Pedido.findByIdAndUpdate(id, pedidoData, { new: true, runValidators: true });
+
+        if (String(pedidoEditado.estadoPedido || '').toLowerCase() === 'entregado') {
+            await Factura.findOneAndUpdate(
+                { pedido: pedidoEditado._id },
+                { estado: 'ENTREGADO' },
+                { new: true }
+            );
+        }
 
         const restaurante = await Restaurante.findById(pedidoEditado.restaurante).select('nombre').lean();
         notificar(req.usuario.email, req.usuario.name, 'actualizado', pedidoEditado, restaurante?.nombre ?? 'Restaurante');
@@ -253,7 +305,7 @@ export const eliminarPedido = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario.id.toString()) {
+        if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(pedido, req.usuario)) {
             return res.status(403).json({ success: false, message: 'No puedes eliminar un pedido ajeno' });
         }
 

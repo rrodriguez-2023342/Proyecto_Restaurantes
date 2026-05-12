@@ -12,6 +12,10 @@ const pedidoSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        email: {
+            type: String,
+            default: ''
+        },
         tipoPedido: {
             type: String,
             enum: ['Domicilio', 'Para llevar', 'En el restaurante'],

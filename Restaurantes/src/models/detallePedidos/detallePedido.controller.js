@@ -34,13 +34,26 @@ const recalcularTotalPedido = async (pedidoId) => {
 
 const getAuthUserId = (usuario) => String(usuario?.id || usuario?._id || '');
 
+const isOrderOwner = (pedido, usuario) => {
+    // Convertir todo a string para comparación consistente
+    const usuarioId = getAuthUserId(usuario);
+    const pedidoUsuarioId = String(pedido?.usuario || '');
+    const pedidoEmail = String(pedido?.email || '').toLowerCase().trim();
+    const usuarioEmail = String(usuario?.email || '').toLowerCase().trim();
+    
+    // Permitir por ID o por email (ambos deben estar presentes y coincidir)
+    const sameUserId = usuarioId && pedidoUsuarioId && usuarioId === pedidoUsuarioId;
+    const sameEmail = pedidoEmail && usuarioEmail && pedidoEmail === usuarioEmail;
+    
+    return sameUserId || sameEmail;
+};
+
 const canViewDetallePedido = async (usuario, pedidoDoc) => {
     const authUserId = getAuthUserId(usuario);
-    const pedidoUserId = String(pedidoDoc?.usuario || '');
     const pedidoRestaurantId = String(pedidoDoc?.restaurante || '');
 
     if (usuario?.role === 'USER_ROLE') {
-        if (pedidoUserId !== authUserId) {
+        if (!isOrderOwner(pedidoDoc, usuario)) {
             return { allowed: false, message: 'No tienes permiso para ver este detalle de pedido' };
         }
         return { allowed: true };
