@@ -5,6 +5,7 @@ import { EmptyState } from "../../../shared/components";
 import { showError } from "../../../shared/utils/toast";
 import { useCartStore } from "../../orders/store/useCartStore";
 import toast from "react-hot-toast";
+import { DishDetailModal } from "../../platos/components/DishDetailModal.jsx";
 
 export const RestaurantDetail = () => {
     const { id } = useParams();
@@ -15,6 +16,7 @@ export const RestaurantDetail = () => {
     const [reviews, setReviews] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
+    const [selectedDish, setSelectedDish] = useState(null);
     
     const addItem = useCartStore((state) => state.addItem);
     const isUserView = location.pathname.startsWith("/home/");
@@ -69,19 +71,26 @@ export const RestaurantDetail = () => {
         } catch {
             showError("No se pudieron cargar los platos de este menú");
         }
+        setSelectedDish(null);
     };
 
-    const handleAddToCart = (plato) => {
+    const handleOpenDish = (plato) => {
+        if (!isUserView) return;
+        setSelectedDish(plato);
+    };
+
+    const handleAddToCart = (plato, quantity = 1) => {
         addItem({
             id: plato._id || plato.id,
             name: plato.nombrePlato || plato.nombre,
             price: plato.precio,
             image: plato.fotosPlato || plato.fotos
-        }, id);
+        }, id, quantity);
         toast.success(`${plato.nombrePlato || plato.nombre} agregado al carrito`, {
             icon: '🛒',
             style: { borderRadius: '16px', background: '#333', color: '#fff' }
         });
+        setSelectedDish(null);
     };
 
     if (isLoading) {
@@ -208,7 +217,10 @@ export const RestaurantDetail = () => {
                         {platos.map((plato) => (
                             <div 
                                 key={plato._id || plato.id}
-                                className="group relative flex flex-col sm:flex-row overflow-hidden rounded-3xl bg-white p-3 md:p-4 border border-slate-100 transition-all duration-300 hover:border-orange-200 hover:shadow-xl"
+                                onClick={() => handleOpenDish(plato)}
+                                className={`group relative flex flex-col sm:flex-row overflow-hidden rounded-3xl bg-white p-3 md:p-4 border border-slate-100 transition-all duration-300 hover:border-orange-200 hover:shadow-xl ${
+                                    isUserView ? "cursor-pointer" : ""
+                                }`}
                             >
                                 <div className="h-40 w-full sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-50 mb-3 sm:mb-0">
                                     {(plato.fotosPlato || plato.fotos) ? (
@@ -239,12 +251,27 @@ export const RestaurantDetail = () => {
                                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
                                             {plato.tipoPlato || "Plato fuerte"}
                                         </span>
-                                        <button 
-                                            onClick={() => handleAddToCart(plato)}
-                                            className="flex-1 sm:flex-none rounded-xl bg-slate-900 px-4 py-2 text-[10px] md:text-xs font-black text-white transition-all hover:bg-orange-500 active:scale-95 shadow-md"
-                                        >
-                                            Agregar
-                                        </button>
+                                        {isUserView ? (
+                                            <button 
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    handleOpenDish(plato);
+                                                }}
+                                                className="flex-1 sm:flex-none rounded-xl bg-slate-900 px-4 py-2 text-[10px] md:text-xs font-black text-white transition-all hover:bg-orange-500 active:scale-95 shadow-md"
+                                            >
+                                                Ver detalle
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    handleAddToCart(plato);
+                                                }}
+                                                className="flex-1 sm:flex-none rounded-xl bg-slate-900 px-4 py-2 text-[10px] md:text-xs font-black text-white transition-all hover:bg-orange-500 active:scale-95 shadow-md"
+                                            >
+                                                Agregar
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -307,6 +334,16 @@ export const RestaurantDetail = () => {
                     )}
                 </section>
             </main>
+
+            {selectedDish && (
+                <DishDetailModal
+                    key={selectedDish._id || selectedDish.id || selectedDish.nombrePlato || selectedDish.nombre}
+                    open
+                    dish={selectedDish}
+                    onClose={() => setSelectedDish(null)}
+                    onAdd={handleAddToCart}
+                />
+            )}
         </div>
     );
 };

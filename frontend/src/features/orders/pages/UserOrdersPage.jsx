@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useOrderStore } from "../store/useOrderStore";
 import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
 
@@ -253,6 +254,15 @@ export const UserOrdersPage = () => {
                                             <p className="mt-1 text-2xl font-black text-orange-500">
                                                 {currency.format(Number(order.total ?? order.totalPedido ?? 0))}
                                             </p>
+                                            <div className="mt-4 flex justify-end">
+                                                <Link
+                                                    to={`/home/orders/${orderId}`}
+                                                    onClick={(event) => event.stopPropagation()}
+                                                    className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
+                                                >
+                                                    Ver seguimiento
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
                                 </article>

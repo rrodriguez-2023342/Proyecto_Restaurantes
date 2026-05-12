@@ -9,16 +9,17 @@ export const useCartStore = create(
             restaurantId: null,
 
             // Agregar item al carrito
-            addItem: (product, restId) => {
+            addItem: (product, restId, quantity = 1) => {
                 const { items, restaurantId: currentRestaurantId } = get();
                 
                 // Si no viene restId, tratar de obtenerlo del producto o del estado actual
                 const finalRestId = restId || product.restaurantId || currentRestaurantId;
+                const finalQuantity = Math.max(1, Number(quantity) || 1);
 
                 // Si el producto es de un restaurante diferente, limpiar el carrito anterior
                 if (currentRestaurantId && finalRestId && currentRestaurantId !== finalRestId) {
                     set({
-                        items: [{ ...product, restaurantId: finalRestId, quantity: 1 }],
+                        items: [{ ...product, restaurantId: finalRestId, quantity: finalQuantity }],
                         restaurantId: finalRestId
                     });
                     return;
@@ -30,14 +31,14 @@ export const useCartStore = create(
                     set({
                         items: items.map((item) =>
                             item.id === product.id
-                                ? { ...item, quantity: item.quantity + 1 }
+                                ? { ...item, quantity: item.quantity + finalQuantity }
                                 : item
                         ),
                         restaurantId: finalRestId
                     });
                 } else {
                     set({
-                        items: [...items, { ...product, restaurantId: finalRestId, quantity: 1 }],
+                        items: [...items, { ...product, restaurantId: finalRestId, quantity: finalQuantity }],
                         restaurantId: finalRestId
                     });
                 }
