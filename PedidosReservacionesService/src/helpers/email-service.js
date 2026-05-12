@@ -32,8 +32,8 @@ const fmtMoney = (n) => `Q ${Number(n ?? 0).toFixed(2)}`;
 
 const supportBlock = `
 <div style="margin-top: 20px; padding: 16px; background-color: #E6F4E9; border-left: 4px solid #104523; border-radius: 4px;">
-    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">Â¿Tuviste algÃºn problema?</p>
-    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">ComunÃ­cate con nuestro equipo de soporte:</p>
+    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">¿Tuviste algún problema?</p>
+    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">Comunícate con nuestro equipo de soporte:</p>
     <p style="margin: 0 0 4px; color: #333; font-size: 13px;">
         @ <a href="mailto:restaurantein6bm@gmail.com" style="color: #104523; text-decoration: none;">restaurantein6bm@gmail.com</a>
     </p>
@@ -144,16 +144,16 @@ const buildReservacionHtml = ({ name, accion, reservacion, restaurante }) =>
 
 // Pedido
 const PEDIDO_TITULO = {
-    creado:     'âœ“ Pedido Recibido',
-    actualizado:'â—´ Estado de tu Pedido',
-    eliminado:  'âœ• Pedido Eliminado',
+    creado:     'Pedido Recibido',
+    actualizado:'Estado de tu Pedido',
+    eliminado:  'Pedido Eliminado',
 };
 
 const PEDIDO_ESTADO_MSG = {
-    'Pendiente':          'Tu pedido estÃ¡ pendiente de confirmaciÃ³n.',
-    'En preparaciÃ³n':     'Tu pedido estÃ¡ siendo preparado, Â¡ya casi estÃ¡ listo!',
-    'Listo para entrega': 'Tu pedido estÃ¡ listo para entrega.',
-    'Entregado':          'Tu pedido ha sido entregado. Â¡Buen provecho!',
+    'Pendiente':          'Tu pedido está pendiente de confirmación.',
+    'En preparación':     'Tu pedido está siendo preparado, ¡ya casi está listo!',
+    'Listo para entrega': 'Tu pedido está listo para entrega.',
+    'Entregado':          'Tu pedido ha sido entregado. ¡Buen provecho!',
     'Cancelado':          'Tu pedido ha sido cancelado.',
 };
 

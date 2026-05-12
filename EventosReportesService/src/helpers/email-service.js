@@ -32,8 +32,8 @@ const fmtMoney = (n) => `Q ${Number(n ?? 0).toFixed(2)}`;
 
 const supportBlock = `
 <div style="margin-top: 20px; padding: 16px; background-color: #E6F4E9; border-left: 4px solid #104523; border-radius: 4px;">
-    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">Â¿Tuviste algÃºn problema?</p>
-    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">ComunÃ­cate con nuestro equipo de soporte:</p>
+    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">¿Tuviste algún problema?</p>
+    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">Comunícate con nuestro equipo de soporte:</p>
     <p style="margin: 0 0 4px; color: #333; font-size: 13px;">
         @ <a href="mailto:restaurantein6bm@gmail.com" style="color: #104523; text-decoration: none;">restaurantein6bm@gmail.com</a>
     </p>
