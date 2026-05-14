@@ -110,43 +110,74 @@ export const useAuthStore = create(
                 const userId = currentUser?.id || currentUser?._id;
 
                 if (!userId) {
-                    const message = "No se encontro el usuario autenticado";
+                    const message = "No se encontró el usuario autenticado";
                     set({ error: message });
                     return { success: false, error: message };
                 }
 
                 try {
                     set({ loading: true, error: null });
-                    const { data } = await updateUserRequest(userId, payload);
-                    const updatedUser = data?.data || data?.user || data;
+                    const response = await updateUserRequest(userId, payload);
+                    
+                    // Robust extraction of updated user data
+                    const updatedData = response.data?.data || response.data?.user || response.data;
+                    
+                    if (!updatedData || typeof updatedData !== 'object') {
+                        throw new Error("Respuesta del servidor no contiene datos de usuario");
+                    }
+
+                    const newUserState = {
+                        ...currentUser,
+                        ...updatedData
+                    };
 
                     set({
-                        user: {
-                            ...currentUser,
-                            ...(updatedUser || {}),
-                        },
+                        user: newUserState,
                         loading: false,
                         error: null,
                     });
 
-                    return { success: true, user: updatedUser };
+                    // Update localStorage to ensure persistence
+                    const storage = JSON.parse(localStorage.getItem('auth-storage'));
+                    if (storage) {
+                        storage.state.user = newUserState;
+                        localStorage.setItem('auth-storage', JSON.stringify(storage));
+                    }
+
+                    return { success: true, user: newUserState };
                 } catch (err) {
-                    const message = err.response?.data?.message || "Error al actualizar perfil";
+                    console.error("Error updating profile:", err);
+                    const message = err.response?.data?.message || err.message || "Error al actualizar perfil";
                     set({ error: message, loading: false });
                     return { success: false, error: message };
                 }
             },
 
             logout: () => {
+                // Clear this store
                 set({
                     user: null,
                     token: null,
                     refreshToken: null,
                     expiresAt: null,
                     isAuthenticated: false
-                })
+                });
+                
+                // Clear other stores to prevent data leakage between sessions
+                localStorage.removeItem('kinaleats-cart-storage');
+                // Force a page reload to ensure all stores reset to their default values
+                window.location.href = '/';
             }
         }),
-        { name: "auth-storage" }
+        { 
+            name: "auth-storage",
+            partialize: (state) => ({
+                user: state.user,
+                token: state.token,
+                refreshToken: state.refreshToken,
+                expiresAt: state.expiresAt,
+                isAuthenticated: state.isAuthenticated
+            })
+        }
     )
 )

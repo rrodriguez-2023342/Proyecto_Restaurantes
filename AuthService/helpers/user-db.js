@@ -502,26 +502,38 @@ export const deleteUser = async (userId) => {
 export const updateUserByAdmin = async (userId, { name, surname, phone, profilePicture }) => {
     const transaction = await User.sequelize.transaction();
     try {
-        await User.update(
-            { Name: name, Surname: surname },
-            { where: { Id: userId }, transaction }
-        );
-        
-        const profileUpdates = {};
-        if (phone) profileUpdates.Phone = phone;
-        if (profilePicture) profileUpdates.ProfilePicture = profilePicture;
+        // Actualizar datos básicos en tabla users
+        const userUpdateData = {};
+        if (name !== undefined) userUpdateData.Name = name;
+        if (surname !== undefined) userUpdateData.Surname = surname;
 
-        if (Object.keys(profileUpdates).length > 0) {
-            await UserProfile.update(
-                profileUpdates,
-                { where: { UserId: userId }, transaction }
-            );
+        if (Object.keys(userUpdateData).length > 0) {
+            await User.update(userUpdateData, { where: { Id: userId }, transaction });
+        }
+        
+        // Actualizar datos de perfil en tabla user_profiles
+        const profileUpdateData = {};
+        if (phone !== undefined) profileUpdateData.Phone = phone;
+        if (profilePicture !== undefined) profileUpdateData.ProfilePicture = profilePicture;
+
+        if (Object.keys(profileUpdateData).length > 0) {
+            // Verificamos si existe el perfil, si no, lo creamos
+            const profile = await UserProfile.findOne({ where: { UserId: userId }, transaction });
+            if (profile) {
+                await UserProfile.update(profileUpdateData, { where: { UserId: userId }, transaction });
+            } else {
+                await UserProfile.create({
+                    UserId: userId,
+                    ...profileUpdateData
+                }, { transaction });
+            }
         }
 
         await transaction.commit();
+        return true;
     } catch (error) {
         if (transaction) await transaction.rollback();
-        console.error('Error actualizando usuario:', error);
+        console.error('Error interno en updateUserByAdmin:', error);
         throw error;
     }
 };

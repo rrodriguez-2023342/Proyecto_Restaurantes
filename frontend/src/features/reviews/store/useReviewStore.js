@@ -16,7 +16,7 @@ export const useReviewStore = create((set, get) => ({
             set({ loading: true, error: null });
             const { data } = await getReviews(filters);
             const reviews = data?.data || data?.resenas || data || [];
-            set({ reviews, loading: false });
+            set({ reviews: Array.isArray(reviews) ? reviews : [], loading: false });
         } catch (err) {
             const message = err.response?.data?.message || "Error al cargar reseñas";
             set({ error: message, loading: false });
@@ -26,53 +26,62 @@ export const useReviewStore = create((set, get) => ({
 
     createReview: async (formData) => {
         try {
-            set({ loading: true, error: null });
+            set({ loading: true });
             const { data } = await createReview(formData);
-            const newReview = data?.data || data;
-            set({
-                reviews: [newReview, ...get().reviews],
-                loading: false,
-            });
-            return newReview;
+            const newReviewBody = data?.data || data?.resena || data;
+            
+            // Re-fetch or manually update is fine, but don't set the global 'error'
+            // so we don't break the ReviewList UI
+            const restaurantId = formData.restaurante;
+            if (restaurantId) {
+                const { data: refreshedData } = await getReviews({ restaurante: restaurantId });
+                const refreshedReviews = refreshedData?.data || refreshedData?.resenas || refreshedData || [];
+                set({ 
+                    reviews: Array.isArray(refreshedReviews) ? refreshedReviews : [],
+                    loading: false 
+                });
+            } else {
+                set({ loading: false });
+            }
+            
+            return newReviewBody;
         } catch (err) {
-            const message = err.response?.data?.message || "Error al crear reseña";
-            set({ error: message, loading: false });
-            throw err;
+            set({ loading: false });
+            throw err; // Re-throw to be handled by the form toast
         }
     },
 
     updateReview: async (id, formData) => {
         try {
-            set({ loading: true, error: null });
+            set({ loading: true });
             const { data } = await updateReview(id, formData);
-            const updatedReview = data?.data || data;
-            set({
-                reviews: get().reviews.map((r) =>
-                    r._id === id || r.id === id ? updatedReview : r
+            const updatedReviewBody = data?.data || data?.resena || data;
+            
+            set((state) => ({
+                reviews: (Array.isArray(state.reviews) ? state.reviews : []).map((r) =>
+                    r._id === id || r.id === id ? { ...r, ...updatedReviewBody } : r
                 ),
                 loading: false,
-            });
-            return updatedReview;
+            }));
+            return updatedReviewBody;
         } catch (err) {
-            const message = err.response?.data?.message || "Error al actualizar reseña";
-            set({ error: message, loading: false });
+            set({ loading: false });
             throw err;
         }
     },
 
     deleteReview: async (id) => {
         try {
-            set({ loading: true, error: null });
+            set({ loading: true });
             await deleteReview(id);
-            set({
-                reviews: get().reviews.filter(
+            set((state) => ({
+                reviews: (Array.isArray(state.reviews) ? state.reviews : []).filter(
                     (r) => r._id !== id && r.id !== id
                 ),
                 loading: false,
-            });
+            }));
         } catch (err) {
-            const message = err.response?.data?.message || "Error al eliminar reseña";
-            set({ error: message, loading: false });
+            set({ loading: false });
             throw err;
         }
     },

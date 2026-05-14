@@ -1,292 +1,29 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useForm, useWatch } from "react-hook-form";
-import styled from "styled-components";
+import { X, User, Phone, Mail, Shield, Camera, Save, ArrowLeft, Diamond, Crown, Upload, MapPin, Globe } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useAuthStore } from "../../features/auth/store/authStore";
 import { showError, showSuccess } from "../utils/toast";
 
-const Backdrop = styled.div`
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.58);
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    z-index: 1000;
-    animation: fadeIn 0.2s ease-in;
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-`;
-
-const StyledCardWrapper = styled.div`
-    width: min(100%, 430px);
-
-    .card {
-        --main-color: #1e293b;
-        --submain-color: #64748b;
-        --accent-color: #ea580c;
-        --bg-color: #fff;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-            Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-        position: relative;
-        width: 100%;
-        max-height: calc(100vh - 48px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        border-radius: 18px;
-        background: var(--bg-color);
-        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
-        border: 1px solid rgba(226, 232, 240, 0.9);
-        overflow: auto;
-        animation: slideUp 0.3s ease-out;
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    }
-
-    .card__img {
-        height: 128px;
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-        flex: 0 0 auto;
-        background:
-            linear-gradient(135deg, rgba(234, 88, 12, 0.92) 0%, rgba(249, 115, 22, 0.9) 46%, rgba(14, 165, 233, 0.75) 100%),
-            #f97316;
-
-        &::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: 
-                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), transparent),
-                radial-gradient(circle at 70% 70%, rgba(0, 0, 0, 0.1), transparent);
-        }
-    }
-
-    .card__avatar {
-        position: absolute;
-        width: 112px;
-        height: 112px;
-        background: var(--bg-color);
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        top: 72px;
-        left: 50%;
-        transform: translateX(-50%);
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
-        border: 4px solid var(--bg-color);
-        overflow: hidden;
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-    }
-
-    .card__title {
-        width: 100%;
-        margin: 70px 0 0;
-        padding: 0 28px;
-        font-weight: 700;
-        font-size: 22px;
-        line-height: 1.2;
-        text-align: center;
-        color: var(--main-color);
-        overflow-wrap: anywhere;
-    }
-
-    .card__subtitle {
-        margin: 7px 0 0;
-        padding: 0 28px;
-        font-weight: 500;
-        font-size: 14px;
-        text-align: center;
-        color: var(--submain-color);
-        overflow-wrap: anywhere;
-    }
-
-    .card__info {
-        width: 100%;
-        padding: 0 24px;
-        margin-top: 22px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .card__info-item {
-        display: grid;
-        grid-template-columns: 112px minmax(0, 1fr);
-        gap: 12px;
-        align-items: start;
-        padding: 12px 14px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        font-size: 13px;
-
-        span:first-child {
-            color: var(--submain-color);
-            font-weight: 500;
-        }
-
-        span:last-child {
-            color: var(--main-color);
-            font-weight: 600;
-            min-width: 0;
-            text-align: right;
-            overflow-wrap: anywhere;
-        }
-    }
-
-    .card__wrapper {
-        width: 100%;
-        padding: 22px 24px 24px;
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-    }
-
-    .card__btn {
-        flex: 1;
-        padding: 10px 16px;
-        border: 2px solid var(--main-color);
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 12px;
-        color: var(--main-color);
-        background: var(--bg-color);
-        text-transform: uppercase;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        letter-spacing: 0.5px;
-
-        &:hover {
-            background: var(--main-color);
-            color: var(--bg-color);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        &:active {
-            transform: translateY(0);
-        }
-    }
-
-    .card__btn-solid {
-        background: linear-gradient(135deg, var(--accent-color) 0%, #f97316 100%);
-        color: var(--bg-color);
-        border-color: transparent;
-
-        &:hover {
-            background: linear-gradient(135deg, #dc5a0f 0%, #ea580c 100%);
-            color: var(--bg-color);
-        }
-    }
-
-    .card__form {
-        width: 100%;
-        padding: 74px 24px 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .card__form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .card__form-label {
-        font-weight: 600;
-        font-size: 12px;
-        color: var(--main-color);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .card__form-input {
-        padding: 10px 12px;
-        border: 2px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        background: #f8fafc;
-
-        &:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
-        }
-
-        &.error {
-            border-color: #ef4444;
-            background: #fee2e2;
-        }
-    }
-
-    .card__form-error {
-        font-size: 11px;
-        color: #ef4444;
-        font-weight: 500;
-    }
-
-    .card__form-success {
-        font-size: 11px;
-        color: #22c55e;
-        font-weight: 500;
-    }
-
-    .card__divider {
-        height: 1px;
-        background: #e2e8f0;
-        margin: 0;
-    }
-
-    @media (max-width: 480px) {
-        .card__info-item {
-            grid-template-columns: 1fr;
-            gap: 4px;
-        }
-
-        .card__info-item span:last-child {
-            text-align: left;
-        }
-
-        .card__wrapper {
-            flex-direction: column;
-        }
-    }
-`;
-
 const getFullName = (user) =>
     [user?.name, user?.surname].filter(Boolean).join(" ") || user?.username || "Usuario";
+
+const InfoItem = ({ label, value, icon: Icon }) => (
+    <div className="flex items-center gap-8 py-6 border-b border-slate-50 last:border-0 group transition-all duration-500 hover:pl-2">
+        <div className="flex-shrink-0 w-5 text-slate-300 group-hover:text-amber-500 transition-colors duration-500">
+            <Icon size={16} strokeWidth={1.2} />
+        </div>
+        <div className="flex flex-col gap-1">
+            <span className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400/80 leading-none">
+                {label}
+            </span>
+            <span className="text-[13px] font-medium text-slate-800 tracking-tight leading-none">
+                {value}
+            </span>
+        </div>
+    </div>
+);
 
 export const ProfileCardModal = ({ isOpen, onClose }) => {
     const user = useAuthStore((state) => state.user);
@@ -294,11 +31,13 @@ export const ProfileCardModal = ({ isOpen, onClose }) => {
     const updateProfile = useAuthStore((state) => state.updateProfile);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef(null);
 
     const {
         register,
         handleSubmit,
         reset,
+        setValue,
         control,
         formState: { errors },
     } = useForm();
@@ -306,7 +45,7 @@ export const ProfileCardModal = ({ isOpen, onClose }) => {
     const profilePicture = useWatch({ control, name: "profilePicture" });
 
     const previewUrl = useMemo(() => {
-        if (!profilePicture?.length) return null;
+        if (!profilePicture || !profilePicture[0]) return null;
         return URL.createObjectURL(profilePicture[0]);
     }, [profilePicture]);
 
@@ -327,6 +66,13 @@ export const ProfileCardModal = ({ isOpen, onClose }) => {
 
     if (!isOpen || !user) return null;
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setValue("profilePicture", e.target.files);
+        }
+    };
+
     const submit = async (values) => {
         try {
             setIsSaving(true);
@@ -335,7 +81,7 @@ export const ProfileCardModal = ({ isOpen, onClose }) => {
             payload.append("surname", values.surname);
             payload.append("phone", values.phone);
 
-            if (values.profilePicture?.[0]) {
+            if (values.profilePicture && values.profilePicture[0]) {
                 payload.append("profilePicture", values.profilePicture[0]);
             }
 
@@ -358,7 +104,6 @@ export const ProfileCardModal = ({ isOpen, onClose }) => {
             name: user.name || "",
             surname: user.surname || "",
             phone: user.phone || "",
-            profilePicture: null,
         });
         setIsEditing(false);
     };
@@ -369,156 +114,165 @@ export const ProfileCardModal = ({ isOpen, onClose }) => {
     };
 
     return createPortal(
-        <Backdrop onClick={closeModal}>
-            <StyledCardWrapper
+        <div 
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-in fade-in duration-500"
+            onClick={closeModal}
+        >
+            <div 
+                className="relative w-full max-w-[420px] bg-white rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-12 duration-700"
                 onClick={(e) => e.stopPropagation()}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Perfil de usuario"
             >
-                <div className="card">
-                    {/* Header Image */}
-                    <div className="card__img"></div>
-
-                    {/* Avatar */}
-                    <div className="card__avatar">
-                        <Avatar
-                            src={previewUrl || user.profilePicture}
-                            name={getFullName(user)}
-                            size={104}
-                        />
+                {/* ── HIGH-END HEADER ── */}
+                <div className="h-40 w-full bg-slate-950 relative overflow-hidden">
+                    {/* Animated Mesh Gradient Background */}
+                    <div className="absolute inset-0 opacity-40">
+                        <div className="absolute top-[-20%] left-[-10%] w-[100%] h-[140%] bg-[radial-gradient(circle_at_center,#f59e0b_0%,transparent_50%)] blur-[80px] animate-pulse" />
+                        <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[120%] bg-[radial-gradient(circle_at_center,#451a03_0%,transparent_60%)] blur-[60px]" />
                     </div>
+                    
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                    
+                    <div className="absolute top-8 left-10 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                        <span className="text-[8px] font-black uppercase tracking-[0.5em] text-white/40">KinalEats Premium</span>
+                    </div>
+                </div>
 
-                    {/* Content */}
+                {/* ── AVATAR SECTION ── */}
+                <div className="absolute top-24 left-10">
+                    <div className="relative group/avatar">
+                        <div className="p-1 bg-white rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)]">
+                            <Avatar
+                                src={previewUrl || user.profilePicture}
+                                name={getFullName(user)}
+                                size={110}
+                                className="rounded-full object-cover grayscale-[0.3] hover:grayscale-0 transition-all duration-700 ring-2 ring-slate-100"
+                            />
+                        </div>
+                        {isEditing && (
+                            <button 
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute -bottom-2 -right-2 h-11 w-11 bg-slate-950 text-white rounded-full border-4 border-white flex items-center justify-center cursor-pointer shadow-2xl hover:bg-amber-500 hover:text-slate-950 transition-all duration-500 active:scale-90 z-20"
+                            >
+                                <Camera size={18} strokeWidth={1.5} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Hidden File Input Master */}
+                <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                />
+
+                {/* ── CONTENT ── */}
+                <div className="pt-24 pb-12 px-12">
                     {!isEditing ? (
-                        <>
-                            <p className="card__title">{getFullName(user)}</p>
-                            <p className="card__subtitle">@{user.username}</p>
-
-                            <div className="card__info">
-                                <div className="card__info-item">
-                                    <span>Teléfono:</span>
-                                    <span>{user.phone || "No registrado"}</span>
-                                </div>
-                                <div className="card__info-item">
-                                    <span>Rol:</span>
-                                    <span>{user.role || "Usuario"}</span>
-                                </div>
-                                <div className="card__info-item">
-                                    <span>Correo:</span>
-                                    <span className="text-xs">{user.email}</span>
-                                </div>
+                        <div className="space-y-10 animate-in fade-in duration-1000">
+                            {/* Identity Section */}
+                            <div className="space-y-1">
+                                <h2 className="text-3xl font-light text-slate-950 tracking-tighter leading-none lowercase">
+                                    {user.name} <span className="font-black italic text-amber-500">{user.surname}</span>
+                                </h2>
+                                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">
+                                    @{user.username}
+                                </p>
                             </div>
 
-                            <div className="card__wrapper">
+                            {/* Info List Section */}
+                            <div className="space-y-0">
+                                <InfoItem icon={Phone} label="Contact Line" value={user.phone || "Private"} />
+                                <InfoItem icon={Shield} label="Account Status" value={user.role === 'ADMIN_ROLE' ? 'Elite Executive' : 'Private Member'} />
+                                <InfoItem icon={Mail} label="Digital Mail" value={user.email} />
+                            </div>
+
+                            {/* Luxury Buttons */}
+                            <div className="flex items-center justify-between pt-6">
                                 <button
-                                    type="button"
                                     onClick={() => setIsEditing(true)}
-                                    className="card__btn card__btn-solid"
+                                    className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-950 hover:text-amber-500 transition-colors duration-500 flex items-center gap-3 group"
                                 >
-                                    Editar
+                                    <span className="w-8 h-[1px] bg-slate-200 group-hover:w-12 group-hover:bg-amber-500 transition-all duration-500" />
+                                    Edit Profile
                                 </button>
                                 <button
-                                    type="button"
                                     onClick={closeModal}
-                                    className="card__btn"
+                                    className="h-14 px-8 bg-slate-950 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] hover:bg-amber-500 hover:text-slate-950 transition-all duration-500 shadow-xl shadow-slate-950/20 active:scale-95"
                                 >
-                                    Cerrar
+                                    Close
                                 </button>
                             </div>
-                        </>
+                        </div>
                     ) : (
-                        <form onSubmit={handleSubmit(submit)} className="card__form">
-                            <div className="card__form-group">
-                                <label className="card__form-label">Nombre</label>
-                                <input
-                                    {...register("name", {
-                                        required: "El nombre es obligatorio",
-                                        minLength: {
-                                            value: 2,
-                                            message: "Mínimo 2 caracteres",
-                                        },
-                                    })}
-                                    className={`card__form-input ${errors.name ? "error" : ""}`}
-                                    placeholder="Tu nombre"
-                                />
-                                {errors.name && (
-                                    <span className="card__form-error">{errors.name.message}</span>
-                                )}
+                        <form onSubmit={handleSubmit(submit)} className="space-y-8 animate-in fade-in duration-500">
+                            <div className="space-y-5">
+                                {/* Photo Status */}
+                                <div className="mb-4">
+                                    <button 
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="text-[9px] font-black uppercase tracking-[0.3em] text-amber-600 hover:text-amber-800 transition-colors flex items-center gap-2"
+                                    >
+                                        <Upload size={12} strokeWidth={3} />
+                                        {profilePicture ? 'New Media Selected' : 'Replace Image'}
+                                    </button>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-300 ml-1">Name</label>
+                                    <input
+                                        {...register("name", { required: "Required" })}
+                                        className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 text-sm font-medium text-slate-900 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-200"
+                                        placeholder="Given name"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-300 ml-1">Surname</label>
+                                    <input
+                                        {...register("surname", { required: "Required" })}
+                                        className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 text-sm font-medium text-slate-900 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-200"
+                                        placeholder="Family name"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-300 ml-1">Direct Line</label>
+                                    <input
+                                        {...register("phone", { 
+                                            required: "Required",
+                                            pattern: { value: /^\d{8}$/, message: "8 digits" }
+                                        })}
+                                        className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 text-sm font-medium text-slate-900 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-200"
+                                        placeholder="8 digit phone"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="card__form-group">
-                                <label className="card__form-label">Apellido</label>
-                                <input
-                                    {...register("surname", {
-                                        required: "El apellido es obligatorio",
-                                        minLength: {
-                                            value: 2,
-                                            message: "Mínimo 2 caracteres",
-                                        },
-                                    })}
-                                    className={`card__form-input ${errors.surname ? "error" : ""}`}
-                                    placeholder="Tu apellido"
-                                />
-                                {errors.surname && (
-                                    <span className="card__form-error">{errors.surname.message}</span>
-                                )}
-                            </div>
-
-                            <div className="card__form-group">
-                                <label className="card__form-label">Teléfono</label>
-                                <input
-                                    {...register("phone", {
-                                        required: "El teléfono es obligatorio",
-                                        pattern: {
-                                            value: /^\d{8}$/,
-                                            message: "8 dígitos requeridos",
-                                        },
-                                    })}
-                                    type="tel"
-                                    maxLength="8"
-                                    className={`card__form-input ${errors.phone ? "error" : ""}`}
-                                    placeholder="12345678"
-                                />
-                                {errors.phone && (
-                                    <span className="card__form-error">{errors.phone.message}</span>
-                                )}
-                            </div>
-
-                            <div className="card__form-group">
-                                <label className="card__form-label">Foto de Perfil</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    {...register("profilePicture")}
-                                    className="card__form-input"
-                                />
-                                <span className="text-xs text-slate-500">Max 5MB</span>
-                            </div>
-
-                            <div className="card__divider"></div>
-
-                            <div className="card__wrapper">
+                            <div className="flex gap-4 pt-4">
                                 <button
                                     type="button"
                                     onClick={cancelEdit}
-                                    className="card__btn"
+                                    className="flex-1 text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-slate-950 transition-colors py-5"
                                 >
-                                    Cancelar
+                                    Discard Changes
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={isSaving || loading}
-                                    className="card__btn card__btn-solid"
+                                    disabled={isSaving}
+                                    className="flex-1 bg-amber-500 text-slate-950 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-slate-950 hover:text-white transition-all shadow-xl shadow-amber-500/20 active:scale-95"
                                 >
-                                    {isSaving ? "Guardando..." : "Guardar"}
+                                    {isSaving ? "Updating..." : "Commit Changes"}
                                 </button>
                             </div>
                         </form>
                     )}
                 </div>
-            </StyledCardWrapper>
-        </Backdrop>,
+            </div>
+        </div>,
         document.body
     );
 };

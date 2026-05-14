@@ -218,18 +218,14 @@ export const updateUser = [
         const { name, surname, phone, roleName } = req.body;
         const isOwnProfile = userId === req.userId;
 
+        console.log(`[UpdateUser] Iniciando actualización para ID: ${userId}`);
+        console.log(`[UpdateUser] Datos recibidos:`, { name, surname, phone, roleName, hasFile: !!req.file });
+
         if (!isOwnProfile) {
             const auth = await ensureAdmin(req);
             if (!auth.allowed) {
                 return res.status(403).json({ success: false, message: auth.reason });
             }
-        }
-
-        if (!name && !surname && !phone && !roleName && !req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'Debes proporcionar al menos un campo para actualizar',
-            });
         }
 
         const user = await findUserById(userId);
@@ -248,22 +244,30 @@ export const updateUser = [
         let profilePictureToStore = user.UserProfile?.ProfilePicture;
         if (req.file) {
             try {
+                console.log(`[UpdateUser] Subiendo nueva imagen a Cloudinary...`);
                 profilePictureToStore = await uploadImage(req.file.path, req.file.filename);
+                console.log(`[UpdateUser] Nueva URL de imagen: ${profilePictureToStore}`);
             } catch (err) {
-                console.error('Error al subir imagen a Cloudinary en update:', err);
+                console.error('[UpdateUser] Error al subir imagen a Cloudinary:', err);
             }
         }
 
-        await updateUserByAdmin(userId, {
-            name: name || user.Name,
-            surname: surname || user.Surname,
-            phone: phone || (user.UserProfile ? user.UserProfile.Phone : null),
-            profilePicture: profilePictureToStore,
-        });
+        try {
+            await updateUserByAdmin(userId, {
+                name: name !== undefined ? name : user.Name,
+                surname: surname !== undefined ? surname : user.Surname,
+                phone: phone !== undefined ? phone : (user.UserProfile ? user.UserProfile.Phone : null),
+                profilePicture: profilePictureToStore,
+            });
+            console.log(`[UpdateUser] Actualización en DB completada con éxito.`);
+        } catch (dbError) {
+            console.error(`[UpdateUser] Error crítico al guardar en DB:`, dbError);
+            return res.status(500).json({ success: false, message: 'Error interno al guardar cambios en base de datos' });
+        }
 
-        Promise.resolve()
-            .then(() => sendAccountUpdatedByAdminEmail(user.Email, user.Name, { name, surname, phone }))
-            .catch((err) => console.error('Error enviando correo de cuenta modificada:', err));
+        // Notificar por correo (opcional, no bloqueante)
+        sendAccountUpdatedByAdminEmail(user.Email, user.Name, { name, surname, phone })
+            .catch((err) => console.error('[UpdateUser] Error enviando correo:', err));
 
         const updatedUser = await findUserById(userId);
         return res.status(200).json({

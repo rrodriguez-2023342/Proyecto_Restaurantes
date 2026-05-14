@@ -4,6 +4,22 @@ import { showError, showSuccess } from "../../../shared/utils/toast";
 import { RestaurantForm } from "../components/RestaurantForm.jsx";
 import { useRestaurantStore } from "../store/useRestaurantStore";
 import { getUsersByRole } from "../../../shared/api/users";
+import { 
+    LayoutDashboard, 
+    Plus, 
+    Settings, 
+    Trash2, 
+    Eye, 
+    Power, 
+    Clock, 
+    MapPin, 
+    Utensils, 
+    Activity, 
+    CheckCircle2, 
+    XCircle,
+    ChevronRight,
+    Search
+} from "lucide-react";
 
 const mapPayload = (values) => {
     const payload = new FormData();
@@ -15,29 +31,16 @@ const mapPayload = (values) => {
     if (values.city) payload.append("direccion.ciudad", values.city);
     payload.append("isActive", values.active === true || values.active === "true" ? "true" : "false");
 
-    if (values.openingTime) {
-        payload.append("horario.apertura", values.openingTime);
-    }
+    if (values.openingTime) payload.append("horario.apertura", values.openingTime);
+    if (values.closingTime) payload.append("horario.cierre", values.closingTime);
 
-    if (values.closingTime) {
-        payload.append("horario.cierre", values.closingTime);
-    }
-
-    const days = Array.isArray(values.openDays)
-        ? values.openDays
-        : values.openDays
-            ? [values.openDays]
-            : [];
+    const days = Array.isArray(values.openDays) ? values.openDays : values.openDays ? [values.openDays] : [];
     days.forEach((day) => {
         if (day) payload.append("horario.diasAbierto", day);
     });
 
-    if (values.photo?.length) {
-        payload.append("fotos", values.photo[0]);
-    }
-    if (values.ownerId) {
-        payload.append('dueno', values.ownerId);
-    }
+    if (values.photo?.length) payload.append("fotos", values.photo[0]);
+    if (values.ownerId) payload.append('dueno', values.ownerId);
 
     return payload;
 };
@@ -49,6 +52,7 @@ export const RestaurantsPage = () => {
     const [modalLoading, setModalLoading] = useState(false);
     const [owners, setOwners] = useState([]);
     const [showSpecs, setShowSpecs] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         fetchRestaurants();
@@ -61,14 +65,16 @@ export const RestaurantsPage = () => {
                 let allOwners = [];
                 if (ownerRes.status === 'fulfilled') allOwners = [...allOwners, ...(ownerRes.value.data || [])];
                 if (adminRes.status === 'fulfilled') allOwners = [...allOwners, ...(adminRes.value.data || [])];
-
                 const unique = Array.from(new Map(allOwners.map(item => [item.id || item._id, item])).values());
                 setOwners(unique);
-            } catch (e) {
-                // ignore
-            }
+            } catch (e) { /* ignore */ }
         })();
     }, []);
+
+    const filteredRestaurants = restaurants.filter(r => 
+        r.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.categoria.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const handleSubmit = async (values) => {
         try {
@@ -76,30 +82,28 @@ export const RestaurantsPage = () => {
             const payload = mapPayload(values);
             if (editing) {
                 await storeUpdate(editing._id || editing.id, payload);
-                showSuccess("Restaurante actualizado");
+                showSuccess("Restaurante actualizado con éxito");
             } else {
                 await storeCreate(payload);
-                showSuccess("Restaurante creado");
+                showSuccess("Nuevo restaurante registrado");
             }
             setOpenModal(false);
             setEditing(null);
         } catch (err) {
             const resp = err.response?.data;
-            const message = resp?.message || resp?.error || "No se pudo guardar el restaurante";
-            const detailed = resp?.errors && resp.errors.length ? resp.errors[0].message : null;
-            showError(detailed || message);
+            showError(resp?.message || "No se pudo procesar la solicitud");
         } finally {
             setModalLoading(false);
         }
     };
 
     const handleDelete = async (restaurant) => {
-        if (!confirm("¿Eliminar este restaurante?")) return;
+        if (!confirm("¿Estás seguro de eliminar este restaurante permanentemente?")) return;
         try {
             await storeDelete(restaurant._id || restaurant.id);
-            showSuccess("Restaurante eliminado");
+            showSuccess("Registro eliminado");
         } catch (err) {
-            showError("No se pudo eliminar el restaurante");
+            showError("Error al eliminar el registro");
         }
     };
 
@@ -107,74 +111,97 @@ export const RestaurantsPage = () => {
         try {
             const nextState = !restaurant?.isActive;
             await storeUpdate(restaurant._id || restaurant.id, { isActive: nextState });
-            showSuccess(nextState ? "Restaurante activado" : "Restaurante desactivado");
+            showSuccess(nextState ? "Restaurante activado" : "Restaurante en pausa");
         } catch (err) {
-            showError("No se pudo actualizar el estado");
+            showError("No se pudo cambiar el estado");
         }
     };
 
-    const getPreviewImage = (restaurant) => {
-        const image = restaurant?.fotos;
-        if (!image) return null;
-        if (
-            image.startsWith("http") ||
-            image.startsWith("data:") ||
-            image.startsWith("blob:")
-        ) {
-            return image;
-        }
-        const base = import.meta.env.VITE_CLOUDINARY_BASE_URL;
-        return base ? `${base}${image}` : image;
-    };
-
-    const shortText = (value, max = 120) => {
-        if (!value) return "-";
-        const trimmed = String(value).trim();
-        if (trimmed.length <= max) return trimmed;
-        return `${trimmed.slice(0, max).trim()}...`;
+    const stats = {
+        total: restaurants.length,
+        active: restaurants.filter(r => r.isActive).length,
+        inactive: restaurants.filter(r => !r.isActive).length
     };
 
     return (
-        <div className="space-y-6">
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-4 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">Gestión de restaurantes</h2>
-                        <p className="mt-1 text-xs sm:text-sm text-slate-600">
-                            Crea y administra restaurantes activos dentro de la plataforma.
-                        </p>
+        <div className="space-y-10 pb-20">
+            {/* ── ADMIN CONTROL TOWER ── */}
+            <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 shadow-2xl">
+                <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-orange-500/10 blur-[80px]" />
+                
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <div className="grid h-10 w-10 place-items-center rounded-xl bg-orange-500 text-white">
+                                <LayoutDashboard size={20} />
+                            </div>
+                            <h2 className="text-3xl font-black text-white tracking-tighter">Control de Restaurantes</h2>
+                        </div>
+                        <p className="text-slate-400 font-medium max-w-md">Monitorea y administra la red de establecimientos de KinalEats en tiempo real.</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditing(null);
-                            setOpenModal(true);
-                        }}
-                        className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm sm:text-base"
-                    >
-                        + Agregar nuevo
-                    </button>
+
+                    <div className="flex flex-wrap gap-4">
+                        <div className="flex items-center gap-6 rounded-3xl bg-white/5 border border-white/10 px-6 py-4 backdrop-blur-md">
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total</p>
+                                <p className="text-2xl font-black text-white leading-none">{stats.total}</p>
+                            </div>
+                            <div className="h-8 w-px bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Activos</p>
+                                <p className="text-2xl font-black text-white leading-none">{stats.active}</p>
+                            </div>
+                            <div className="h-8 w-px bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Pausa</p>
+                                <p className="text-2xl font-black text-white leading-none">{stats.inactive}</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => { setEditing(null); setOpenModal(true); }}
+                            className="flex items-center gap-3 rounded-2xl bg-orange-500 px-8 py-4 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
+                        >
+                            <Plus size={20} strokeWidth={3} />
+                            Nuevo Registro
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── SEARCH & FILTERS ── */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="relative w-full md:max-w-md group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Filtrar por nombre o categoría..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full rounded-2xl bg-white border border-slate-200 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all shadow-sm"
+                    />
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* ── MODAL SYSTEM ── */}
             {openModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                    <div className="rounded-3xl bg-white shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
-                        <div className="sticky top-0 flex items-center justify-between border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 p-6">
-                            <h3 className="text-lg font-semibold text-slate-900">
-                                {editing ? "Editar restaurante" : "Nuevo restaurante"}
-                            </h3>
-                            <button
-                                onClick={() => {
-                                    setOpenModal(false);
-                                    setEditing(null);
-                                }}
-                                className="text-slate-500 hover:text-slate-700"
-                            >
-                                ✕
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-white shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-slate-950 flex items-center justify-center text-white">
+                                    {editing ? <Settings size={16} /> : <Plus size={16} />}
+                                </div>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                                    {editing ? "Configurar Restaurante" : "Registrar Restaurante"}
+                                </h3>
+                            </div>
+                            <button onClick={() => { setOpenModal(false); setEditing(null); }} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-colors">
+                                <XCircle size={24} />
                             </button>
                         </div>
-                        <div className="p-6">
+                        <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
                             <RestaurantForm
                                 defaultValues={editing}
                                 onSubmit={handleSubmit}
@@ -186,90 +213,132 @@ export const RestaurantsPage = () => {
                 </div>
             )}
 
-            {/* Grid de Restaurantes */}
+            {/* ── RESTAURANTS GRID ── */}
             {loading ? (
-                <div className="text-center py-12">
-                    <p className="text-slate-600">Cargando restaurantes...</p>
+                <div className="flex h-64 items-center justify-center">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
                 </div>
-            ) : restaurants.length ? (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {restaurants.map((restaurant) => (
-                        <Card
+            ) : filteredRestaurants.length ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredRestaurants.map((restaurant) => (
+                        <div
                             key={restaurant?._id || restaurant?.id}
-                            className="transition hover:-translate-y-1 hover:shadow-md"
+                            className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-white border border-slate-100 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2"
                         >
-                            {getPreviewImage(restaurant) ? (
-                                <img
-                                    src={getPreviewImage(restaurant)}
-                                    alt={restaurant?.nombre || "Restaurante"}
-                                    className="mb-3 h-40 w-full rounded-xl object-contain bg-slate-100"
-                                />
-                            ) : (
-                                <div className="mb-3 h-40 w-full rounded-xl bg-gradient-to-br from-orange-100 via-amber-50 to-white" />
-                            )}
-                            <h3 className="font-semibold text-slate-900">{restaurant?.nombre}</h3>
-                            <p className="mt-1 text-sm text-slate-600">
-                                {shortText(restaurant?.descripcion, 80)}
-                            </p>
-                            <div className="mt-5 grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setEditing(restaurant);
-                                        setOpenModal(true);
-                                    }}
-                                    className="flex-1 rounded-xl border border-orange-100 bg-orange-50 py-2.5 text-xs font-bold text-orange-600 hover:bg-orange-100 transition"
-                                >
-                                    Editar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleToggleStatus(restaurant)}
-                                    className="flex-1 rounded-xl border border-slate-100 bg-slate-50 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
-                                >
-                                    {restaurant?.isActive ? "Desactivar" : "Activar"}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDelete(restaurant)}
-                                    className="col-span-2 sm:flex-initial rounded-xl border border-rose-100 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition"
-                                >
-                                    Eliminar
-                                </button>
+                            {/* Image Header */}
+                            <div className="relative h-48 w-full bg-slate-50 overflow-hidden">
+                                {restaurant?.fotos ? (
+                                    <img
+                                        src={restaurant.fotos}
+                                        alt={restaurant?.nombre}
+                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-5xl bg-gradient-to-br from-slate-100 to-white">🍲</div>
+                                )}
+                                <div className="absolute top-4 left-4">
+                                    <span className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-xl border ${
+                                        restaurant?.isActive 
+                                        ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                                        : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                                    }`}>
+                                        <Activity size={10} />
+                                        {restaurant?.isActive ? "Operativo" : "En Pausa"}
+                                    </span>
+                                </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowSpecs(restaurant)}
-                                className="mt-2 w-full rounded-lg bg-slate-900 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm"
-                            >
-                                Ver especificaciones
-                            </button>
-                        </Card>
+
+                            {/* Content */}
+                            <div className="flex flex-1 flex-col p-6">
+                                <div className="mb-4">
+                                    <h4 className="text-xl font-black text-slate-950 tracking-tight mb-1 group-hover:text-orange-500 transition-colors">
+                                        {restaurant?.nombre}
+                                    </h4>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Utensils size={10} />
+                                        {restaurant?.categoria || "General"}
+                                    </p>
+                                </div>
+                                
+                                <p className="line-clamp-2 text-sm text-slate-500 font-medium leading-relaxed mb-8">
+                                    {restaurant?.descripcion || "Sin descripción disponible."}
+                                </p>
+
+                                {/* Action Buttons Panel */}
+                                <div className="mt-auto space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => { setEditing(restaurant); setOpenModal(true); }}
+                                            className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 py-3 text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-950 hover:text-white transition-all active:scale-95 border border-slate-100"
+                                        >
+                                            <Settings size={14} />
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => handleToggleStatus(restaurant)}
+                                            className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 border ${
+                                                restaurant?.isActive 
+                                                ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white" 
+                                                : "bg-green-50 text-green-600 border-green-100 hover:bg-green-600 hover:text-white"
+                                            }`}
+                                        >
+                                            <Power size={14} />
+                                            {restaurant?.isActive ? "Pausar" : "Activar"}
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => setShowSpecs(restaurant)}
+                                            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/10 hover:bg-orange-600 transition-all active:scale-95"
+                                        >
+                                            <Eye size={14} />
+                                            Ficha Técnica
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(restaurant)}
+                                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-300 hover:text-rose-500 hover:bg-rose-50 border border-slate-100 transition-all active:scale-75"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : (
-                <EmptyState title="Sin restaurantes" description="Crea el primer restaurante para comenzar" />
+                <EmptyState 
+                    title="No hay registros activos" 
+                    description="Comienza por crear el primer restaurante de la red para que los usuarios puedan descubrirlo." 
+                    actionLabel="+ Nuevo Restaurante"
+                    onAction={() => { setEditing(null); setOpenModal(true); }}
+                />
             )}
 
-            {/* Specs Modal */}
+            {/* Specs Modal (Glassmorphism) */}
             {showSpecs && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-slate-900">Especificaciones</h3>
-                            <button onClick={() => setShowSpecs(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl animate-in fade-in duration-300">
+                    <div className="w-full max-w-lg rounded-[3rem] bg-white p-10 shadow-2xl border border-white/20 animate-in zoom-in-95 duration-500">
+                        <div className="flex items-center justify-between mb-10">
+                            <h3 className="text-3xl font-black text-slate-950 tracking-tighter italic">Ficha de Restaurante</h3>
+                            <button onClick={() => setShowSpecs(null)} className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                                <ChevronRight size={24} />
+                            </button>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-10">
                             <section>
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-orange-500 mb-3">🕒 Horario de atención</h4>
-                                <div className="rounded-2xl bg-orange-50 p-4 border border-orange-100">
-                                    <p className="text-sm text-slate-700 font-semibold">
-                                        {showSpecs.horario?.apertura} - {showSpecs.horario?.cierre}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500"><Clock size={16} /></div>
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Ventana Operativa</h4>
+                                </div>
+                                <div className="rounded-[2rem] bg-orange-50/50 p-6 border border-orange-100">
+                                    <p className="text-2xl font-black text-slate-900 tracking-tighter italic">
+                                        {showSpecs.horario?.apertura} — {showSpecs.horario?.cierre}
                                     </p>
-                                    <div className="mt-2 flex flex-wrap gap-1">
+                                    <div className="mt-4 flex flex-wrap gap-2">
                                         {showSpecs.horario?.diasAbierto?.map(day => (
-                                            <span key={day} className="text-[10px] bg-white border border-orange-200 px-2 py-0.5 rounded-full text-orange-600 font-medium">
+                                            <span key={day} className="text-[9px] font-black uppercase tracking-widest bg-white border border-orange-200 px-3 py-1.5 rounded-xl text-orange-600">
                                                 {day}
                                             </span>
                                         ))}
@@ -278,21 +347,31 @@ export const RestaurantsPage = () => {
                             </section>
 
                             <section>
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-blue-500 mb-3">📍 Ubicación</h4>
-                                <div className="rounded-2xl bg-blue-50 p-4 border border-blue-100">
-                                    <p className="text-sm text-slate-700 leading-relaxed">
-                                        <span className="font-bold">Calle:</span> {showSpecs.direccion?.calle || "No especificada"}<br />
-                                        <span className="font-bold">Ciudad:</span> {showSpecs.direccion?.ciudad || "No especificada"}
-                                    </p>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500"><MapPin size={16} /></div>
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Coordenadas de Sabor</h4>
+                                </div>
+                                <div className="rounded-[2rem] bg-blue-50/50 p-6 border border-blue-100">
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-bold text-slate-700">
+                                            <span className="text-blue-500 uppercase text-[9px] tracking-widest block mb-1">Calle / Avenida</span> 
+                                            {showSpecs.direccion?.calle || "No especificada"}
+                                        </p>
+                                        <div className="h-px bg-blue-200/50" />
+                                        <p className="text-sm font-bold text-slate-700">
+                                            <span className="text-blue-500 uppercase text-[9px] tracking-widest block mb-1">Ciudad / Región</span>
+                                            {showSpecs.direccion?.ciudad || "No especificada"}
+                                        </p>
+                                    </div>
                                 </div>
                             </section>
                         </div>
 
                         <button
                             onClick={() => setShowSpecs(null)}
-                            className="mt-8 w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white hover:bg-slate-800 transition"
+                            className="mt-12 w-full rounded-[1.5rem] bg-slate-950 py-5 text-sm font-black uppercase tracking-widest text-white shadow-2xl hover:bg-orange-500 transition-all active:scale-95"
                         >
-                            Cerrar
+                            Cerrar Expediente
                         </button>
                     </div>
                 </div>

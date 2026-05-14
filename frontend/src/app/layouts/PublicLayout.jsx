@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/store/authStore";
 import { UserProfileDropdown } from "../../shared/components";
@@ -7,20 +7,20 @@ import { SideCart } from "../../features/orders/components/SideCart";
 import { useCartStore } from "../../features/orders/store/useCartStore";
 import logo from "../../assets/images/logo1.png";
 
- const navItems = [
-     { to: "/home", label: "Inicio" },
-     { to: "/home/restaurants", label: "Restaurantes" },
-     { to: "/home/reviews", label: "Reseñas" },
-     { to: "/home/orders", label: "Pedidos" },
-     { to: "/reservaciones", label: "Reservaciones" },
-     { to: "/home/invoices", label: "Facturas" },
- ];
+const navItems = [
+    { to: "/home", label: "INICIO" },
+    { to: "/home/restaurants", label: "RESTAURANTES" },
+    { to: "/home/reviews", label: "RESEÑAS" },
+    { to: "/home/orders", label: "PEDIDOS" },
+    { to: "/reservaciones", label: "RESERVAS" },
+    { to: "/home/invoices", label: "FACTURAS" },
+];
 
 const linkClass = ({ isActive }) => {
-    const base = "rounded-full px-4 py-2 text-sm font-semibold transition";
+    const base = "text-[11px] font-black tracking-[0.25em] transition-all duration-300 py-1.5 border-b-2 border-transparent";
     return isActive
-    ? `${base} bg-orange-500 text-white shadow-sm`
-    : `${base} text-slate-600 hover:bg-orange-50`;
+        ? `${base} text-orange-600 border-orange-600`
+        : `${base} text-slate-500 hover:text-slate-900`;
 };
 
 export const PublicLayout = () => {
@@ -28,7 +28,16 @@ export const PublicLayout = () => {
     const navigate = useNavigate();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
     const totalItems = useCartStore((state) => state.getTotalItems());
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -37,105 +46,104 @@ export const PublicLayout = () => {
 
     return (
         <PrincipalContainer>
-            <header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-40">
-                <div className="mx-auto max-w-7xl px-4 py-3 md:px-6 md:py-4">
-                    <div className="flex items-center justify-between gap-4">
-                        {/* Mobile Menu Button & Logo Area */}
-                        <div className="flex items-center gap-3">
-                             <button 
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="lg:hidden rounded-xl p-2 text-slate-600 hover:bg-slate-100 transition-colors"
-                             >
-                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    {isMenuOpen ? (
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                                    ) : (
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7" />
-                                    )}
-                                </svg>
-                             </button>
+            {/* Professional Dark Navbar - Dreamhub Inspired */}
+            <header 
+                className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+                    scrolled ? "bg-white/95 py-2 shadow-2xl backdrop-blur-md border-b border-slate-100" : "bg-white py-4"
+                }`}
+            >
+                <div className="px-6 md:px-12 lg:px-16">
+                    <div className="flex items-center justify-between">
+                        
+                        {/* Logo Area */}
+                        <div className="flex items-center gap-12">
+                            <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate("/home")}>
+                                <div className="h-12 w-12 overflow-hidden">
+                                    <img 
+                                        src={logo}
+                                        alt="KinalEats Logo" 
+                                        className="h-full w-full object-contain"
+                                    />
+                                </div>
+                                <div className="hidden sm:block">
+                                    <h1 className="text-lg font-black text-slate-900 tracking-[0.1em] leading-none uppercase">Kinal<span className="text-orange-500">Eats</span></h1>
+                                    <p className="text-[8px] font-black text-orange-500 uppercase tracking-[0.3em] mt-1.5">Gourmet Experience</p>
+                                </div>
+                            </div>
 
-                             <div className="h-10 w-10 md:h-12 md:w-12 overflow-hidden rounded-xl md:rounded-2xl bg-orange-500 shadow-lg shadow-orange-100">
-                                <img 
-                                    src={logo}
-                                    alt="KinalEats Logo" 
-                                    className="h-full w-full object-cover"
-                                />
-                             </div>
-                             <div className="hidden xs:block">
-                                <h1 className="text-lg md:text-xl font-black text-slate-900 tracking-tight leading-none">KinalEats</h1>
-                                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Premium Delivery</p>
-                             </div>
+                            {/* Desktop Navigation */}
+                            <nav className="hidden xl:flex items-center gap-10">
+                                {navItems.map((item) => (
+                                    <NavLink key={item.to} to={item.to} className={linkClass} end>
+                                        {item.label}
+                                    </NavLink>
+                                ))}
+                            </nav>
                         </div>
 
-                        {/* Desktop Navigation */}
-                        <nav className="hidden lg:flex items-center gap-1 bg-slate-50 p-1 rounded-2xl border border-slate-100">
-                            {navItems.map((item) => (
-                                <NavLink key={item.to} to={item.to} className={linkClass} end>
-                                    {item.label}
-                                </NavLink>
-                            ))}
-                        </nav>
-
                         {/* Actions Area */}
-                        <div className="flex items-center gap-2 md:gap-3">
+                        <div className="flex items-center gap-6">
                             <button 
                                 onClick={() => setIsCartOpen(true)}
-                                className="relative rounded-xl md:rounded-2xl bg-slate-900 p-2.5 md:p-3 text-white transition-all hover:bg-slate-800 active:scale-95 shadow-lg shadow-slate-200"
+                                className="group relative p-2 text-slate-700 hover:text-orange-500 transition-colors"
                             >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
                                 {totalItems > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-orange-500 text-[8px] md:text-[10px] font-black text-white ring-2 ring-white">
+                                    <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white shadow-lg border-2 border-white">
                                         {totalItems}
                                     </span>
                                 )}
                             </button>
 
-                            <div className="h-8 w-px bg-slate-200 mx-0.5 md:mx-1" />
+                            <div className="h-8 w-px bg-slate-200" />
 
-                            <UserProfileDropdown />
-                            
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="hidden md:block rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition active:scale-95"
-                            >
-                                Salir
-                            </button>
+                            <div className="flex items-center gap-5">
+                                <UserProfileDropdown compact />
+                                <button
+                                    onClick={handleLogout}
+                                    className="hidden md:flex items-center gap-2 border-2 border-slate-950 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-lg hover:bg-orange-500 hover:border-orange-500 transition-all active:scale-95 shadow-lg shadow-slate-900/10"
+                                >
+                                    Salir
+                                </button>
+                                
+                                {/* Mobile Menu Button */}
+                                <button 
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="xl:hidden p-2 text-slate-900"
+                                >
+                                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8h16M4 16h16" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Mobile Navigation - Hamburger Menu Overlay */}
+                    {/* Mobile Navigation */}
                     {isMenuOpen && (
-                        <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-2xl animate-in slide-in-from-top duration-300">
-                            <nav className="flex flex-col p-4 gap-2">
+                        <div className="xl:hidden fixed inset-0 top-[70px] bg-white z-50 p-8 animate-in fade-in slide-in-from-right duration-500">
+                            <nav className="flex flex-col gap-8">
                                 {navItems.map((item) => (
                                     <NavLink 
                                         key={item.to} 
                                         to={item.to} 
                                         onClick={() => setIsMenuOpen(false)}
                                         className={({ isActive }) => `
-                                            flex items-center justify-between rounded-2xl px-6 py-4 text-sm font-black transition-all
-                                            ${isActive ? 'bg-orange-500 text-white shadow-lg shadow-orange-100' : 'text-slate-600 hover:bg-slate-50'}
+                                            text-3xl font-black tracking-tighter transition-all uppercase
+                                            ${isActive ? 'text-orange-500' : 'text-slate-300'}
                                         `}
                                         end
                                     >
                                         {item.label}
-                                        <svg className="h-4 w-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                                        </svg>
                                     </NavLink>
                                 ))}
-                                <div className="h-px bg-slate-100 my-2" />
+                                <div className="h-px bg-slate-100 my-4" />
                                 <button
                                     onClick={handleLogout}
-                                    className="flex items-center gap-3 rounded-2xl px-6 py-4 text-sm font-black text-rose-500 hover:bg-rose-50 transition-all"
+                                    className="text-left text-rose-600 text-2xl font-black tracking-tighter uppercase"
                                 >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
                                     Cerrar Sesión
                                 </button>
                             </nav>
@@ -144,7 +152,10 @@ export const PublicLayout = () => {
                 </div>
             </header>
 
-            <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
+            {/* Content Spacer */}
+            <div className="h-[70px] md:h-[80px]" />
+
+            <main className="w-full">
                 <Outlet />
             </main>
 

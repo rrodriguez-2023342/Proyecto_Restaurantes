@@ -9,6 +9,7 @@ import { AdminLayout } from "../layouts/AdminLayout.jsx";
 import { PublicLayout } from "../layouts/PublicLayout.jsx";
 import { AdminDashboard } from "../../features/dashboard/pages/AdminDashboard.jsx";
 import { UserHome } from "../../features/home/pages/UserHome.jsx";
+import { UserRestaurantsPage } from "../../features/home/pages/UserRestaurantsPage.jsx";
 import { RestaurantsPage } from "../../features/restaurants/pages/RestaurantsPage.jsx";
 import { RestaurantDetail } from "../../features/restaurants/pages/RestaurantDetail.jsx";
 import { MenusPage } from "../../features/menus/pages/MenusPage.jsx";
@@ -89,7 +90,7 @@ export const AppRoutes = () => {
                 }
             >
                 <Route path="/home" element={<UserHome />} />
-                <Route path="/home/restaurants" element={<UserHome />} />
+                <Route path="/home/restaurants" element={<UserRestaurantsPage />} />
                 <Route path="/home/restaurants/:id" element={<RestaurantDetail />} />
                 <Route path="/home/restaurants/:restaurantId/reservar" element={<CreateReservationPage />} />
                 <Route path="/home/reviews" element={<ReviewsPage />} />

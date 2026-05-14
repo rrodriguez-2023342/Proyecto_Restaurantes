@@ -87,7 +87,26 @@ export const useCartStore = create(
             getSubtotal: () => get().items.reduce((acc, item) => acc + item.price * item.quantity, 0),
         }),
         {
-            name: 'kinaleats-cart-storage', // Nombre para localStorage
+            name: 'kinaleats-cart',
+            storage: {
+                getItem: (name) => {
+                    // Obtener el ID del usuario actual de la memoria o del localStorage directamente
+                    const authData = JSON.parse(localStorage.getItem('auth-storage'));
+                    const userId = authData?.state?.user?._id || authData?.state?.user?.id || 'guest';
+                    const value = localStorage.getItem(`${name}-${userId}`);
+                    return value ? JSON.parse(value) : null;
+                },
+                setItem: (name, value) => {
+                    const authData = JSON.parse(localStorage.getItem('auth-storage'));
+                    const userId = authData?.state?.user?._id || authData?.state?.user?.id || 'guest';
+                    localStorage.setItem(`${name}-${userId}`, JSON.stringify(value));
+                },
+                removeItem: (name) => {
+                    const authData = JSON.parse(localStorage.getItem('auth-storage'));
+                    const userId = authData?.state?.user?._id || authData?.state?.user?.id || 'guest';
+                    localStorage.removeItem(`${name}-${userId}`);
+                },
+            },
         }
     )
 );
