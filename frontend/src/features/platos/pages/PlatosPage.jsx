@@ -5,6 +5,7 @@ import { showError, showSuccess } from "../../../shared/utils/toast";
 import { DishForm } from "../components/DishForm.jsx";
 import { usePlatoStore } from "../store/usePlatoStore";
 import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
+import { useInventoryStore } from "../../inventory/store/useInventoryStore";
 
 const typeLabels = {
     ENTRADA: "Entrada",
@@ -57,6 +58,12 @@ export const PlatosPage = () => {
     const [editing, setEditing] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [menuLoading, setMenuLoading] = useState(false);
+
+    const { inventarios, fetchInventarios } = useInventoryStore();
+
+    useEffect(() => {
+        fetchInventarios();
+    }, [fetchInventarios]);
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -287,7 +294,15 @@ export const PlatosPage = () => {
                             <div className="mt-3 flex flex-wrap gap-2 text-xs">
                                 <BadgeEstado value={plato.menu?.nombreMenu || selectedMenuData?.nombreMenu || "Menú"} />
                                 {parseIngredients(plato.ingredientes).map((ingredient, idx) => {
-                                    const label = formatIngredientLabel(ingredient);
+                                    // Búsqueda del nombre del ingrediente en el inventario global
+                                    const idToSearch = ingredient?.itemInventario?._id || ingredient?.itemInventario?.id || ingredient?.itemInventario || ingredient;
+                                    const found = inventarios.find(i => i._id === idToSearch || i.id === idToSearch);
+                                    
+                                    const name = found?.nombreItem || ingredient?.itemInventario?.nombreItem || ingredient?.itemInventario?.nombre || idToSearch;
+                                    const amount = ingredient?.cantidad;
+                                    
+                                    const label = (name && amount != null && amount !== "") ? `${name} x${amount}` : name;
+
                                     return label ? (
                                         <span key={`${plato._id || plato.id}-ingredient-${idx}`} className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
                                             {label}

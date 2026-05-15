@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useReservationStore } from "../store/useReservationStore";
+import { 
+    CalendarDays, 
+    ChevronRight, 
+    Users, 
+    MapPin, 
+    Clock, 
+    XCircle, 
+    Plus,
+    Utensils,
+    Calendar,
+    ArrowRight
+} from "lucide-react";
+import resHero from "../../../assets/images/Restaurante5.jpg";
 
 const filters = ["Todas", "Confirmada", "Pendiente", "Cancelada"];
 
@@ -12,15 +25,30 @@ const statusMap = {
     COMPLETADA: "Completada",
 };
 
-const statusStyles = {
-    Confirmada: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    Pendiente: "border-amber-200 bg-amber-50 text-amber-700",
-    Cancelada: "border-red-200 bg-red-50 text-red-600",
-    Completada: "border-blue-200 bg-blue-50 text-blue-700",
+const statusConfig = {
+    Confirmada: {
+        pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        dot: "bg-emerald-500",
+        label: "Confirmada"
+    },
+    Pendiente: {
+        pill: "bg-amber-50 text-amber-700 border-amber-200",
+        dot: "bg-amber-500",
+        label: "Pendiente"
+    },
+    Cancelada: {
+        pill: "bg-rose-50 text-rose-700 border-rose-200",
+        dot: "bg-rose-500",
+        label: "Cancelada"
+    },
+    Completada: {
+        pill: "bg-blue-50 text-blue-700 border-blue-200",
+        dot: "bg-blue-500",
+        label: "Completada"
+    },
 };
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
-
 const normalizeStatus = (status) => statusMap[status] || status || "Pendiente";
 
 const formatReservationDate = (date) =>
@@ -65,6 +93,8 @@ export const ReservationsPage = () => {
 
     const handleCancel = async (reservation) => {
         const id = reservation._id || reservation.id;
+        if (!window.confirm("¿Estás seguro de que deseas cancelar esta reservación?")) return;
+        
         setSavingId(id);
         try {
             await deleteReservation(id);
@@ -77,30 +107,43 @@ export const ReservationsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
-            <main className="mx-auto max-w-5xl">
-                <header className="mb-7 rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-8">
-                    <div className="flex flex-col gap-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <div className="min-h-screen bg-slate-50">
+            {/* Hero Banner */}
+            <div className="relative overflow-hidden bg-slate-950 mb-8">
+                <div className="absolute inset-0">
+                    <img
+                        src={resHero}
+                        alt="Reservations"
+                        className="h-full w-full object-cover object-center opacity-30 mix-blend-multiply"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
+                </div>
+                <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                         <div>
-                            <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">Agenda</p>
-                            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-                                Mis Reservaciones
+                            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-orange-500 mb-4">Agenda Gastronómica</p>
+                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
+                                Mis <span className="text-orange-500">Reservaciones</span>
                             </h1>
-                            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-500 sm:mx-0">
-                                Revisa tus mesas apartadas y crea nuevas reservaciones para tus proximas visitas.
+                            <p className="text-slate-400 text-sm font-medium max-w-md leading-relaxed">
+                                Revisa tus mesas apartadas y crea nuevas experiencias inolvidables para tus próximas visitas.
                             </p>
                         </div>
                         <button
                             type="button"
                             onClick={() => navigate("/home/restaurants")}
-                            className="rounded-2xl bg-orange-500 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-orange-200 transition hover:bg-orange-400 active:scale-95"
+                            className="inline-flex items-center gap-3 rounded-full bg-orange-500 px-7 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/20 transition-all hover:bg-orange-600 hover:-translate-y-0.5 active:scale-95"
                         >
-                            Elegir restaurante
+                            <Plus size={16} strokeWidth={3} />
+                            Nueva Reservación
                         </button>
                     </div>
-                </header>
+                </div>
+            </div>
 
-                <section className="mb-7 overflow-x-auto pb-2">
+            <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-20">
+                {/* Filters */}
+                <div className="mb-8 overflow-x-auto pb-2 no-scrollbar">
                     <div className="flex min-w-max gap-2">
                         {filters.map((filter) => (
                             <button
@@ -108,20 +151,21 @@ export const ReservationsPage = () => {
                                 type="button"
                                 onClick={() => setActiveFilter(filter)}
                                 className={cx(
-                                    "rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] transition",
+                                    "rounded-full border px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-200",
                                     activeFilter === filter
-                                        ? "border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-200"
-                                        : "border-slate-100 bg-white text-slate-600 hover:border-orange-200 hover:bg-orange-50"
+                                        ? "border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                                        : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-800"
                                 )}
                             >
                                 {filter}
                             </button>
                         ))}
                     </div>
-                </section>
+                </div>
 
                 {error && (
-                    <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+                    <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-bold text-rose-600 flex items-center gap-3">
+                        <XCircle size={18} />
                         {error}
                     </div>
                 )}
@@ -129,31 +173,33 @@ export const ReservationsPage = () => {
                 {loading ? (
                     <section className="space-y-4">
                         {[1, 2, 3].map((item) => (
-                            <div key={item} className="h-44 animate-pulse rounded-3xl bg-slate-100" />
+                            <div key={item} className="h-44 animate-pulse rounded-[2rem] bg-white border border-slate-100 shadow-sm" />
                         ))}
                     </section>
                 ) : visibleReservations.length === 0 ? (
-                    <section className="rounded-3xl border border-dashed border-orange-200 bg-white px-6 py-16 text-center shadow-xl shadow-slate-200/60">
-                        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-orange-50 text-4xl font-black text-orange-500">
-                            --
+                    <section className="rounded-[2.5rem] border border-dashed border-slate-200 bg-white px-6 py-24 text-center shadow-sm">
+                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-orange-50">
+                            <Calendar size={36} className="text-orange-400" />
                         </div>
-                        <h2 className="mt-6 text-2xl font-black text-slate-950">No hay reservaciones</h2>
-                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-500">
+                        <h2 className="text-2xl font-black text-slate-900">Sin reservaciones</h2>
+                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
                             Agenda una mesa y deja que el restaurante prepare tu experiencia antes de llegar.
                         </p>
                         <button
                             type="button"
                             onClick={() => navigate("/home/restaurants")}
-                            className="mt-7 rounded-2xl bg-orange-500 px-6 py-3 text-sm font-black text-white shadow-lg shadow-orange-200 transition hover:bg-orange-400"
+                            className="mt-8 inline-flex items-center gap-2 rounded-full bg-orange-500 px-8 py-4 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-600"
                         >
-                            Explorar restaurantes
+                            Explorar Restaurantes
+                            <ArrowRight size={16} strokeWidth={3} />
                         </button>
                     </section>
                 ) : (
-                    <section className="space-y-4">
+                    <section className="space-y-5">
                         {visibleReservations.map((reservation, index) => {
                             const id = reservation._id || reservation.id;
                             const status = normalizeStatus(reservation.estado);
+                            const config = statusConfig[status] || statusConfig.Pendiente;
                             const canAct = status === "Pendiente" || status === "Confirmada";
                             const restaurantName = reservation.restaurante?.nombre || "Restaurante";
                             const tableNumber = reservation.mesa?.numeroMesa;
@@ -162,61 +208,79 @@ export const ReservationsPage = () => {
                             return (
                                 <article
                                     key={id}
-                                    className="rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-200/70 transition duration-300 hover:-translate-y-1 hover:border-orange-200 sm:p-6"
-                                    style={{ animation: "reservationCard .45s ease-out both", animationDelay: `${index * 80}ms` }}
+                                    style={{ animation: "resIn .4s ease-out both", animationDelay: `${index * 60}ms` }}
+                                    className="group overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-0.5 transition-all duration-300"
                                 >
                                     <style>{`
-                                        @keyframes reservationCard {
-                                            from { opacity: 0; transform: translateY(14px) scale(.98); }
-                                            to { opacity: 1; transform: translateY(0) scale(1); }
+                                        @keyframes resIn {
+                                            from { opacity: 0; transform: translateY(16px); }
+                                            to   { opacity: 1; transform: translateY(0); }
                                         }
                                     `}</style>
-                                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <div className="mb-3 flex flex-wrap items-center gap-2">
-                                                <span className={cx("rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]", statusStyles[status])}>
-                                                    {status}
-                                                </span>
-                                                {tableNumber && (
-                                                    <span className="rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-                                                        Mesa {tableNumber}
-                                                    </span>
-                                                )}
+                                    
+                                    <div className="p-6 md:p-8">
+                                        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="flex items-start gap-5">
+                                                <div className={cx("h-16 w-1.5 rounded-full flex-shrink-0", config.dot)} />
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                        <span className={cx("rounded-full border px-4 py-1.5 text-[10px] font-black uppercase tracking-widest", config.pill)}>
+                                                            {config.label}
+                                                        </span>
+                                                        {tableNumber && (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-100 bg-slate-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                                <Utensils size={10} />
+                                                                Mesa {tableNumber}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{restaurantName}</h2>
+                                                    <div className="mt-3 flex flex-wrap items-center gap-4 text-slate-400">
+                                                        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
+                                                            <CalendarDays size={14} className="text-orange-500" />
+                                                            {formatReservationDate(reservation.fecha)}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
+                                                            <Clock size={14} className="text-orange-500" />
+                                                            {formatReservationTime(reservation.fecha)}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <h2 className="text-2xl font-black text-slate-950">{restaurantName}</h2>
-                                            <p className="mt-2 text-sm font-semibold capitalize text-slate-500">
-                                                {formatReservationDate(reservation.fecha)} - {formatReservationTime(reservation.fecha)}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                                            <span className="grid h-9 w-9 place-items-center rounded-full bg-orange-50 text-sm font-black text-orange-500">
-                                                {guests}
-                                            </span>
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Personas</p>
-                                                <p className="text-lg font-black text-slate-950">{guests}</p>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {canAct && (
-                                        <div className="mt-6 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-                                            <button
-                                                type="button"
-                                                className="rounded-2xl border border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-600 transition hover:border-orange-200 hover:bg-orange-50"
-                                            >
-                                                Modificar
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCancel(reservation)}
-                                                disabled={savingId === id}
-                                                className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-black text-red-600 transition hover:bg-red-100 disabled:cursor-wait disabled:opacity-60"
-                                            >
-                                                {savingId === id ? "Cancelando..." : "Cancelar"}
-                                            </button>
+                                            <div className="flex items-center gap-4 rounded-3xl bg-slate-50 border border-slate-100 p-4 min-w-[140px]">
+                                                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-sm text-orange-500">
+                                                    <Users size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Invitados</p>
+                                                    <p className="text-xl font-black text-slate-900">{guests}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
+
+                                        {canAct && (
+                                            <div className="mt-8 flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t border-slate-100">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => navigate(`/reservaciones/modificar/${id}`)}
+                                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600 active:scale-95"
+                                                >
+                                                    Modificar
+                                                    <ChevronRight size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleCancel(reservation)}
+                                                    disabled={savingId === id}
+                                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-6 py-3 text-xs font-bold uppercase tracking-widest text-rose-600 transition-all hover:bg-rose-100 active:scale-95 disabled:opacity-60 disabled:cursor-wait"
+                                                >
+                                                    <XCircle size={14} />
+                                                    {savingId === id ? "Cancelando..." : "Cancelar"}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </article>
                             );
                         })}

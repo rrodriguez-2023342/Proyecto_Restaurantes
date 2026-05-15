@@ -66,27 +66,27 @@ export const UserHome = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent" />
                 </div>
                 
-                <div className="relative z-10 w-full px-6 md:px-16 lg:px-32">
+                <div className="relative z-10 w-full px-6 md:px-16 lg:px-32 py-20 md:py-0">
                     <div className="max-w-4xl animate-in fade-in slide-in-from-bottom duration-1000">
-                        <div className="flex items-center gap-6 mb-12">
-                            <div className="h-px w-20 bg-amber-500" />
-                            <span className="text-[11px] font-black uppercase tracking-[0.6em] text-amber-600">Edición 2026</span>
+                        <div className="flex items-center gap-4 md:gap-6 mb-8 md:mb-12">
+                            <div className="h-px w-12 md:w-20 bg-amber-500" />
+                            <span className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-amber-600">Edición 2026</span>
                         </div>
                         
-                        <h1 className="text-6xl md:text-8xl font-extralight text-slate-950 tracking-tighter leading-[0.9] mb-10 italic">
+                        <h1 className="text-4xl md:text-8xl font-extralight text-slate-950 tracking-tighter leading-[1] md:leading-[0.9] mb-8 md:mb-10 italic">
                             Redefiniendo el<br />
                             <span className="font-black text-amber-500 not-italic">Lujo Culinario.</span>
                         </h1>
                         
-                        <p className="text-lg md:text-xl text-slate-400 font-light max-w-xl leading-relaxed mb-14 italic">
+                        <p className="text-base md:text-xl text-slate-400 font-light max-w-xl leading-relaxed mb-10 md:mb-14 italic">
                             Una curaduría de experiencias diseñadas para quienes entienden que comer es un arte, no una necesidad. 
                             <span className="text-slate-900 font-medium block mt-4">Bienvenidos al Club de KinalEats.</span>
                         </p>
                         
-                        <div className="flex flex-wrap gap-12 items-center">
+                        <div className="flex flex-col sm:flex-row gap-8 md:gap-12 items-center sm:items-start">
                             <Link
                                 to="/home/restaurants"
-                                className="group/link relative text-slate-950 text-[11px] font-black uppercase tracking-[0.4em] transition-all"
+                                className="group/link relative text-slate-950 text-[10px] md:text-[11px] font-black uppercase tracking-[0.4em] transition-all"
                             >
                                 <span className="relative">
                                     Explorar Restaurantes
@@ -96,7 +96,7 @@ export const UserHome = () => {
                             
                             <Link
                                 to="/reservaciones"
-                                className="bg-slate-950 text-white px-14 py-6 rounded-full text-[11px] font-black uppercase tracking-[0.4em] hover:bg-amber-600 transition-all shadow-2xl active:scale-95"
+                                className="bg-slate-950 text-white px-10 md:px-14 py-4 md:py-6 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-[0.4em] hover:bg-amber-600 transition-all shadow-2xl active:scale-95 text-center w-full sm:w-auto"
                             >
                                 Reservar Mesa
                             </Link>
@@ -105,9 +105,8 @@ export const UserHome = () => {
                 </div>
             </section>
 
-            {/* ── STATS BAR ── */}
-            <section className="w-full bg-white py-24 border-b border-slate-50">
-                <div className="max-w-[1500px] mx-auto flex flex-wrap justify-center gap-16 md:gap-24 lg:gap-32">
+            <section className="w-full bg-white py-16 md:py-24 border-b border-slate-50">
+                <div className="max-w-[1500px] mx-auto grid grid-cols-2 lg:flex lg:justify-center gap-y-12 gap-x-8 md:gap-24 lg:gap-32">
                     <StatCard value="60+" label="Partners" />
                     <StatCard value="15K" label="Servicios" />
                     <StatCard value="24H" label="Concierge" />

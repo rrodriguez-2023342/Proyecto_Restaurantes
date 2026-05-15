@@ -62,28 +62,21 @@ export const ReviewForm = ({ restaurantId, initialData = null, onCancelEdit = nu
     const stars = [1, 2, 3, 4, 5];
 
     return (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/60">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+            <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500">
-                        {isEditing ? "Modificando" : "Feedback"}
-                    </p>
-                    <h3 className="mt-1 text-xl font-black text-slate-950">
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
                         {isEditing ? "Edita tu opinión" : "Tu opinión importa"}
                     </h3>
-                </div>
-                <div className="h-10 w-10 rounded-2xl bg-orange-50 flex items-center justify-center">
-                    <Star className="h-5 w-5 text-orange-500" fill="currentColor" />
+                    <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600">
+                        {isEditing ? "Modificando" : "¿Qué tal fue tu experiencia?"}
+                    </p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Selector de Estrellas Premium */}
-                <div className="flex flex-col items-center justify-center py-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                    <p className="mb-3 text-xs font-bold text-slate-500 uppercase tracking-tighter">
-                        ¿Qué tal estuvo tu experiencia?
-                    </p>
-                    <div className="flex items-center gap-2">
+                <div className="flex justify-center py-6">
+                    <div className="flex items-center gap-4">
                         {stars.map((star) => (
                             <button
                                 key={star}
@@ -91,29 +84,20 @@ export const ReviewForm = ({ restaurantId, initialData = null, onCancelEdit = nu
                                 onMouseEnter={() => setHoveredStar(star)}
                                 onMouseLeave={() => setHoveredStar(0)}
                                 onClick={() => setValue("rating", star, { shouldValidate: true })}
-                                className="group relative transition-transform active:scale-90"
+                                className="transition-transform active:scale-90"
                             >
                                 <Star
-                                    size={36}
+                                    size={32}
                                     className={`transition-all duration-300 ${
                                         (hoveredStar || currentRating) >= star
-                                            ? "text-orange-500"
+                                            ? "text-amber-500 fill-amber-500"
                                             : "text-slate-200"
                                     }`}
-                                    fill={(hoveredStar || currentRating) >= star ? "currentColor" : "none"}
-                                    strokeWidth={2.5}
+                                    strokeWidth={1.5}
                                 />
-                                {(hoveredStar || currentRating) === star && (
-                                    <span className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-orange-500" />
-                                )}
                             </button>
                         ))}
                     </div>
-                    {currentRating > 0 && (
-                        <p className="mt-3 text-[10px] font-black text-orange-600 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">
-                            {currentRating === 5 ? "¡Increíble!" : currentRating >= 4 ? "Muy bueno" : currentRating >= 3 ? "Normal" : "Pudo ser mejor"}
-                        </p>
-                    )}
                 </div>
 
                 <div className="relative">
@@ -124,7 +108,7 @@ export const ReviewForm = ({ restaurantId, initialData = null, onCancelEdit = nu
                         })}
                         placeholder="Escribe aquí tu reseña..."
                         rows={4}
-                        className={`w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 ${
+                        className={`w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-50 ${
                             errors.comment ? "border-red-300 bg-red-50" : ""
                         }`}
                     />
@@ -136,13 +120,13 @@ export const ReviewForm = ({ restaurantId, initialData = null, onCancelEdit = nu
                 <button
                     type="submit"
                     disabled={loading}
-                    className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-950 px-6 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-slate-200 transition-all hover:bg-orange-500 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-amber-600 active:scale-[0.98] disabled:opacity-70"
                 >
                     {loading ? (
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     ) : (
                         <>
-                            <Send size={18} />
+                            <Send size={16} />
                             {isEditing ? "Guardar Cambios" : "Publicar Reseña"}
                         </>
                     )}

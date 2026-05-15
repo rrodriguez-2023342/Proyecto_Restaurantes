@@ -38,10 +38,14 @@ export const createMesa = async (req, res) => {
 //OBTENER TODAS LAS MESAS
 export const getMesas = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, restaurante } = req.query;
         let query = { disponibilidad: true };
 
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+        if (restaurante) {
+            query.restaurante = restaurante;
+        }
+
+        if (req.usuario && req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             query.restaurante = req.usuario.restaurante;
         }
 

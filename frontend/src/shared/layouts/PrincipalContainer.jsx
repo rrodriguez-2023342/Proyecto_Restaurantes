@@ -1,7 +1,7 @@
 
 export const PrincipalContainer = ({ children, className = "" }) => {
     return (
-        <main className={`min-h-screen bg-slate-50 text-slate-900 ${className}`}>
+        <main className={`min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden ${className}`}>
             {children}
         </main>
     )

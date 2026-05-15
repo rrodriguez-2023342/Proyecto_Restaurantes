@@ -75,8 +75,6 @@ export const validateDeleteInventario = [
 
 // validator para listar inventarios
 export const validateListInventarios = [
-    validateJWT,
-    attachRestaurant,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
+    // Se elimina validateJWT y requireRoles para permitir consulta pública de nombres de ingredientes
     checkValidators,
 ];

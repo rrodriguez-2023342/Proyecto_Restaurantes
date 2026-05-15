@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bike, Clock3, CookingPot, House } from "lucide-react";
-import { Card } from "../../../shared/components";
+import { ArrowLeft, Bike, Clock3, CookingPot, House, MapPin, Phone, StickyNote, Receipt, ShieldCheck } from "lucide-react";
 import { getOrderById } from "../../../shared/api";
 import { useOrderStore } from "../store/useOrderStore";
 import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
-import { OrderStatus } from "../components/OrderStatus.jsx";
 import { showError, showSuccess } from "../../../shared/utils/toast";
+import { DeliveryTruck } from "../components/DeliveryTruck";
 
 const currency = new Intl.NumberFormat("es-GT", {
     style: "currency",
@@ -128,19 +127,19 @@ export const UserOrderDetail = () => {
             {
                 key: "preparing",
                 title: "Preparando",
-                description: "La cocina ya esta trabajando en tus platos.",
+                description: "La cocina ya está trabajando en tus platos.",
                 icon: CookingPot,
             },
             {
                 key: "delivery",
                 title: "En camino",
-                description: "Tu pedido salio del restaurante y va rumbo a tu direccion.",
+                description: "Tu pedido salió del restaurante y va rumbo a tu dirección.",
                 icon: Bike,
             },
             {
                 key: "delivered",
                 title: "Entregado",
-                description: "Pedido finalizado y entregado con exito.",
+                description: "Pedido finalizado y entregado con éxito.",
                 icon: House,
             },
         ].map((step, index) => ({
@@ -201,9 +200,10 @@ export const UserOrderDetail = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 p-6">
-                <div className="mx-auto max-w-5xl">
-                    <div className="h-96 animate-pulse rounded-lg bg-slate-200" />
+            <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin" />
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Cargando pedido...</p>
                 </div>
             </div>
         );
@@ -211,265 +211,269 @@ export const UserOrderDetail = () => {
 
     if (!order) {
         return (
-            <div className="min-h-screen bg-slate-50 p-6">
-                <div className="mx-auto max-w-5xl py-12 text-center">
-                    <p className="text-slate-600">Pedido no encontrado</p>
+            <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-slate-200 text-4xl mb-4">🍽️</div>
+                    <p className="text-xl font-bold text-slate-900">Pedido no encontrado</p>
+                    <button onClick={() => navigate("/home/orders")} className="mt-6 text-sm font-bold text-orange-500 hover:underline">Volver a mis pedidos</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6">
-            <div className="mx-auto max-w-5xl space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900">
-                            Pedido #{order.numeroPedido || id?.slice(-6)}
-                        </h1>
-                        <p className="mt-1 text-slate-600">
-                            {new Date(order.fechaPedido || order.createdAt).toLocaleDateString("es-ES")}
-                        </p>
-                    </div>
+        <div className="min-h-screen bg-slate-50 pb-20">
+            {/* Header / Hero */}
+            <div className="bg-slate-950 pt-10 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-orange-900/20 via-slate-950 to-slate-950" />
+                <div className="relative mx-auto max-w-5xl">
                     <button
                         onClick={() => navigate("/home/orders")}
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="group mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
                     >
-                        <ArrowLeft className="h-4 w-4" />
-                        Mis Pedidos
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 transition-colors group-hover:bg-white/10">
+                            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" strokeWidth={2} />
+                        </div>
+                        Volver a pedidos
                     </button>
-                </div>
-
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="space-y-6 lg:col-span-2">
-                        <Card title="Informacion del Pedido">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <p className="text-xs font-semibold uppercase text-slate-500">
-                                        Restaurante
-                                    </p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                                        {order.restaurante?.nombre || "N/A"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold uppercase text-slate-500">
-                                        Estado
-                                    </p>
-                                    <div className="mt-1">
-                                        <OrderStatus status={order.estado || "pendiente"} />
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-
-                        <Card title="Direccion de Entrega">
-                            <p className="text-sm text-slate-700">
-                                {order.direccionEntrega || "No especificada"}
+                    
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                        <div>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-500 mb-2">
+                                {order.restaurante?.nombre || "Restaurante"}
                             </p>
-                        </Card>
+                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                                Pedido <span className="text-orange-500">#{order.numeroPedido || id?.slice(-6)}</span>
+                            </h1>
+                            <p className="mt-3 text-sm font-medium text-slate-400">
+                                Realizado el {new Date(order.fechaPedido || order.createdAt).toLocaleDateString("es-ES", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        <Card title="Articulos del Pedido">
-                            {relatedDetails.length ? (
-                                <div className="space-y-2">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-slate-50">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left font-semibold text-slate-700">
-                                                        Plato
-                                                    </th>
-                                                    <th className="px-3 py-2 text-center font-semibold text-slate-700">
-                                                        Cantidad
-                                                    </th>
-                                                    <th className="px-3 py-2 text-right font-semibold text-slate-700">
-                                                        Precio Unit.
-                                                    </th>
-                                                    <th className="px-3 py-2 text-right font-semibold text-slate-700">
-                                                        Subtotal
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {relatedDetails.map((detail) => (
-                                                    <tr key={detail._id || detail.id}>
-                                                        <td className="px-3 py-2 text-slate-900">
-                                                            {detail.plato?.nombre ||
-                                                                detail.nombrePlato ||
-                                                                "Plato desconocido"}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-center text-slate-900">
-                                                            {detail.cantidad}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right text-slate-900">
-                                                            {currency.format(detail.precioUnitario || 0)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right font-semibold text-slate-900">
-                                                            {currency.format(detail.subtotal || detail.cantidad * detail.precioUnitario || 0)}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 -mt-12 relative z-10">
+                <div className="grid gap-8 lg:grid-cols-12">
+                    
+                    {/* Left Column */}
+                    <div className="lg:col-span-8 space-y-8">
+                        
+                        {/* Tracking Section */}
+                        <div className="rounded-[2rem] bg-white p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative">
+                            {isCancelled ? (
+                                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm font-bold text-rose-600 flex items-center gap-4">
+                                    <div className="h-10 w-10 bg-rose-200 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <XCircle className="h-5 w-5 text-rose-700" />
                                     </div>
+                                    Este pedido ha sido cancelado.
                                 </div>
                             ) : (
-                                <p className="text-sm text-slate-500">No hay articulos en este pedido</p>
+                                <>
+                                    <div className="mb-8 flex items-center gap-4">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
+                                            <Bike className="h-6 w-6" strokeWidth={2} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-900">Estado del Envío</h3>
+                                            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mt-1">Rastrea tu orden</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Animated Truck (only if active) */}
+                                    {!isDelivered && (
+                                        <div className="mb-10 p-6 bg-slate-50/50 rounded-2xl border border-slate-100 flex justify-center">
+                                            <DeliveryTruck />
+                                        </div>
+                                    )}
+
+                                    {/* Timeline */}
+                                    <div className="space-y-6 relative ml-4">
+                                        <div className="absolute top-8 bottom-8 left-[1.125rem] w-0.5 bg-slate-100" />
+                                        {trackingSteps.map((step, index) => {
+                                            const Icon = step.icon;
+                                            const isCompleted = step.state === "completed";
+                                            const isActive = step.state === "active";
+
+                                            return (
+                                                <div key={step.key} className="relative flex gap-6">
+                                                    <div
+                                                        className={`relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
+                                                            isCompleted
+                                                                ? "bg-emerald-500 text-white shadow-md shadow-emerald-200"
+                                                                : isActive
+                                                                    ? "bg-orange-500 text-white shadow-lg shadow-orange-200 ring-4 ring-orange-50"
+                                                                    : "bg-white border-2 border-slate-200 text-slate-300"
+                                                        }`}
+                                                    >
+                                                        <Icon className={`h-4 w-4 ${isActive ? "animate-pulse" : ""}`} strokeWidth={isCompleted || isActive ? 2.5 : 2} />
+                                                    </div>
+                                                    <div className="pb-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <p className={`text-base font-bold ${isActive ? "text-orange-500" : isCompleted ? "text-slate-900" : "text-slate-400"}`}>
+                                                                {step.title}
+                                                            </p>
+                                                            {isActive && (
+                                                                <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-orange-600">
+                                                                    Actual
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-1 text-sm font-medium text-slate-500">{step.description}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </>
                             )}
-                        </Card>
+                        </div>
+
+                        {/* Order Items */}
+                        <div className="rounded-[2rem] bg-white p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
+                            <div className="mb-8 flex items-center gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-600">
+                                    <Receipt className="h-6 w-6" strokeWidth={2} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-900">Artículos</h3>
+                                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mt-1">{relatedDetails.length} items en tu pedido</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {relatedDetails.map((detail, idx) => (
+                                    <div key={detail._id || detail.id || idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-slate-200 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="grid h-10 w-10 place-items-center rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-500">
+                                                x{detail.cantidad}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-900">{detail.plato?.nombre || detail.nombrePlato || "Plato desconocido"}</p>
+                                                <p className="text-xs font-medium text-slate-500">{currency.format(detail.precioUnitario || 0)} c/u</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-900">
+                                            {currency.format(detail.subtotal || detail.cantidad * detail.precioUnitario || 0)}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div className="space-y-6">
-                        <Card title="Resumen del Pedido">
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">Subtotal:</span>
-                                    <span className="font-semibold text-slate-900">
-                                        {currency.format(order.subtotal || order.total || 0)}
-                                    </span>
+                    {/* Right Column */}
+                    <div className="lg:col-span-4 space-y-8">
+                        
+                        {/* Summary */}
+                        <div className="rounded-[2.5rem] bg-slate-950 p-8 md:p-10 text-white shadow-2xl">
+                            <h3 className="mb-8 text-xl font-black tracking-tight">Resumen</h3>
+                            
+                            <div className="space-y-4 border-b border-white/10 pb-6">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Subtotal</span>
+                                    <span className="text-sm font-bold text-white">{currency.format(order.subtotal || order.total || 0)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">Impuesto:</span>
-                                    <span className="font-semibold text-slate-900">
-                                        {currency.format(order.impuesto || 0)}
-                                    </span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Impuesto</span>
+                                    <span className="text-sm font-bold text-white">{currency.format(order.impuesto || 0)}</span>
                                 </div>
-                                <div className="flex justify-between border-t border-slate-100 pt-2 text-lg font-bold">
-                                    <span>Total:</span>
-                                    <span className="text-orange-600">{currency.format(order.total || 0)}</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Envío</span>
+                                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-1 rounded-md border border-emerald-400/20">GRATIS</span>
                                 </div>
                             </div>
-                        </Card>
+                            
+                            <div className="pt-6">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Pagado</p>
+                                <p className="text-4xl font-black text-white tracking-tighter">
+                                    {currency.format(order.total || 0)}
+                                </p>
+                            </div>
+                        </div>
 
-                        <Card title="Estado del Pedido">
+                        {/* Delivery Info */}
+                        <div className="rounded-[2rem] bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
+                            <h3 className="text-lg font-bold text-slate-900 mb-6">Detalles de Entrega</h3>
+                            
                             <div className="space-y-5">
-                                {isCancelled && (
-                                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-                                        Este pedido fue cancelado. El seguimiento se detuvo en la ultima fase registrada.
-                                    </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    {trackingSteps.map((step, index) => {
-                                        const Icon = step.icon;
-                                        const isCompleted = step.state === "completed";
-                                        const isActive = step.state === "active";
-
-                                        return (
-                                            <div key={step.key} className="relative flex gap-4">
-                                                {index < trackingSteps.length - 1 && (
-                                                    <span
-                                                        className={`absolute left-[1.18rem] top-12 h-[calc(100%-1.2rem)] w-px ${
-                                                            isCompleted || isActive ? "bg-orange-300" : "bg-slate-200"
-                                                        }`}
-                                                    />
-                                                )}
-                                                <div
-                                                    className={`relative z-10 grid h-10 w-10 place-items-center rounded-full border transition-all duration-300 ${
-                                                        isCompleted
-                                                            ? "border-emerald-200 bg-emerald-50 text-emerald-600"
-                                                            : isActive
-                                                                ? "border-orange-200 bg-orange-50 text-orange-600 shadow-lg shadow-orange-100"
-                                                                : "border-slate-200 bg-slate-50 text-slate-400"
-                                                    }`}
-                                                >
-                                                    <Icon className={`h-4 w-4 ${isActive ? "animate-pulse" : ""}`} />
-                                                </div>
-                                                <div className="pb-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-sm font-bold text-slate-900">{step.title}</p>
-                                                        {isActive && (
-                                                            <span className="rounded-full bg-orange-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-600">
-                                                                Actual
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="mt-1 text-sm leading-6 text-slate-500">{step.description}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </Card>
-
-                        {order.notas && (
-                            <Card title="Notas">
-                                <div className="text-sm text-slate-600">
-                                    {order.notas}
-                                </div>
-                            </Card>
-                        )}
-
-                        <Card title="Editar entrega">
-                            <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700">Dirección de entrega</label>
+                                    <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                                        <MapPin size={12} /> Dirección
+                                    </label>
                                     <textarea
-                                        rows={3}
+                                        rows={2}
                                         value={deliveryAddress}
                                         onChange={(e) => setDeliveryAddress(e.target.value)}
                                         disabled={!canUpdateDelivery}
-                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-70"
-                                        placeholder="Escribe una dirección clara para la entrega"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all resize-none disabled:opacity-60"
+                                        placeholder="Tu dirección"
                                     />
                                 </div>
+                                
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700">Teléfono de contacto</label>
+                                    <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                                        <Phone size={12} /> Teléfono
+                                    </label>
                                     <input
                                         type="tel"
                                         value={deliveryPhone}
                                         onChange={(e) => setDeliveryPhone(e.target.value)}
                                         disabled={!canUpdateDelivery}
-                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-70"
-                                        placeholder="Ej: 41234567"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all disabled:opacity-60"
+                                        placeholder="Ej: 5555-5555"
                                     />
                                 </div>
+                                
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700">Notas para el repartidor</label>
+                                    <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                                        <StickyNote size={12} /> Notas (Opcional)
+                                    </label>
                                     <textarea
                                         rows={2}
                                         value={deliveryNotes}
                                         onChange={(e) => setDeliveryNotes(e.target.value)}
                                         disabled={!canUpdateDelivery}
-                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-70"
-                                        placeholder="Agrega instrucciones especiales de entrega"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all resize-none disabled:opacity-60"
+                                        placeholder="Instrucciones para el repartidor"
                                     />
                                 </div>
-                                {canUpdateDelivery ? (
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                        <button
-                                            onClick={handleSaveDelivery}
-                                            disabled={savingDelivery}
-                                            className="inline-flex items-center justify-center rounded-full bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            {savingDelivery ? "Guardando..." : "Guardar cambios de entrega"}
-                                        </button>
-                                        {canConfirmDelivery && (
-                                            <button
-                                                onClick={handleConfirmDelivery}
-                                                disabled={confirmingDelivery}
-                                                className="inline-flex items-center justify-center rounded-full border border-emerald-600 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                {confirmingDelivery ? "Confirmando..." : "Marcar como entregado"}
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                        Este pedido ya fue entregado o cancelado, no se pueden cambiar los datos de entrega.
-                                    </div>
+
+                                {canUpdateDelivery && (
+                                    <button
+                                        onClick={handleSaveDelivery}
+                                        disabled={savingDelivery}
+                                        className="mt-4 w-full flex items-center justify-center gap-2 rounded-[1.2rem] bg-slate-900 py-3.5 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {savingDelivery ? "Guardando..." : "Actualizar Datos"}
+                                    </button>
                                 )}
+
+                                {canUpdateDelivery && canConfirmDelivery && (
+                                    <button
+                                        onClick={handleConfirmDelivery}
+                                        disabled={confirmingDelivery}
+                                        className="mt-2 w-full flex items-center justify-center gap-2 rounded-[1.2rem] bg-emerald-500 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        <ShieldCheck size={16} />
+                                        {confirmingDelivery ? "Confirmando..." : "Marcar Entregado"}
+                                    </button>
+                                )}
+
                                 {isDelivered && (
-                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                                        El pedido está marcado como entregado. No se puede revertir a pendiente.
+                                    <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center">
+                                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest">¡Pedido Entregado!</p>
                                     </div>
                                 )}
                             </div>
-                        </Card>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+export default UserOrderDetail;

@@ -10,7 +10,6 @@ import logo from "../../assets/images/logo1.png";
 const navItems = [
     { to: "/home", label: "INICIO" },
     { to: "/home/restaurants", label: "RESTAURANTES" },
-    { to: "/home/reviews", label: "RESEÑAS" },
     { to: "/home/orders", label: "PEDIDOS" },
     { to: "/reservaciones", label: "RESERVAS" },
     { to: "/home/invoices", label: "FACTURAS" },
@@ -39,8 +38,20 @@ export const PublicLayout = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    useEffect(() => {
+        if (isMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [isMenuOpen]);
+
     const handleLogout = () => {
         logout();
+        setIsMenuOpen(false);
         navigate("/");
     };
 
@@ -121,36 +132,79 @@ export const PublicLayout = () => {
                         </div>
                     </div>
 
-                    {/* Mobile Navigation */}
-                    {isMenuOpen && (
-                        <div className="xl:hidden fixed inset-0 top-[70px] bg-white z-50 p-8 animate-in fade-in slide-in-from-right duration-500">
-                            <nav className="flex flex-col gap-8">
-                                {navItems.map((item) => (
-                                    <NavLink 
-                                        key={item.to} 
-                                        to={item.to} 
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className={({ isActive }) => `
-                                            text-3xl font-black tracking-tighter transition-all uppercase
-                                            ${isActive ? 'text-orange-500' : 'text-slate-300'}
-                                        `}
-                                        end
-                                    >
-                                        {item.label}
-                                    </NavLink>
-                                ))}
-                                <div className="h-px bg-slate-100 my-4" />
-                                <button
-                                    onClick={handleLogout}
-                                    className="text-left text-rose-600 text-2xl font-black tracking-tighter uppercase"
-                                >
-                                    Cerrar Sesión
-                                </button>
-                            </nav>
-                        </div>
-                    )}
                 </div>
             </header>
+
+            {/* Mobile Navigation Overlay - PREMIUM MINIMALIST REDESIGN */}
+            {isMenuOpen && (
+                <div className="xl:hidden fixed inset-0 z-[100] flex flex-col bg-slate-950 animate-in fade-in zoom-in-95 duration-500">
+                    {/* Decorative Background Elements */}
+                    <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-600/5 blur-[120px] rounded-full pointer-events-none" />
+                    
+                    {/* Top Bar */}
+                    <div className="flex items-center justify-between px-8 py-8 relative z-10">
+                        <div className="flex items-center gap-3">
+                            <img src={logo} alt="Logo" className="h-10 w-10 object-contain" />
+                            <span className="text-sm font-black text-white tracking-[0.2em] uppercase">Kinal<span className="text-amber-500">Eats</span></span>
+                        </div>
+                        <button 
+                            onClick={() => setIsMenuOpen(false)}
+                            className="h-12 w-12 flex items-center justify-center rounded-full bg-white/5 text-white/40 hover:text-white transition-all active:scale-90"
+                        >
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Main Navigation */}
+                    <nav className="flex-1 flex flex-col justify-center px-10 relative z-10">
+                        <div className="space-y-2">
+                            {navItems.map((item, index) => (
+                                <NavLink 
+                                    key={item.to} 
+                                    to={item.to} 
+                                    onClick={() => setIsMenuOpen(false)}
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                    className={({ isActive }) => `
+                                        group relative flex items-center py-5 transition-all animate-in slide-in-from-left-8 duration-700
+                                        ${isActive ? 'text-white' : 'text-white/30 hover:text-white/60'}
+                                    `}
+                                    end
+                                >
+                                    <span className="text-4xl sm:text-5xl font-black tracking-tightest uppercase italic group-hover:translate-x-3 transition-transform duration-500">
+                                        {item.label}
+                                    </span>
+                                    {/* Active Indicator Line */}
+                                    <div className={`absolute left-[-20px] w-1 h-8 bg-amber-500 transition-all duration-500 ${index % 2 === 0 ? 'bg-amber-500' : 'bg-orange-500'}`} 
+                                         style={{ opacity: 0 }} 
+                                    />
+                                </NavLink>
+                            ))}
+                        </div>
+                    </nav>
+
+                    {/* Bottom Actions */}
+                    <div className="px-10 py-12 relative z-10 border-t border-white/5">
+                        <div className="flex items-center justify-between">
+                            <button
+                                onClick={handleLogout}
+                                className="flex flex-col items-start gap-1 group animate-in slide-in-from-bottom-4 duration-700"
+                            >
+                                <span className="text-xl font-black text-rose-500 uppercase tracking-tight group-hover:text-rose-400 transition-colors">
+                                    Cerrar Sesión
+                                </span>
+                                <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.3em]">Sesión de {useAuthStore.getState().user?.nombre || "Usuario"}</span>
+                            </button>
+                            
+                            <div className="text-right">
+                                <p className="text-[8px] font-black text-white/10 uppercase tracking-[0.5em] rotate-180 [writing-mode:vertical-lr]">Kinaleats © 2026</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Content Spacer */}
             <div className="h-[70px] md:h-[80px]" />

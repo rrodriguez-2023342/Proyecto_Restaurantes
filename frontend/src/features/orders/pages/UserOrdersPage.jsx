@@ -2,77 +2,69 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrderStore } from "../store/useOrderStore";
 import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
+import { CheckCircle2, Clock, Package, XCircle, Truck, ChevronDown, ChevronUp, ArrowRight, ShoppingBag } from "lucide-react";
+import deliveryImg from "../../../assets/images/delivery.png";
 
 const filterOptions = [
     { label: "Todos", statuses: [] },
     { label: "Entregados", statuses: ["entregado"] },
-    { label: "Pendientes", statuses: ["pendiente", "en preparacion", "en preparacion", "listo para entrega", "en camino"] },
+    { label: "Pendientes", statuses: ["pendiente", "en preparacion", "listo para entrega", "en camino"] },
     { label: "Cancelados", statuses: ["cancelado"] },
 ];
 
-const statusStyles = {
+const statusConfig = {
     entregado: {
         label: "Entregado",
-        icon: "OK",
-        className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        icon: CheckCircle2,
+        pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        dot: "bg-emerald-500",
     },
     "en preparacion": {
-        label: "En preparacion",
-        icon: "...",
-        className: "border-orange-200 bg-orange-50 text-orange-700",
+        label: "En preparación",
+        icon: Clock,
+        pill: "bg-orange-50 text-orange-700 border-orange-200",
+        dot: "bg-orange-500",
     },
     pendiente: {
         label: "Pendiente",
-        icon: "...",
-        className: "border-amber-200 bg-amber-50 text-amber-700",
+        icon: Package,
+        pill: "bg-amber-50 text-amber-700 border-amber-200",
+        dot: "bg-amber-500",
     },
     cancelado: {
         label: "Cancelado",
-        icon: "X",
-        className: "border-red-200 bg-red-50 text-red-600",
+        icon: XCircle,
+        pill: "bg-rose-50 text-rose-700 border-rose-200",
+        dot: "bg-rose-500",
     },
     "listo para entrega": {
         label: "En camino",
-        icon: "->",
-        className: "border-blue-200 bg-blue-50 text-blue-700",
+        icon: Truck,
+        pill: "bg-blue-50 text-blue-700 border-blue-200",
+        dot: "bg-blue-500",
     },
     "en camino": {
         label: "En camino",
-        icon: "->",
-        className: "border-blue-200 bg-blue-50 text-blue-700",
+        icon: Truck,
+        pill: "bg-blue-50 text-blue-700 border-blue-200",
+        dot: "bg-blue-500",
     },
 };
 
-const currency = new Intl.NumberFormat("es-GT", {
-    style: "currency",
-    currency: "GTQ",
-});
-
+const currency = new Intl.NumberFormat("es-GT", { style: "currency", currency: "GTQ" });
 const cx = (...classes) => classes.filter(Boolean).join(" ");
-
 const normalize = (value = "") =>
-    String(value)
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-
+    String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const formatDate = (date) =>
     date
-        ? new Date(date).toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-        })
+        ? new Date(date).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })
         : "Fecha no disponible";
-
 const getOrderId = (order) => order?._id || order?.id;
-
 const getDetailOrderId = (detail) => {
     const pedido = detail?.pedido;
     if (typeof pedido === "string") return pedido;
     return pedido?._id || pedido?.id;
 };
-
 const getItemName = (item) => {
     const plato = item?.plato;
     if (typeof plato === "string") return item.nombrePlato || "Plato";
@@ -81,17 +73,13 @@ const getItemName = (item) => {
 
 export const UserOrdersPage = () => {
     const { orders, loading, error, fetchOrders } = useOrderStore();
-    const {
-        detailOrders,
-        loading: loadingDetails,
-        fetchDetailOrders,
-    } = useDetailOrderStore();
+    const { detailOrders, loading: loadingDetails, fetchDetailOrders } = useDetailOrderStore();
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [expandedOrderId, setExpandedOrderId] = useState(null);
 
     useEffect(() => {
-        fetchOrders().catch(() => {});
-        fetchDetailOrders().catch(() => {});
+        fetchOrders().catch(() => { });
+        fetchDetailOrders().catch(() => { });
     }, [fetchDetailOrders, fetchOrders]);
 
     const detailsByOrder = useMemo(() => {
@@ -115,19 +103,37 @@ export const UserOrdersPage = () => {
     }, [activeFilter, orders]);
 
     return (
-        <div className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
-            <main className="mx-auto max-w-5xl">
-                <header className="mb-7 rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-xl shadow-slate-200/70 sm:p-8">
-                    <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">Historial</p>
-                    <div className="mx-auto mt-4 max-w-2xl">
-                        <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Mis Pedidos</h1>
-                        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-500">
-                            Recibos recientes, estados de entrega y el detalle de tus platos favoritos.
-                        </p>
+        <div className="min-h-screen bg-slate-50">
+            {/* Hero Banner */}
+            <div className="relative overflow-hidden bg-slate-950 mb-8">
+                <div className="absolute inset-0">
+                    <img
+                        src={deliveryImg}
+                        alt="Delivery"
+                        className="h-full w-full object-contain object-right opacity-40 mix-blend-screen"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
+                </div>
+                <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-orange-500 mb-4">Historial de Órdenes</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
+                        Mis <span className="text-orange-500">Pedidos</span>
+                    </h1>
+                    <p className="text-slate-400 text-sm font-medium max-w-md leading-relaxed">
+                        Recibos recientes, estados de entrega y el detalle de tus platos favoritos.
+                    </p>
+                    <div className="mt-8 flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-white/10 border border-white/10 rounded-2xl px-4 py-2.5">
+                            <ShoppingBag size={16} className="text-orange-500" />
+                            <span className="text-white font-bold text-sm">{orders.length} pedidos en total</span>
+                        </div>
                     </div>
-                </header>
+                </div>
+            </div>
 
-                <section className="mb-6 overflow-x-auto pb-2">
+            <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-20">
+                {/* Filter Tabs */}
+                <div className="mb-8 overflow-x-auto pb-2">
                     <div className="flex min-w-max gap-2">
                         {filterOptions.map((filter) => (
                             <button
@@ -135,20 +141,21 @@ export const UserOrdersPage = () => {
                                 type="button"
                                 onClick={() => setActiveFilter(filter.label)}
                                 className={cx(
-                                    "rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] transition",
+                                    "rounded-full border px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-200",
                                     activeFilter === filter.label
                                         ? "border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-200"
-                                        : "border-slate-100 bg-white text-slate-600 hover:border-orange-200 hover:bg-orange-50"
+                                        : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-800"
                                 )}
                             >
                                 {filter.label}
                             </button>
                         ))}
                     </div>
-                </section>
+                </div>
 
                 {error && (
-                    <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+                    <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-bold text-rose-600 flex items-center gap-3">
+                        <XCircle size={18} />
                         {error}
                     </div>
                 )}
@@ -160,19 +167,29 @@ export const UserOrdersPage = () => {
                         ))}
                     </section>
                 ) : visibleOrders.length === 0 ? (
-                    <section className="rounded-3xl border border-dashed border-orange-200 bg-white px-6 py-16 text-center shadow-xl shadow-slate-200/60">
-                        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-orange-50 text-4xl font-black text-orange-500">--</div>
-                        <h2 className="mt-6 text-2xl font-black">No hay pedidos</h2>
-                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-500">
-                            Cambia el filtro o explora restaurantes para crear tu proximo recibo favorito.
+                    <section className="rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-24 text-center shadow-sm">
+                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-orange-50">
+                            <ShoppingBag size={36} className="text-orange-400" />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900">Sin pedidos aún</h2>
+                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
+                            Cambia el filtro o explora restaurantes para crear tu próximo pedido favorito.
                         </p>
+                        <Link
+                            to="/home/restaurants"
+                            className="mt-8 inline-flex items-center gap-2 rounded-full bg-orange-500 px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600"
+                        >
+                            Explorar Restaurantes
+                            <ArrowRight size={16} strokeWidth={3} />
+                        </Link>
                     </section>
                 ) : (
-                    <section className="space-y-4">
+                    <section className="space-y-5">
                         {visibleOrders.map((order, index) => {
                             const orderId = getOrderId(order);
-                            const normalizedStatus = normalize(order.estado || order.estadoPedido || "Pendiente");
-                            const status = statusStyles[normalizedStatus] || statusStyles.pendiente;
+                            const normalizedStatus = normalize(order.estado || order.estadoPedido || "pendiente");
+                            const status = statusConfig[normalizedStatus] || statusConfig.pendiente;
+                            const StatusIcon = status.icon;
                             const isExpanded = expandedOrderId === orderId;
                             const orderDetails = detailsByOrder.get(orderId) || [];
                             const items = orderDetails.length
@@ -183,86 +200,94 @@ export const UserOrdersPage = () => {
                             const restaurantName = order.restaurante?.nombre || "Restaurante";
                             const orderNumber = order.numeroPedido
                                 ? `#${order.numeroPedido}`
-                                : `#ORD-${String(orderId || "").slice(-6).toUpperCase()}`;
+                                : `#${String(orderId || "").slice(-6).toUpperCase()}`;
 
                             return (
                                 <article
                                     key={orderId}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => setExpandedOrderId((current) => (current === orderId ? null : orderId))}
-                                    onKeyDown={(event) => {
-                                        if (event.key === "Enter" || event.key === " ") {
-                                            event.preventDefault();
-                                            setExpandedOrderId((current) => (current === orderId ? null : orderId));
-                                        }
-                                    }}
-                                    className="group overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl shadow-slate-200/70 outline-none transition duration-300 hover:-translate-y-1 hover:border-orange-200 focus:border-orange-400"
-                                    style={{ animation: "orderReceipt .45s ease-out both", animationDelay: `${index * 70}ms` }}
+                                    style={{ animation: "orderIn .4s ease-out both", animationDelay: `${index * 60}ms` }}
+                                    className="group overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-0.5 transition-all duration-300"
                                 >
                                     <style>{`
-                                        @keyframes orderReceipt {
-                                            from { opacity: 0; transform: translateY(14px); }
-                                            to { opacity: 1; transform: translateY(0); }
+                                        @keyframes orderIn {
+                                            from { opacity: 0; transform: translateY(16px); }
+                                            to   { opacity: 1; transform: translateY(0); }
                                         }
                                     `}</style>
-                                    <div className="border-b border-dashed border-slate-200 p-5 sm:p-6">
-                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+
+                                    {/* Card Header */}
+                                    <div
+                                        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-6 md:p-8 cursor-pointer"
+                                        onClick={() => setExpandedOrderId((c) => (c === orderId ? null : orderId))}
+                                    >
+                                        <div className="flex items-center gap-5">
+                                            {/* Color accent line */}
+                                            <div className={cx("h-14 w-1.5 rounded-full flex-shrink-0", status.dot)} />
                                             <div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
-                                                    {restaurantName}
-                                                </p>
-                                                <h2 className="mt-2 text-2xl font-black text-slate-950">{orderNumber}</h2>
-                                                <p className="mt-1 text-sm font-semibold text-slate-500">{formatDate(order.fechaPedido || order.createdAt)}</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">{restaurantName}</p>
+                                                <h2 className="mt-1 text-xl font-black text-slate-900">{orderNumber}</h2>
+                                                <p className="mt-0.5 text-xs font-medium text-slate-400">{formatDate(order.fechaPedido || order.createdAt)}</p>
                                             </div>
-                                            <span className={cx("inline-flex w-max items-center gap-2 rounded-full border px-3 py-2 text-xs font-black", status.className)}>
-                                                <span className={normalizedStatus === "en preparacion" ? "animate-pulse" : ""}>{status.icon}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                            <span className={cx("inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold", status.pill)}>
+                                                <StatusIcon size={14} className={normalizedStatus === "en preparacion" ? "animate-pulse" : ""} />
                                                 {status.label}
                                             </span>
+                                            <div className="text-slate-400">
+                                                {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-5 sm:p-6">
+                                    {/* Divider */}
+                                    <div className="mx-6 md:mx-8 h-px bg-slate-100" />
+
+                                    {/* Items */}
+                                    <div className="p-6 md:p-8">
                                         <div
                                             className="overflow-hidden transition-[max-height] duration-500 ease-in-out"
-                                            style={{ maxHeight: isExpanded ? "420px" : "142px" }}
+                                            style={{ maxHeight: isExpanded ? "500px" : "130px" }}
                                         >
                                             <div className="space-y-3">
                                                 {visibleItems.map((item, itemIndex) => (
-                                                    <div key={`${orderId}-${getItemName(item)}-${itemIndex}`} className="flex items-center justify-between gap-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="grid h-8 w-8 place-items-center rounded-full bg-orange-50 text-xs font-black text-orange-500">
-                                                                {itemIndex + 1}
-                                                            </span>
-                                                            <span className="text-sm font-bold text-slate-700">
-                                                                {getItemName(item)} - x{item.cantidad || 1}
-                                                            </span>
-                                                        </div>
-                                                        <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
+                                                    <div key={`${orderId}-${itemIndex}`} className="flex items-center gap-3">
+                                                        <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[11px] font-black text-white">
+                                                            {itemIndex + 1}
+                                                        </span>
+                                                        <span className="text-sm font-medium text-slate-700">
+                                                            {getItemName(item)}
+                                                            <span className="ml-2 text-xs font-bold text-slate-400">×{item.cantidad || 1}</span>
+                                                        </span>
                                                     </div>
                                                 ))}
                                                 {!isExpanded && hiddenCount > 0 && (
-                                                    <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-black text-slate-500">
-                                                        + {hiddenCount} mas
-                                                    </div>
+                                                    <button
+                                                        onClick={() => setExpandedOrderId(orderId)}
+                                                        className="ml-10 text-xs font-bold text-orange-500 hover:underline"
+                                                    >
+                                                        + {hiddenCount} más
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="mt-5 border-t border-slate-100 pt-4 text-right">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Total</p>
-                                            <p className="mt-1 text-2xl font-black text-orange-500">
-                                                {currency.format(Number(order.total ?? order.totalPedido ?? 0))}
-                                            </p>
-                                            <div className="mt-4 flex justify-end">
-                                                <Link
-                                                    to={`/home/orders/${orderId}`}
-                                                    onClick={(event) => event.stopPropagation()}
-                                                    className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
-                                                >
-                                                    Ver seguimiento
-                                                </Link>
+                                        {/* Footer */}
+                                        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-5 border-t border-slate-100">
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total del pedido</p>
+                                                <p className="text-2xl font-black text-slate-900 mt-1">
+                                                    {currency.format(Number(order.total ?? order.totalPedido ?? 0))}
+                                                </p>
                                             </div>
+                                            <Link
+                                                to={`/home/orders/${orderId}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-orange-500 hover:shadow-lg hover:shadow-orange-200 active:scale-95"
+                                            >
+                                                Ver seguimiento
+                                                <ArrowRight size={14} strokeWidth={3} />
+                                            </Link>
                                         </div>
                                     </div>
                                 </article>

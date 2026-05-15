@@ -10,11 +10,13 @@ import { PublicLayout } from "../layouts/PublicLayout.jsx";
 import { AdminDashboard } from "../../features/dashboard/pages/AdminDashboard.jsx";
 import { UserHome } from "../../features/home/pages/UserHome.jsx";
 import { UserRestaurantsPage } from "../../features/home/pages/UserRestaurantsPage.jsx";
+import { UserRestaurantDetail } from "../../features/home/pages/UserRestaurantDetail.jsx";
 import { RestaurantsPage } from "../../features/restaurants/pages/RestaurantsPage.jsx";
 import { RestaurantDetail } from "../../features/restaurants/pages/RestaurantDetail.jsx";
 import { MenusPage } from "../../features/menus/pages/MenusPage.jsx";
 import { PlatosPage } from "../../features/platos/pages/PlatosPage.jsx";
 import { ReviewsPage } from "../../features/reviews/pages/ReviewsPage.jsx";
+
 import { UsersPage } from "../../features/users/pages/UsersPage.jsx";
 import { StatisticsPage } from "../../features/dashboard/pages/StatisticsPage.jsx";
 import { ResetPasswordPage } from "../../features/auth/pages/ResetPasswordPage.jsx";
@@ -91,12 +93,13 @@ export const AppRoutes = () => {
             >
                 <Route path="/home" element={<UserHome />} />
                 <Route path="/home/restaurants" element={<UserRestaurantsPage />} />
-                <Route path="/home/restaurants/:id" element={<RestaurantDetail />} />
+                <Route path="/home/restaurants/:id" element={<UserRestaurantDetail />} />
                 <Route path="/home/restaurants/:restaurantId/reservar" element={<CreateReservationPage />} />
-                <Route path="/home/reviews" element={<ReviewsPage />} />
+
                 <Route path="/home/orders" element={<UserOrdersPage />} />
                 <Route path="/reservaciones" element={<ReservationsPage />} />
                 <Route path="/reservaciones/crear" element={<CreateReservationPage />} />
+                <Route path="/reservaciones/modificar/:reservationId" element={<CreateReservationPage />} />
                 <Route path="/home/orders/:id" element={<UserOrderDetail />} />
                 <Route path="/home/stats" element={<StatisticsPage />} />
                 <Route path="/home/invoices" element={<InvoicesPage />} />

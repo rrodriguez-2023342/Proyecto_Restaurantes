@@ -85,19 +85,19 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h3 className="text-2xl font-black text-slate-900 tracking-tight">Opiniones de clientes</h3>
-                    <p className="text-sm text-slate-500 font-medium">Lo que otros comensales dicen de este lugar.</p>
+                    <p className="text-sm text-slate-500 mt-1">Lo que otros comensales dicen de este lugar.</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    <span className="rounded-full bg-orange-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-orange-600">
+                    <span className="rounded-full bg-slate-50 border border-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                         {reviews.length} {reviews.length === 1 ? "Reseña" : "Reseñas"}
                     </span>
                     {currentUser && (
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                            Viendo como: <span className="text-orange-500">{currentUser.nombre || currentUser.username}</span>
+                            Viendo como: <span className="text-amber-600">{currentUser.nombre || currentUser.username}</span>
                         </span>
                     )}
                 </div>
@@ -107,8 +107,8 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                 {reviews.map((review, idx) => (
                     <article 
                         key={review._id || review.id} 
-                        className="group relative rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50"
-                        style={{ animation: 'fadeUp 0.5s ease-out both', animationDelay: `${idx * 100}ms` }}
+                        className="group relative rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md"
+                        style={{ animation: 'fadeUp 0.5s ease-out both', animationDelay: `${idx * 50}ms` }}
                     >
                         <style>{`
                             @keyframes fadeUp {
@@ -122,7 +122,7 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                                     name={review.usuario?.nombre || review.usuario?.name || review.usuario?.username || "Usuario"}
                                     src={review.usuario?.profilePicture}
                                     size={48}
-                                    className="border-2 border-white shadow-md"
+                                    className="border border-slate-100"
                                 />
                                 <div>
                                     <h4 className="font-bold text-slate-900">
@@ -130,7 +130,7 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                                             ? `${review.usuario.nombre || review.usuario.name} ${review.usuario.apellido || review.usuario.surname || ""}` 
                                             : review.usuario?.username || "Comensal Anónimo"}
                                     </h4>
-                                    <p className="text-[10px] font-bold uppercase tracking-tighter text-slate-400">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
                                         {review.createdAt ? formatDate(review.createdAt) : "Reciente"}
                                     </p>
                                 </div>
@@ -144,8 +144,8 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                                             <Star
                                                 key={star}
                                                 size={14}
-                                                className={ratingValue >= star ? "text-orange-500" : "text-slate-200"}
-                                                fill={ratingValue >= star ? "currentColor" : "none"}
+                                                className={ratingValue >= star ? "text-amber-500 fill-amber-500" : "text-slate-200"}
+                                                strokeWidth={1.5}
                                             />
                                         );
                                     })}
@@ -158,10 +158,10 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                                     
                                     return currentId && ownerId && currentId === ownerId;
                                 })() && (
-                                    <div className="flex items-center gap-2 border-l border-slate-100 pl-3">
+                                    <div className="flex items-center gap-1 border-l border-slate-100 pl-3">
                                         <button 
                                             onClick={() => onEdit(review)}
-                                            className="p-1.5 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
+                                            className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
                                             title="Editar"
                                         >
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                                         </button>
                                         <button 
                                             onClick={() => handleDelete(review._id || review.id)}
-                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                                             title="Eliminar"
                                         >
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,9 +181,8 @@ export const ReviewList = ({ restaurantId, onEdit }) => {
                                 )}
                             </div>
                         </div>
-                        <div className="mt-4 relative">
-                            <span className="absolute -left-1 -top-1 text-4xl text-slate-50 font-serif opacity-50 select-none">"</span>
-                            <p className="relative z-10 text-sm leading-relaxed text-slate-600 italic">
+                        <div className="mt-4 relative pl-1">
+                            <p className="text-sm leading-relaxed text-slate-600">
                                 {review.comentario || review.comment}
                             </p>
                         </div>

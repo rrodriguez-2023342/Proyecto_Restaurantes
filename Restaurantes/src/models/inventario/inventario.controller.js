@@ -57,10 +57,11 @@ export const createInventario = async (req, res) => {
 
 export const getInventarios = async (req, res) => {
     try {
-        const { page = 1, limit = 10, restaurante } = req.query;
+        const { page = 1, limit = 50, restaurante } = req.query;
         let query = {};
 
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+        // Si hay un usuario logueado como admin, filtramos por su restaurante
+        if (req.usuario && req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
             const adminRestaurantId = await getAdminRestaurantId(req.usuario);
             if (!adminRestaurantId) {
                 return res.status(403).json({
@@ -70,6 +71,7 @@ export const getInventarios = async (req, res) => {
             }
             query.restaurante = adminRestaurantId;
         } else if (restaurante) {
+            // Si es consulta pública y pasaron el restaurante, filtramos
             query.restaurante = restaurante;
         }
 

@@ -4,25 +4,38 @@ import { useReservationStore } from "../store/useReservationStore";
 import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { useTableStore } from "../../tables/store/useTableStore";
 import { getRestaurantById } from "../../../shared/api";
+import { 
+    CalendarDays, Clock, User, Users, MapPin, 
+    ChevronLeft, ChevronRight, Check, Sparkles, MessageSquare, Utensils, ArrowLeft,
+    ShieldCheck, Save
+} from "lucide-react";
+import { showSuccess as toastSuccess, showError as toastError } from "../../../shared/utils/toast";
 
-const lunchSlots = ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
-const dinnerSlots = ["19:00", "19:30", "20:00", "20:30", "21:00", "21:30"];
+// Helper to generate 30‑minute intervals between two HH:MM strings
+const generateTimeSlots = (start, end) => {
+  const slots = [];
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let hour = sh;
+  let minute = sm;
+  while (hour < eh || (hour === eh && minute <= em)) {
+    const pad = (n) => String(n).padStart(2, "0");
+    slots.push(`${pad(hour)}:${pad(minute)}`);
+    minute += 30;
+    if (minute >= 60) {
+      minute = 0;
+      hour += 1;
+    }
+  }
+  return slots;
+};
+
 const guestOptions = [1, 2, 3, 4, 5, 6, 7, "8+"];
 const monthNames = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
-const weekDays = ["L", "M", "M", "J", "V", "S", "D"];
+const fullWeekDays = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
 const toDateKey = (date) => {
     const year = date.getFullYear();
@@ -45,17 +58,15 @@ const buildCalendarDays = (currentMonth) => {
 };
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
-
-const cardClass = "rounded-3xl border bg-white p-5 shadow-xl shadow-slate-200/70 sm:p-6";
-const sectionEyebrow = "text-[10px] font-black uppercase tracking-[0.24em] text-orange-500";
-const sectionTitle = "mt-1 text-xl font-black text-slate-950";
-const inputClass = "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100";
-const emptyPanelClass = "rounded-2xl border border-slate-100 bg-slate-50 px-4 py-5 text-sm font-bold text-slate-500";
+const sectionWrapper = "pt-12 pb-16 border-b border-slate-100 last:border-0";
+const sectionEyebrow = "text-[10px] font-black uppercase tracking-[0.25em] text-amber-600 mb-4 flex items-center gap-2";
+const sectionTitle = "text-3xl font-black text-slate-950 tracking-tight mb-8";
+const inputClass = "w-full border-b-2 border-slate-200 bg-transparent px-0 py-4 text-xl font-bold text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-amber-500";
 
 export const CreateReservationPage = () => {
     const navigate = useNavigate();
-    const { restaurantId } = useParams();
-    const { createReservation } = useReservationStore();
+    const { restaurantId, reservationId } = useParams();
+    const { createReservation, updateReservation, fetchReservationById } = useReservationStore();
     const { restaurants, loading: loadingRestaurants, fetchRestaurants } = useRestaurantStore();
     const {
         restaurantTables,
@@ -63,6 +74,7 @@ export const CreateReservationPage = () => {
         fetchRestaurantTables,
         clearRestaurantTables,
     } = useTableStore();
+    
     const today = useMemo(() => new Date(), []);
     const [clientName, setClientName] = useState("");
     const [guests, setGuests] = useState(2);
@@ -77,25 +89,51 @@ export const CreateReservationPage = () => {
     const [submitError, setSubmitError] = useState("");
     const [showSuccess, setShowSuccess] = useState(false);
     const [lockedRestaurant, setLockedRestaurant] = useState(null);
+    const isEdit = Boolean(reservationId);
+    
     const isRestaurantLocked = Boolean(restaurantId);
     const reservationRestaurantId = restaurantId || selectedRestaurant;
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
         fetchRestaurants().catch(() => {});
-    }, [fetchRestaurants]);
+        
+        if (isEdit) {
+            setLoading(true);
+            fetchReservationById(reservationId)
+                .then((res) => {
+                    if (res) {
+                        setClientName(res.nombre || "");
+                        setGuests(res.cantidadPersonas >= 8 ? "8+" : res.cantidadPersonas || 2);
+                        setSelectedRestaurant(res.restaurante?._id || res.restaurante?.id || res.restaurante);
+                        setSelectedTable(res.mesa?._id || res.mesa?.id || res.mesa);
+                        setSpecialRequests(res.notas || "");
+                        
+                        if (res.fecha) {
+                            const d = new Date(res.fecha);
+                            setSelectedDate(toDateKey(d));
+                            setSelectedTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+                            setCurrentMonth(d);
+                        }
+                    }
+                    setLoading(false);
+                })
+                .catch(() => {
+                    toastError("No se pudo cargar la reservación");
+                    navigate("/reservaciones");
+                });
+        }
+    }, [fetchRestaurants, isEdit, reservationId, fetchReservationById, navigate]);
 
     useEffect(() => {
-        if (!restaurantId) return;
+        if (!restaurantId && !isEdit) return;
+        const targetId = restaurantId || selectedRestaurant;
+        if (!targetId) return;
 
-        getRestaurantById(restaurantId)
-            .then(({ data }) => {
-                setLockedRestaurant(data?.data || data?.restaurante || data || null);
-            })
-            .catch(() => {
-                setLockedRestaurant(null);
-            });
-    }, [restaurantId]);
+        getRestaurantById(targetId)
+            .then(({ data }) => setLockedRestaurant(data?.data || data?.restaurante || data || null))
+            .catch(() => setLockedRestaurant(null));
+    }, [restaurantId, isEdit, selectedRestaurant]);
 
     useEffect(() => {
         if (!reservationRestaurantId) {
@@ -105,33 +143,33 @@ export const CreateReservationPage = () => {
         fetchRestaurantTables(reservationRestaurantId).catch(() => {});
     }, [clearRestaurantTables, fetchRestaurantTables, reservationRestaurantId]);
 
-    const autoSelectedTable = useMemo(() => {
-        const preferredCapacity = guests === "8+" ? 8 : Number(guests);
-        return restaurantTables.find((table) => {
-            const capacity = Number(table.capacidad || 0);
-            const isAvailable = table.disponibilidad !== false;
-            return isAvailable && capacity >= preferredCapacity;
-        });
-    }, [guests, restaurantTables]);
+    const selectedRestaurantData = lockedRestaurant || restaurants.find(
+        (restaurant) => String(restaurant._id || restaurant.id) === String(reservationRestaurantId)
+    ) || { nombre: lockedRestaurant?.nombre || (loading ? "Cargando..." : "Selecciona un restaurante") };
 
-    const days = useMemo(() => buildCalendarDays(currentMonth), [currentMonth]);
+    const timeSlots = useMemo(() => {
+        if (!selectedRestaurantData?.horario?.apertura || !selectedRestaurantData?.horario?.cierre) {
+            return [];
+        }
+        return generateTimeSlots(selectedRestaurantData.horario.apertura, selectedRestaurantData.horario.cierre);
+    }, [selectedRestaurantData?.horario]);
+    
     const minDateKey = toDateKey(today);
+    const days = useMemo(() => buildCalendarDays(currentMonth), [currentMonth]);
+    const shortWeekDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
     const errors = {
         clientName: submitted && !clientName.trim(),
         guests: submitted && !guests,
         selectedRestaurant: submitted && !reservationRestaurantId,
-        selectedTable: submitted && !(selectedTable || autoSelectedTable),
+        selectedTable: submitted && !selectedTable,
         selectedDate: submitted && !selectedDate,
         selectedTime: submitted && !selectedTime,
     };
 
-    const selectedRestaurantData = lockedRestaurant || restaurants.find(
-        (restaurant) => (restaurant._id || restaurant.id) === reservationRestaurantId
-    );
     const selectedTableData = restaurantTables.find(
-        (table) => (table._id || table.id) === (selectedTable || autoSelectedTable?._id || autoSelectedTable?.id)
-    ) || autoSelectedTable;
+        (table) => String(table._id || table.id) === String(selectedTable)
+    );
     const capacityGuests = guests === "8+" ? 8 : Number(guests);
 
     const selectedDateLabel = selectedDate
@@ -145,32 +183,52 @@ export const CreateReservationPage = () => {
     const handleSubmit = async () => {
         setSubmitted(true);
         setSubmitError("");
-        const tableId = selectedTable || autoSelectedTable?._id || autoSelectedTable?.id;
-        if (!clientName.trim() || !guests || !reservationRestaurantId || !tableId || !selectedDate || !selectedTime) return;
+        const tableId = selectedTableData?._id || selectedTableData?.id || selectedTable;
+        if (!clientName.trim() || !guests || !reservationRestaurantId || !tableId || !selectedDate || !selectedTime) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
 
         setLoading(true);
+        const payload = {
+            restaurante: reservationRestaurantId,
+            mesa: tableId,
+            fecha: new Date(`${selectedDate}T${selectedTime}:00`).toISOString(),
+            cantidadPersonas: capacityGuests,
+            notas: specialRequests,
+            nombre: clientName, // Added to match store usage
+        };
+
         try {
-            await createReservation({
-                restaurante: reservationRestaurantId,
-                mesa: tableId,
-                fecha: new Date(`${selectedDate}T${selectedTime}:00`).toISOString(),
-                cantidadPersonas: capacityGuests,
-                notas: specialRequests,
-            });
+            if (isEdit) {
+                await updateReservation(reservationId, payload);
+                toastSuccess("Reservación actualizada con éxito");
+            } else {
+                await createReservation(payload);
+            }
             setLoading(false);
             setShowSuccess(true);
         } catch (error) {
-            setSubmitError(error.response?.data?.message || error.response?.data?.error || "No se pudo crear la reservacion");
+            setSubmitError(error.response?.data?.message || error.response?.data?.error || "Ocurrió un error al procesar la reservación");
             setLoading(false);
         }
     };
 
-    const moveMonth = (direction) => {
-        setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + direction, 1));
-    };
+    const moveMonth = (direction) => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + direction, 1));
+
+    if (loading && isEdit && !clientName) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-white">
+                <div className="text-center">
+                    <div className="h-12 w-12 rounded-full border-4 border-amber-100 border-t-amber-500 animate-spin mx-auto mb-4" />
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Cargando reservación...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
+        <div className="flex min-h-screen flex-col lg:flex-row bg-white font-sans selection:bg-amber-200">
             <style>{`
                 @keyframes reservationPop {
                     0% { transform: scale(.72); opacity: 0; }
@@ -181,363 +239,435 @@ export const CreateReservationPage = () => {
                     0% { transform: scale(.75); opacity: .7; }
                     100% { transform: scale(1.45); opacity: 0; }
                 }
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
 
-            <main className="mx-auto max-w-6xl">
-                <header className="mb-8 rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-8">
-                    <div className="flex flex-col gap-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-                        <div>
-                            <p className="text-xs font-black uppercase tracking-[0.32em] text-orange-500">Mesa privada</p>
-                            <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-                                Nueva Reservacion
-                            </h1>
-                            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-500 sm:mx-0">
-                                {isRestaurantLocked
-                                    ? `Reserva tu mesa en ${selectedRestaurantData?.nombre || "este restaurante"} sin volver a elegir el lugar.`
-                                    : "Reserva una experiencia tranquila, con servicio atento y mesa lista cuando llegues."}
-                            </p>
+            {/* LADO IZQUIERDO */}
+            <div className="flex-1 px-6 py-10 md:px-16 md:py-16 lg:px-24 xl:px-32 lg:w-[65%] overflow-y-auto no-scrollbar pb-32 lg:pb-16">
+                
+                <div className="flex items-center justify-between mb-16">
+                    <button 
+                        onClick={() => navigate(-1)} 
+                        className="group flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors"
+                    >
+                        <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                            <ArrowLeft size={14} />
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => navigate("/reservaciones")}
-                            className="rounded-2xl border border-slate-100 bg-slate-50 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-600 transition hover:border-orange-200 hover:bg-orange-50"
-                        >
-                            Mis reservas
-                        </button>
+                        Volver
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/reservaciones")}
+                        className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-black uppercase tracking-widest text-amber-600 bg-amber-50 hover:bg-amber-100 transition-colors"
+                    >
+                        <CalendarDays size={14} />
+                        Mis reservas
+                    </button>
+                </div>
+
+                <header className="mb-12">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="h-[2px] w-12 bg-amber-500" />
+                        <span className="text-xs font-black uppercase tracking-[0.3em] text-amber-600">
+                            {isEdit ? "Gestión de Reserva" : "Servicio Exclusivo"}
+                        </span>
                     </div>
+                    <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-slate-950 mb-6 leading-none">
+                        {isEdit ? "Ajusta tu experiencia." : "Asegura tu lugar."}
+                    </h1>
+                    <p className="max-w-xl text-lg font-medium text-slate-500">
+                        {isEdit 
+                            ? "Cambia los detalles de tu reservación para que todo sea perfecto en tu próxima visita."
+                            : isRestaurantLocked
+                                ? `Estás a unos pasos de vivir una experiencia culinaria inigualable en ${selectedRestaurantData?.nombre || "nuestro restaurante"}.`
+                                : "Reserva una experiencia tranquila, con servicio atento y tu mesa lista cuando llegues."}
+                    </p>
                 </header>
 
-                <section className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
-                    <div className="space-y-5">
-                        <article className={cx(cardClass, errors.clientName ? "border-red-300" : "border-slate-100")}>
-                            <div className="mb-4 flex items-center justify-between gap-4">
-                                <div>
-                                    <p className={sectionEyebrow}>Cliente</p>
-                                    <h2 className={sectionTitle}>Datos de la mesa</h2>
-                                </div>
-                                {errors.clientName && <span className="text-xs font-bold text-red-500">Requerido</span>}
-                            </div>
+                <div className="max-w-3xl">
+                    {/* Cliente */}
+                    <div className={sectionWrapper}>
+                        <p className={sectionEyebrow}><User size={14} /> Titular de la reserva</p>
+                        <h2 className={sectionTitle}>¿A nombre de quién?</h2>
+                        <div className="relative">
                             <input
                                 value={clientName}
                                 onChange={(event) => setClientName(event.target.value)}
-                                placeholder="Nombre del cliente"
-                                className={inputClass}
+                                placeholder="Ej. Alexander Pierce"
+                                className={cx(inputClass, errors.clientName && "border-red-500 placeholder:text-red-300")}
                             />
-                        </article>
+                            {errors.clientName && <span className="absolute right-0 top-4 text-xs font-black text-red-500 uppercase tracking-widest">Requerido</span>}
+                        </div>
+                    </div>
 
-                        {isRestaurantLocked ? (
-                            <article className={cx(cardClass, "border-orange-100")}>
-                                <p className={sectionEyebrow}>Restaurante</p>
-                                <div className="mt-2 rounded-2xl border border-orange-100 bg-orange-50 p-4">
-                                    <h2 className="text-xl font-black text-slate-950">
-                                        {selectedRestaurantData?.nombre || "Restaurante seleccionado"}
-                                    </h2>
-                                    <p className="mt-1 text-sm font-semibold text-slate-500">
-                                        {selectedRestaurantData?.categoria || "Estas reservando desde el restaurante elegido."}
-                                    </p>
-                                </div>
-                            </article>
-                        ) : (
-                            <article className={cx(cardClass, errors.selectedRestaurant ? "border-red-300" : "border-slate-100")}>
-                                <div className="mb-5 flex items-center justify-between gap-4">
-                                    <div>
-                                        <p className={sectionEyebrow}>Restaurante</p>
-                                        <h2 className={sectionTitle}>Elige el lugar</h2>
-                                    </div>
-                                    {loadingRestaurants && <span className="text-xs font-bold text-slate-500">Cargando...</span>}
-                                </div>
-                                {restaurants.length ? (
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                        {restaurants.map((restaurant) => {
-                                            const id = restaurant._id || restaurant.id;
-                                            const isSelected = selectedRestaurant === id;
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedRestaurant(id);
-                                                        setSelectedTable("");
-                                                    }}
-                                                    className={cx(
-                                                        "rounded-2xl border p-4 text-left transition duration-200 active:scale-[0.99]",
-                                                        isSelected
-                                                            ? "border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-200"
-                                                            : "border-slate-100 bg-slate-50 text-slate-700 hover:border-orange-200 hover:bg-orange-50"
-                                                    )}
-                                                >
-                                                    <p className="text-sm font-black">{restaurant.nombre || restaurant.name}</p>
-                                                    <p className={cx("mt-1 text-xs", isSelected ? "text-white/75" : "text-slate-500")}>
-                                                        {restaurant.categoria || "Restaurante premium"}
-                                                    </p>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <p className={emptyPanelClass}>
-                                        No hay restaurantes disponibles desde la base de datos.
-                                    </p>
-                                )}
-                            </article>
-                        )}
-
-                        <article className={cx(cardClass, errors.guests ? "border-red-300" : "border-slate-100")}>
-                            <div className="mb-5 flex items-center justify-between">
+                    {/* Restaurante (Only if not locked and not edit) */}
+                    {!isRestaurantLocked && !isEdit && (
+                        <div className={sectionWrapper}>
+                            <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <p className={sectionEyebrow}>Personas</p>
-                                    <h2 className={sectionTitle}>Tamano del grupo</h2>
+                                    <p className={sectionEyebrow}><MapPin size={14} /> Destino Gourmet</p>
+                                    <h2 className={sectionTitle}>Elige el lugar</h2>
                                 </div>
-                                <div className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 p-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedTable("");
-                                            setGuests((value) => (value === "8+" ? 8 : Math.max(1, value - 1)));
-                                        }}
-                                        className="grid h-9 w-9 place-items-center rounded-full bg-white text-xl font-black text-orange-500 shadow-sm transition hover:bg-orange-500 hover:text-white"
-                                    >
-                                        -
-                                    </button>
-                                    <span className="min-w-8 text-center text-sm font-black text-slate-900">{guests}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedTable("");
-                                            setGuests((value) => (value >= 8 || value === "8+" ? "8+" : value + 1));
-                                        }}
-                                        className="grid h-9 w-9 place-items-center rounded-full bg-white text-xl font-black text-orange-500 shadow-sm transition hover:bg-orange-500 hover:text-white"
-                                    >
-                                        +
-                                    </button>
-                                </div>
+                                {loadingRestaurants && <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest animate-pulse">Cargando...</span>}
                             </div>
-                            <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-                                {guestOptions.map((option) => (
-                                    <button
-                                        key={option}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedTable("");
-                                            setGuests(option);
-                                        }}
-                                        className={cx(
-                                            "rounded-2xl border py-3 text-sm font-black transition duration-200 active:scale-95",
-                                            guests === option
-                                                ? "border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-200"
-                                                : "border-slate-100 bg-slate-50 text-slate-600 hover:border-orange-200 hover:bg-orange-50"
-                                        )}
-                                    >
-                                        {option}
-                                    </button>
-                                ))}
-                            </div>
-                        </article>
-
-                        <article className={cx(cardClass, errors.selectedTable ? "border-red-300" : "border-slate-100")}>
-                            <div className="mb-5 flex items-center justify-between gap-4">
-                                <div>
-                                    <p className={sectionEyebrow}>Mesa</p>
-                                    <h2 className={sectionTitle}>Mesa compatible</h2>
-                                </div>
-                                {loadingTables && <span className="text-xs font-bold text-slate-500">Buscando...</span>}
-                            </div>
-                            {!reservationRestaurantId ? (
-                                <p className={emptyPanelClass}>
-                                    Selecciona un restaurante para cargar mesas reales.
-                                </p>
-                            ) : restaurantTables.length ? (
-                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                                    {restaurantTables.map((table) => {
-                                        const id = table._id || table.id;
-                                        const capacity = Number(table.capacidad || 0);
-                                        const disabled = table.disponibilidad === false || capacity < capacityGuests;
-                                        const isSelected = selectedTable === id;
+                            
+                            {restaurants.length ? (
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    {restaurants.map((restaurant) => {
+                                        const id = restaurant._id || restaurant.id;
+                                        const isSelected = selectedRestaurant === id;
                                         return (
                                             <button
                                                 key={id}
                                                 type="button"
-                                                disabled={disabled}
-                                                onClick={() => setSelectedTable(id)}
+                                                onClick={() => {
+                                                    setSelectedRestaurant(id);
+                                                    setSelectedTable("");
+                                                }}
                                                 className={cx(
-                                                    "rounded-2xl border p-4 text-left transition duration-200",
+                                                    "group relative overflow-hidden rounded-3xl border-2 p-6 text-left transition-all duration-300",
                                                     isSelected
-                                                        ? "border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-200"
-                                                        : "border-slate-100 bg-slate-50 text-slate-700 hover:border-orange-200 hover:bg-orange-50",
-                                                    disabled && "cursor-not-allowed opacity-40 hover:border-slate-100 hover:bg-slate-50"
+                                                        ? "border-slate-950 bg-slate-950 text-white shadow-xl shadow-slate-900/20"
+                                                        : "border-slate-100 bg-white text-slate-700 hover:border-slate-300 hover:shadow-md"
                                                 )}
                                             >
-                                                <p className="text-sm font-black">Mesa {table.numeroMesa || "S/N"}</p>
-                                                <p className={cx("mt-1 text-xs", isSelected ? "text-white/75" : "text-slate-500")}>
-                                                    {capacity} personas
+                                                {isSelected && <Sparkles size={16} className="absolute right-4 top-4 text-amber-400" />}
+                                                <p className="text-xl font-black tracking-tight mb-1">{restaurant.nombre || restaurant.name}</p>
+                                                <p className={cx("text-sm font-bold", isSelected ? "text-white/60" : "text-slate-400")}>
+                                                    {restaurant.categoria || "Restaurante premium"}
                                                 </p>
                                             </button>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <p className={emptyPanelClass}>
-                                    No hay mesas registradas para este restaurante.
-                                </p>
+                                <p className="text-sm font-bold text-slate-400 italic">No hay restaurantes disponibles.</p>
                             )}
-                        </article>
+                            {errors.selectedRestaurant && <p className="mt-4 text-xs font-black text-red-500 uppercase tracking-widest">Debes seleccionar un restaurante</p>}
+                        </div>
+                    )}
 
-                        <article className={cx(cardClass, errors.selectedDate ? "border-red-300" : "border-slate-100")}>
-                            <div className="mb-5 flex items-center justify-between gap-3">
-                                <div>
-                                    <p className={sectionEyebrow}>Fecha</p>
-                                    <h2 className={sectionTitle}>{selectedDateLabel}</h2>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={() => moveMonth(-1)} className="grid h-10 w-10 place-items-center rounded-full border border-slate-100 bg-slate-50 text-lg font-black text-slate-600 transition hover:border-orange-200 hover:bg-orange-50">{"<"}</button>
-                                    <button type="button" onClick={() => moveMonth(1)} className="grid h-10 w-10 place-items-center rounded-full border border-slate-100 bg-slate-50 text-lg font-black text-slate-600 transition hover:border-orange-200 hover:bg-orange-50">{">"}</button>
-                                </div>
+                    {/* Personas */}
+                    <div className={sectionWrapper}>
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+                            <div>
+                                <p className={sectionEyebrow}><Users size={14} /> Acompañantes</p>
+                                <h2 className={sectionTitle}>Tamaño del grupo</h2>
                             </div>
-                            <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center text-sm font-black uppercase tracking-[0.2em] text-slate-600">
-                                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                            <div className="flex items-center gap-4 bg-slate-50 rounded-full p-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedTable("");
+                                        setGuests((value) => (value === "8+" ? 8 : Math.max(1, value - 1)));
+                                    }}
+                                    className="grid h-12 w-12 place-items-center rounded-full bg-white text-slate-900 shadow-sm transition-all hover:bg-slate-950 hover:text-white active:scale-90"
+                                >
+                                    <span className="text-2xl font-black mb-1">-</span>
+                                </button>
+                                <span className="w-8 text-center text-2xl font-black text-slate-950">{guests}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedTable("");
+                                        setGuests((value) => (value >= 8 || value === "8+" ? "8+" : value + 1));
+                                    }}
+                                    className="grid h-12 w-12 place-items-center rounded-full bg-white text-slate-900 shadow-sm transition-all hover:bg-slate-950 hover:text-white active:scale-90"
+                                >
+                                    <span className="text-2xl font-black mb-1">+</span>
+                                </button>
                             </div>
-                            <div className="grid grid-cols-7 gap-2">
-                                {weekDays.map((day, index) => (
-                                    <div key={`${day}-${index}`} className="py-2 text-center text-[10px] font-black text-slate-400">
-                                        {day}
-                                    </div>
-                                ))}
-                                {days.map((date, index) => {
-                                    const dateKey = date ? toDateKey(date) : "";
-                                    const isPast = dateKey && dateKey < minDateKey;
-                                    const isSelected = selectedDate === dateKey;
+                        </div>
+                        <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+                            {guestOptions.map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedTable("");
+                                        setGuests(option);
+                                    }}
+                                    className={cx(
+                                        "rounded-2xl py-4 text-base font-black transition-all duration-300",
+                                        guests === option
+                                            ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30 scale-105"
+                                            : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    )}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
+                    {/* Mesa */}
+                    <div className={sectionWrapper}>
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <p className={sectionEyebrow}><Utensils size={14} /> Ubicación</p>
+                                <h2 className={sectionTitle}>Mesa ideal</h2>
+                            </div>
+                            {loadingTables && <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest animate-pulse">Buscando...</span>}
+                        </div>
+                        
+                        {!reservationRestaurantId ? (
+                            <p className="text-sm font-bold text-slate-400 italic">Selecciona un restaurante para visualizar las mesas.</p>
+                        ) : restaurantTables.length ? (
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                                {restaurantTables.map((table) => {
+                                    const id = table._id || table.id;
+                                    const capacity = Number(table.capacidad || 0);
+                                    const isSelected = String(selectedTable) === String(id);
+                                    const disabled = table.disponibilidad === false || capacity < capacityGuests;
+                                    
                                     return (
                                         <button
-                                            key={dateKey || `empty-${index}`}
+                                            key={id}
                                             type="button"
-                                            disabled={!date || isPast}
-                                            onClick={() => setSelectedDate(dateKey)}
+                                            disabled={disabled && !isSelected}
+                                            onClick={() => setSelectedTable(id)}
                                             className={cx(
-                                                "aspect-square rounded-2xl text-sm font-black transition duration-200",
-                                                !date && "pointer-events-none opacity-0",
-                                                isPast && "cursor-not-allowed text-slate-300",
-                                                date && !isPast && !isSelected && "border border-slate-100 bg-slate-50 text-slate-600 hover:border-orange-200 hover:bg-orange-50",
-                                                isSelected && "bg-orange-500 text-white shadow-lg shadow-orange-200"
+                                                "relative flex flex-col items-center justify-center rounded-3xl border-2 p-6 transition-all duration-300",
+                                                isSelected
+                                                    ? "border-slate-950 bg-slate-950 text-white shadow-xl shadow-slate-900/20"
+                                                    : "border-slate-100 bg-white text-slate-700 hover:border-slate-300",
+                                                (disabled && !isSelected) && "cursor-not-allowed opacity-40 grayscale"
                                             )}
                                         >
-                                            {date?.getDate()}
+                                            {isSelected && <Sparkles size={16} className="absolute right-3 top-3 text-amber-400" />}
+                                            <p className="text-xl font-black mb-1">{table.numeroMesa || "S/N"}</p>
+                                            <p className={cx("text-[10px] font-black uppercase tracking-widest", isSelected ? "text-white/60" : "text-slate-400")}>
+                                                {capacity} personas
+                                            </p>
                                         </button>
                                     );
                                 })}
                             </div>
-                        </article>
+                        ) : (
+                            <p className="text-sm font-bold text-slate-400 italic">No hay mesas registradas para este restaurante.</p>
+                        )}
+                        {errors.selectedTable && <p className="mt-4 text-xs font-black text-red-500 uppercase tracking-widest">Debes seleccionar una mesa</p>}
                     </div>
 
-                    <aside className="space-y-5">
-                        <article className={cx(cardClass, errors.selectedTime ? "border-red-300" : "border-slate-100")}>
-                            <p className={sectionEyebrow}>Hora</p>
-                            <h2 className={sectionTitle}>Elige tu turno</h2>
-
-                            {[
-                                ["Almuerzo", lunchSlots],
-                                ["Cena", dinnerSlots],
-                            ].map(([label, slots]) => (
-                                <div key={label} className="mt-6">
-                                    <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {slots.map((slot) => (
-                                            <button
-                                                key={slot}
-                                                type="button"
-                                                onClick={() => setSelectedTime(slot)}
-                                                className={cx(
-                                                    "rounded-full border px-4 py-3 text-sm font-black transition duration-200 active:scale-95",
-                                                    selectedTime === slot
-                                                        ? "border-orange-500 bg-slate-950 text-white shadow-lg shadow-slate-200 ring-2 ring-orange-200"
-                                                        : "border-slate-100 bg-slate-50 text-slate-600 hover:border-orange-200 hover:bg-orange-50"
-                                                )}
-                                            >
-                                                {slot}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </article>
-
-                        <article className={cx(cardClass, "border-slate-100")}>
-                            <p className={sectionEyebrow}>Solicitudes</p>
-                            <h2 className={sectionTitle}>Detalles especiales</h2>
-                            <textarea
-                                value={specialRequests}
-                                onChange={(event) => setSpecialRequests(event.target.value)}
-                                placeholder="Alergias, aniversario, mesa junto a la ventana..."
-                                rows={5}
-                                className="mt-5 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
-                            />
-                        </article>
-
-                        <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-xl shadow-slate-200/70 sm:p-6">
-                            <p className={sectionEyebrow}>Resumen</p>
-                            <div className="mt-5 space-y-4 text-sm">
-                                <div className="flex justify-between gap-4 border-b border-slate-100 pb-3">
-                                    <span className="text-slate-500">Cliente</span>
-                                    <span className="font-black text-slate-950">{clientName || "Pendiente"}</span>
-                                </div>
-                                <div className="flex justify-between gap-4 border-b border-slate-100 pb-3">
-                                    <span className="text-slate-500">Personas</span>
-                                    <span className="font-black text-slate-950">{guests}</span>
-                                </div>
-                                <div className="flex justify-between gap-4 border-b border-slate-100 pb-3">
-                                    <span className="text-slate-500">Restaurante</span>
-                                    <span className="text-right font-black text-slate-950">{selectedRestaurantData?.nombre || "Pendiente"}</span>
-                                </div>
-                                <div className="flex justify-between gap-4 border-b border-slate-100 pb-3">
-                                    <span className="text-slate-500">Mesa</span>
-                                    <span className="font-black text-slate-950">{selectedTableData ? `Mesa ${selectedTableData.numeroMesa}` : "Pendiente"}</span>
-                                </div>
-                                <div className="flex justify-between gap-4 border-b border-slate-100 pb-3">
-                                    <span className="text-slate-500">Fecha</span>
-                                    <span className="text-right font-black text-slate-950">{selectedDateLabel}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-slate-500">Hora</span>
-                                    <span className="font-black text-slate-950">{selectedTime || "Pendiente"}</span>
-                                </div>
+                    {/* Fecha */}
+                    <div className={sectionWrapper}>
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <p className={sectionEyebrow}><CalendarDays size={14} /> El día</p>
+                                <h2 className={`${sectionTitle} capitalize`}>{selectedDateLabel}</h2>
                             </div>
-                            {submitError && (
-                                <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
-                                    {submitError}
-                                </p>
-                            )}
-                            <button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={loading}
-                                className="mt-6 flex w-full items-center justify-center rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-orange-200 transition hover:bg-orange-400 active:scale-[0.99] disabled:cursor-wait disabled:opacity-70"
-                            >
-                                {loading ? "Confirmando..." : "Confirmar Reservacion"}
-                            </button>
-                        </article>
-                    </aside>
-                </section>
-            </main>
-
-            {showSuccess && (
-                <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 px-4 backdrop-blur-md">
-                    <div className="w-full max-w-sm rounded-3xl border border-orange-100 bg-white p-8 text-center shadow-2xl shadow-slate-950/30">
-                        <div className="relative mx-auto mb-6 grid h-24 w-24 place-items-center">
-                            <span className="absolute h-20 w-20 rounded-full bg-orange-200" style={{ animation: "successRing 1s ease-out infinite" }} />
-                            <div className="grid h-20 w-20 place-items-center rounded-full bg-orange-500 text-4xl font-black text-white" style={{ animation: "reservationPop .55s ease-out both" }}>
-                                OK
+                            <div className="flex gap-2 bg-slate-50 p-1 rounded-full">
+                                <button type="button" onClick={() => moveMonth(-1)} className="grid h-12 w-12 place-items-center rounded-full bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-950 hover:text-white active:scale-95"><ChevronLeft size={20} strokeWidth={3} /></button>
+                                <button type="button" onClick={() => moveMonth(1)} className="grid h-12 w-12 place-items-center rounded-full bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-950 hover:text-white active:scale-95"><ChevronRight size={20} strokeWidth={3} /></button>
                             </div>
                         </div>
-                        <h2 className="text-2xl font-black text-slate-950">Reservacion confirmada</h2>
-                        <p className="mt-3 text-sm leading-6 text-slate-500">
-                            Te esperamos {selectedDateLabel} a las {selectedTime}. Tu mesa queda preparada.
+                        
+                        <div className="mb-6 bg-transparent text-center text-sm font-black uppercase tracking-[0.4em] text-slate-900">
+                            {monthNames[currentMonth.getMonth()]} <span className="text-slate-400">{currentMonth.getFullYear()}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-7 gap-3">
+                            {shortWeekDays.map((day, index) => (
+                                <div key={`${day}-${index}`} className="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-amber-500">
+                                    {day}
+                                </div>
+                            ))}
+                            {days.map((date, index) => {
+                                const dateKey = date ? toDateKey(date) : "";
+                                const isDisabled = dateKey && selectedRestaurantData?.horario?.diasAbierto && !selectedRestaurantData.horario.diasAbierto.includes(fullWeekDays[date.getDay()]);
+                                const isSelected = selectedDate === dateKey;
+                                const isPast = dateKey && dateKey < minDateKey && !isSelected;
+
+                                return (
+                                    <button
+                                        key={dateKey || `empty-${index}`}
+                                        type="button"
+                                        disabled={!date || (isPast && !isSelected) || isDisabled}
+                                        onClick={() => setSelectedDate(dateKey)}
+                                        className={cx(
+                                            "aspect-square rounded-full text-base font-black transition-all duration-300",
+                                            !date && "pointer-events-none opacity-0",
+                                            (isPast && !isSelected) && "cursor-not-allowed text-slate-300",
+                                            isDisabled && "cursor-not-allowed text-slate-300",
+                                            date && !(isPast && !isSelected) && !isDisabled && !isSelected && "bg-slate-50 text-slate-700 hover:bg-slate-200 hover:text-slate-950",
+                                            isSelected && "bg-slate-950 text-white shadow-lg shadow-slate-900/30 scale-110"
+                                        )}
+                                    >
+                                        {date?.getDate()}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {errors.selectedDate && <p className="mt-6 text-xs font-black text-red-500 uppercase tracking-widest text-center">Debes elegir una fecha</p>}
+                    </div>
+
+                    {/* Hora */}
+                    <div className={sectionWrapper}>
+                        <p className={sectionEyebrow}><Clock size={14} /> El momento</p>
+                        <h2 className={sectionTitle}>Elige tu turno</h2>
+
+                        {timeSlots.length ? (
+                            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                                {timeSlots.map((slot) => (
+                                    <button
+                                        key={slot}
+                                        type="button"
+                                        onClick={() => setSelectedTime(slot)}
+                                        className={cx(
+                                            "rounded-2xl py-4 text-sm font-black transition-all duration-300",
+                                            selectedTime === slot
+                                                ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30 scale-105"
+                                                : "bg-slate-50 text-slate-600 hover:bg-slate-200 hover:text-slate-950"
+                                        )}
+                                    >
+                                        {slot}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-500 italic">Horario no disponible para este restaurante.</p>
+                        )}
+                        {errors.selectedTime && <p className="mt-6 text-xs font-black text-red-500 uppercase tracking-widest text-center">Debes seleccionar una hora</p>}
+                    </div>
+
+                    {/* Detalles Especiales */}
+                    <div className="pt-12 pb-8">
+                        <p className={sectionEyebrow}><MessageSquare size={14} /> Opcional</p>
+                        <h2 className={sectionTitle}>Detalles especiales</h2>
+                        <textarea
+                            value={specialRequests}
+                            onChange={(event) => setSpecialRequests(event.target.value)}
+                            placeholder="Alergias, aniversario, mesa junto a la ventana..."
+                            rows={3}
+                            className={cx(inputClass, "resize-none border-b-2")}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* LADO DERECHO */}
+            <div className="lg:w-[35%] bg-slate-950 text-white p-8 md:p-12 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto flex flex-col justify-between relative shadow-2xl shadow-slate-900 border-l border-slate-800 z-10">
+                <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
+                <div className="absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-slate-800/50 blur-[100px] pointer-events-none" />
+
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-8 opacity-70">
+                        <div className="h-1 w-1 rounded-full bg-amber-500" />
+                        <div className="h-1 w-1 rounded-full bg-amber-500" />
+                        <div className="h-1 w-1 rounded-full bg-amber-500" />
+                    </div>
+                    
+                    <h3 className="text-4xl font-black tracking-tighter mb-12">
+                        {isEdit ? "Edición" : "Resumen"}<br/>
+                        <span className="text-slate-500">{isEdit ? "de cambios." : "de reserva."}</span>
+                    </h3>
+
+                    <div className="space-y-8 font-medium">
+                        <div className="group">
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Titular</p>
+                            <p className="text-xl font-black truncate">{clientName || "—"}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="group">
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Fecha</p>
+                                <p className="text-xl font-black capitalize">{selectedDate ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "—"}</p>
+                            </div>
+                            <div className="group">
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Hora</p>
+                                <p className="text-xl font-black">{selectedTime || "—"}</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="group">
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Ubicación</p>
+                                <p className="text-xl font-black">{selectedTableData ? `Mesa ${selectedTableData.numeroMesa}` : "—"}</p>
+                            </div>
+                            <div className="group">
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Invitados</p>
+                                <p className="text-xl font-black">{guests} personas</p>
+                            </div>
+                        </div>
+                        {specialRequests.trim() && (
+                            <div className="group border-t border-white/10 pt-4 mt-4">
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Detalles Especiales</p>
+                                <p className="text-sm font-bold text-slate-300 italic break-words whitespace-pre-wrap">"{specialRequests}"</p>
+                            </div>
+                        )}
+                        <div className="group border-t border-slate-800 pt-6 mt-6">
+                            <p className="text-amber-500/70 text-[10px] font-black uppercase tracking-widest mb-2">Restaurante</p>
+                            <p className="text-2xl font-black truncate">{selectedRestaurantData?.nombre || "—"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="relative z-10 mt-16 lg:mt-24">
+                    {submitError && (
+                        <div className="mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 p-4 text-xs font-bold text-red-400">
+                            {submitError}
+                        </div>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className={`group relative flex w-full items-center justify-between overflow-hidden rounded-full p-2 pr-6 transition-all duration-500 ${
+                            loading 
+                                ? "bg-amber-600/50 cursor-wait" 
+                                : "bg-amber-500 hover:bg-amber-400 active:scale-[0.98]"
+                        }`}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className={`grid h-14 w-14 place-items-center rounded-full transition-all duration-500 bg-white/20 group-hover:rotate-12`}>
+                                {loading ? (
+                                    <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                ) : isEdit ? (
+                                    <Save className="h-6 w-6 text-white" strokeWidth={3} />
+                                ) : (
+                                    <Check className="h-6 w-6 text-white" strokeWidth={3} />
+                                )}
+                            </div>
+                            <div className="text-left">
+                                <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
+                                    {isEdit ? "Actualización" : "Paso Final"}
+                                </span>
+                                <span className="block text-sm font-black text-white uppercase tracking-widest">
+                                    {isEdit ? "Guardar Cambios" : "Confirmar Reserva"}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <p className="text-center text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-6">
+                        Transacción segura garantizada
+                    </p>
+                </div>
+            </div>
+
+            {/* Modal de Éxito */}
+            {showSuccess && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-2xl">
+                    <div className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900 p-10 text-center shadow-[0_0_80px_-20px_rgba(245,158,11,0.3)]">
+                        <div className="mb-8 flex justify-center">
+                            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-amber-500/20 text-amber-500 ring-8 ring-amber-500/10">
+                                <ShieldCheck size={48} strokeWidth={4} />
+                            </div>
+                        </div>
+                        <h2 className="text-3xl font-black text-white tracking-tighter mb-4">
+                            {isEdit ? "¡Cambios guardados!" : "¡Reserva confirmada!"}
+                        </h2>
+                        <p className="text-slate-400 text-sm mb-10 leading-relaxed max-w-sm mx-auto">
+                            {isEdit 
+                                ? `Tu reservación en ${selectedRestaurantData?.nombre} ha sido actualizada correctamente.`
+                                : `Tu reserva en ${selectedRestaurantData?.nombre} ha sido procesada exitosamente. Revisa tu ticket para los detalles.`}
                         </p>
                         <button
                             type="button"
                             onClick={() => navigate("/reservaciones")}
-                            className="mt-7 w-full rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-white shadow-lg shadow-orange-200 transition hover:bg-orange-400"
+                            className="w-full bg-white text-slate-950 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all active:scale-[0.98]"
                         >
-                            Ver mis reservaciones
+                            Volver a mis reservas
                         </button>
                     </div>
                 </div>

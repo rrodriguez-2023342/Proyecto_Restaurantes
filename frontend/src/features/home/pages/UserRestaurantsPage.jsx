@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter, Star, Clock, MapPin, ChevronRight, Utensils, Pizza, Coffee, Dessert, Soup, Sandwich, Fish, IceCream, Flame, ArrowRight, Sparkles, ChefHat, Timer, Zap, TrendingUp, DollarSign, Users } from "lucide-react";
+import { Search, Filter, Star, Clock, MapPin, ChevronRight, Utensils, Pizza, Coffee, Dessert, Soup, Sandwich, Fish, IceCream, Flame, ArrowRight, Sparkles, ChefHat, Timer, Zap, TrendingUp, DollarSign, Users, Quote, Award, ShieldCheck } from "lucide-react";
 import { EmptyState } from "../../../shared/components";
 import { getRestaurants } from "../../../shared/api";
 import { showError } from "../../../shared/utils/toast";
@@ -98,8 +98,6 @@ export const UserRestaurantsPage = () => {
         return restaurants.filter(r => r.categoria?.toLowerCase() === cat.toLowerCase()).length;
     };
 
-    const peopleFavorites = useMemo(() => filtered.slice(0, 4), [filtered]);
-
     return (
         <div className="w-full bg-[#fcfcfc] min-h-screen relative overflow-x-hidden font-sans">
             
@@ -115,32 +113,33 @@ export const UserRestaurantsPage = () => {
                     <FloatingDish src={comida3} size={400} top={120} left={-5} delay={5} duration={30} rotate={-10} opacity={0.3} />
                     <FloatingDish src={comida9} size={220} top={250} left={85} delay={3} duration={22} rotate={20} opacity={0.3} />
                 </div>
-                
-                <div className="relative z-10 w-full max-w-[1400px] mx-auto px-12 lg:px-20">
-                    <div className="max-w-4xl space-y-10">
+                        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-12 lg:px-20">
+                    <div className="max-w-4xl space-y-6 md:space-y-10">
                         <div className="flex items-center gap-3">
-                            <div className="h-[2px] w-8 bg-amber-500" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-amber-500">KinalEats Discovery</span>
+                            <div className="h-[2px] w-6 md:w-8 bg-amber-500" />
+                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.4em] md:tracking-[0.6em] text-amber-500">KinalEats Discovery</span>
                         </div>
                         
-                        <h2 className="text-7xl md:text-8xl font-bold text-white tracking-tight leading-none uppercase">
+                        <h2 className="text-4xl md:text-8xl font-bold text-white tracking-tight leading-none uppercase">
                             Universo<br />
                             <span className="italic font-light text-amber-500">Gourmet.</span>
                         </h2>
-
+ 
                         <div className="relative group max-w-xl">
-                            <div className="relative flex items-center bg-white/5 backdrop-blur-md border border-white/20 rounded-xl transition-all duration-300 focus-within:border-amber-500/50 focus-within:bg-white/10">
-                                <div className="pl-6 pr-4 text-amber-500">
-                                    <Search size={22} strokeWidth={2.5} />
+                            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center bg-white/5 backdrop-blur-md border border-white/20 rounded-xl transition-all duration-300 focus-within:border-amber-500/50 focus-within:bg-white/10 overflow-hidden">
+                                <div className="flex items-center flex-1">
+                                    <div className="pl-6 pr-4 text-amber-500">
+                                        <Search size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <input
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        placeholder="¿Qué restaurante buscas hoy?"
+                                        className="flex-1 bg-transparent py-4 md:py-5 text-white placeholder:text-slate-500 focus:outline-none font-medium text-base md:text-lg w-full"
+                                    />
                                 </div>
-                                <input
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="¿Qué restaurante buscas hoy?"
-                                    className="flex-1 bg-transparent py-5 text-white placeholder:text-slate-500 focus:outline-none font-medium text-lg"
-                                />
-                                <div className="pr-2">
-                                    <button className="bg-amber-500 hover:bg-amber-600 text-black px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-xs transition-colors">
+                                <div className="p-2 sm:pr-2 sm:pl-0">
+                                    <button className="w-full bg-amber-500 hover:bg-amber-600 text-black px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-xs transition-colors">
                                         Buscar
                                     </button>
                                 </div>
@@ -151,22 +150,19 @@ export const UserRestaurantsPage = () => {
             </section>
 
             {/* ── CONTENT AREA ── */}
-            <div className="max-w-[1500px] mx-auto px-12 lg:px-20 space-y-32 pt-24 pb-40 relative z-10">
+            <div className="max-w-[1500px] mx-auto px-6 md:px-12 lg:px-20 space-y-20 md:space-y-32 pt-16 md:pt-24 pb-24 relative z-10">
                 
-                {/* ── CATEGORIES: THE BOUTIQUE MENU (Editorial Update) ── */}
+                {/* ── CATEGORIES ── */}
                 <section className="relative">
-                    <div className="grid lg:grid-cols-[280px_1fr] gap-16 items-center">
-                        <div className="space-y-4">
+                    <div className="grid lg:grid-cols-[280px_1fr] gap-8 md:gap-16 items-center">
+                        <div className="space-y-3 md:space-y-4">
                             <div className="flex items-center gap-3 text-amber-600">
-                                <Utensils size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Carta de Sabores</span>
+                                <Utensils size={16} />
+                                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em]">Carta de Sabores</span>
                             </div>
-                            <h3 className="text-4xl font-bold text-slate-900 leading-tight uppercase tracking-tighter">
+                            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight uppercase tracking-tighter">
                                 Explora por <br /> <span className="italic font-light text-slate-400">Concepto</span>
                             </h3>
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-[200px]">
-                                Selecciona una categoría para filtrar nuestra red de destinos culinarios elite.
-                            </p>
                         </div>
 
                         <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -190,56 +186,12 @@ export const UserRestaurantsPage = () => {
                                                 {getCount(cat)} locales
                                             </span>
                                         </div>
-                                        {selectedCategory === cat && (
-                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-4 bg-amber-500 rounded-full" />
-                                        )}
                                     </button>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </section>
-
-                {/* ── FAVORITOS DE LA GENTE ── */}
-                {selectedCategory === "Todos" && (
-                    <section className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-amber-50 p-3 rounded-2xl text-amber-600">
-                                    <Users size={24} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <h3 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">Favoritos de la Gente</h3>
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">Destinos con mayor calificación</span>
-                                </div>
-                            </div>
-                            <Link to="#" className="p-3 rounded-full border border-slate-100 text-slate-400 hover:text-amber-600 hover:border-amber-500 transition-all">
-                                <ChevronRight size={20} />
-                            </Link>
-                        </div>
-                        
-                        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-                            {peopleFavorites.map((restaurant) => (
-                                <Link 
-                                    key={`fav-${restaurant.id}`} 
-                                    to={`/home/restaurants/${restaurant.id}`}
-                                    className="group relative h-[250px] rounded-[2rem] overflow-hidden shadow-lg transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 border border-slate-50"
-                                >
-                                    <img src={restaurant.fotos} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                                    <div className="absolute bottom-6 left-6 right-6 space-y-2">
-                                        <div className="flex items-center gap-2 bg-amber-500 text-black px-3 py-1 rounded-full w-fit shadow-lg">
-                                            <Star size={10} fill="currentColor" />
-                                            <span className="text-[10px] font-black italic">4.9</span>
-                                        </div>
-                                        <h4 className="text-xl font-bold text-white uppercase tracking-tight leading-tight">{restaurant.nombre}</h4>
-                                        <p className="text-[9px] text-white/50 font-bold uppercase tracking-[0.3em]">{restaurant.categoria}</p>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    </section>
-                )}
 
                 {/* ── MAIN DIRECTORY ── */}
                 <section className="space-y-16">
@@ -248,20 +200,16 @@ export const UserRestaurantsPage = () => {
                             <div className="h-3 w-3 bg-amber-500 rotate-45" />
                             <h3 className="text-2xl font-bold text-slate-900 uppercase tracking-widest">Directorio General</h3>
                         </div>
-                        <div className="flex gap-3">
-                             <div className="bg-white border border-slate-100 p-3 rounded-xl hover:border-amber-500 cursor-pointer transition-all shadow-sm"><Filter size={20} /></div>
-                             <div className="bg-white border border-slate-100 p-3 rounded-xl hover:border-amber-500 cursor-pointer transition-all shadow-sm"><TrendingUp size={20} /></div>
-                        </div>
                     </div>
 
                     {isLoading ? (
-                        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div className="grid gap-8 md:gap-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((i) => (
                                 <div key={i} className="aspect-video w-full animate-pulse bg-slate-100 rounded-[2rem]" />
                             ))}
                         </div>
                     ) : filtered.length ? (
-                        <div className="grid gap-x-12 gap-y-24 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-x-8 md:gap-x-12 gap-y-16 md:gap-y-24 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                             {filtered.map((restaurant) => (
                                 <Link
                                     key={restaurant?._id || restaurant?.id}
@@ -290,8 +238,8 @@ export const UserRestaurantsPage = () => {
 
                                         <div className="space-y-4 px-2">
                                             <div className="flex items-start justify-between">
-                                                <div className="space-y-1.5">
-                                                    <h4 className="text-3xl font-bold text-slate-900 tracking-tighter uppercase group-hover:text-amber-600 transition-colors leading-none">
+                                                <div className="space-y-1.5 flex-1">
+                                                    <h4 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tighter uppercase group-hover:text-amber-600 transition-colors leading-tight">
                                                         {restaurant.nombre}
                                                     </h4>
                                                     <div className="flex items-center gap-2 text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">
@@ -330,13 +278,53 @@ export const UserRestaurantsPage = () => {
                     )}
                 </section>
             </div>
+
+            {/* ── THE KINAL PROMISE: MEDIUM SIZE & COMPACT ── */}
+            <section className="relative w-full bg-[#050505] py-24 overflow-hidden">
+                <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-leather.png')] opacity-20" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]" />
+                </div>
+
+                {/* Explosion of Food: Using more images */}
+                <div className="absolute inset-0 pointer-events-none opacity-50">
+                    <FloatingDish src={comida4} size={300} top={-40} left={82} delay={0} duration={30} rotate={15} />
+                    <FloatingDish src={comida10} size={200} top={250} left={3} delay={5} duration={25} rotate={-20} />
+                    <FloatingDish src={comida2} size={180} top={20} left={10} delay={2} duration={28} rotate={45} opacity={0.2} />
+                    <FloatingDish src={comida6} size={220} top={350} left={85} delay={7} duration={32} rotate={-10} opacity={0.2} />
+                    <FloatingDish src={comida8} size={150} top={150} left={50} delay={4} duration={22} rotate={30} opacity={0.15} />
+                </div>
+
+                <div className="relative z-10 max-w-[900px] mx-auto px-12 text-center space-y-12">
+                    <div className="flex justify-center">
+                        <div className="relative h-16 w-16 flex items-center justify-center border border-amber-500/30 rounded-full">
+                            <ShieldCheck size={32} className="text-amber-500" strokeWidth={1.5} />
+                            <div className="absolute inset-0 border border-amber-500/10 rounded-full animate-ping" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <Quote size={40} className="text-amber-500/20 mx-auto" />
+                        <h3 className="text-3xl md:text-5xl font-light text-white tracking-tighter leading-tight italic">
+                            "La gastronomía es el arte de usar los alimentos para <br />
+                            <span className="font-black not-italic text-amber-500 underline decoration-1 underline-offset-8">crear felicidad</span> y elevar el espíritu."
+                        </h3>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-4 pt-6">
+                        <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+                        <div className="flex items-center gap-3 text-amber-500/60">
+                            <Award size={14} />
+                            <span className="text-[9px] font-black uppercase tracking-[0.5em] italic">The KinalEats Seal of Excellence</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
             
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <FloatingDish src={comida7} size={400} top={800} left={88} delay={0} duration={40} rotate={12} opacity={0.2} />
                 <FloatingDish src={comida5} size={300} top={2400} left={2} delay={6} duration={45} rotate={25} opacity={0.2} />
             </div>
-
-            <div className="h-40" />
         </div>
     );
 };

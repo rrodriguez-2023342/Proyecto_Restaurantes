@@ -65,10 +65,7 @@ export const validateDeleteMesa = [
 // Validator para ver/consultar una mesa por ID (mismo que eliminar)
 export const validateViewMesa = validateDeleteMesa;
 
-// Validator para listar mesas (no necesita parámetro)
+// Validator para listar mesas (ahora es público)
 export const validateListMesas = [
-    validateJWT,
-    attachRestaurant,
-    requireRoles('ADMIN_ROLE', 'ADMIN_RESTAURANT_ROLE'),
     checkValidators
 ];
