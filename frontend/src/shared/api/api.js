@@ -56,6 +56,18 @@ const handleRefreshToken = async function (_error) {
     const errorCode = _error.response?.data?.error;
     const requestUrl = _original.url || "";
     const isRefreshEndpoint = requestUrl.includes("/auth/refresh");
+    const isPublicAuthEndpoint = [
+        "/auth/login",
+        "/auth/register",
+        "/auth/verify-email",
+        "/auth/resend-verification",
+        "/auth/forgot-password",
+        "/auth/reset-password",
+    ].some((endpoint) => requestUrl.includes(endpoint));
+
+    if (isPublicAuthEndpoint) {
+        return Promise.reject(_error);
+    }
     const shouldAttemptRefresh =
         !isRefreshEndpoint &&
         // La mayoría de casos es 401 (TokenExpiredError)

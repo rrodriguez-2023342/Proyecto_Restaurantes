@@ -49,10 +49,23 @@ export const useAuthStore = create(
 
                 } catch (err) {
                     console.error("Login error:", err);
-                    const message =
-                        err.response?.data?.message || "Error de autenticación";
+                    const responseData = err.response?.data || {};
+                    const errorCode = responseData.error;
+                    let message = responseData.message || "Error de autenticación";
+
+                    if (errorCode === "EMAIL_NOT_VERIFIED" || responseData.emailVerificationRequired) {
+                        message = "Debes verificar tu email antes de iniciar sesión.";
+                    } else if (errorCode === "INVALID_CREDENTIALS" || err.response?.status === 401) {
+                        message = "Usuario o contraseña incorrectos.";
+                    }
+
                     set({ error: message, loading: false })
-                    return { success: false, error: message }
+                    return {
+                        success: false,
+                        error: message,
+                        code: errorCode,
+                        emailVerificationRequired: Boolean(responseData.emailVerificationRequired),
+                    }
                 }
             },
 

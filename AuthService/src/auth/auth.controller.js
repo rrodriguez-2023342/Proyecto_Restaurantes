@@ -64,17 +64,28 @@ export const login = asyncHandler(async (req, res) => {
         console.error('Error in login controller:', error);
 
         let statusCode = 401;
+        let errorCode = 'INVALID_CREDENTIALS';
+        let emailVerificationRequired = false;
+
+        if (error.message.includes('verificar tu email')) {
+            statusCode = 403;
+            errorCode = 'EMAIL_NOT_VERIFIED';
+            emailVerificationRequired = true;
+        }
+
         if (
             error.message.includes('bloqueada') ||
             error.message.includes('desactivada')
         ) {
             statusCode = 423; // Locked
+            errorCode = 'ACCOUNT_LOCKED';
         }
 
         res.status(statusCode).json({
             success: false,
             message: error.message || 'Error en el login',
-            error: error.message,
+            error: errorCode,
+            emailVerificationRequired,
         });
     }
 });
