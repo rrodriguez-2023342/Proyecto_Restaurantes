@@ -11,7 +11,7 @@ import { OrderStatus } from "../components/OrderStatus.jsx";
 import { useOrderStore } from "../store/useOrderStore";
 
 const ORDER_TYPE_OPTIONS = ["Domicilio", "Para llevar", "En el restaurante"];
-const ORDER_STATUS_OPTIONS = ["Pendiente", "En preparacion", "Listo para entrega", "Entregado", "Cancelado"];
+const ORDER_STATUS_OPTIONS = ["Pendiente", "En preparación", "Listo para entrega", "Entregado", "Cancelado"];
 
 const getOrderTotal = (order) => Number(order.total ?? order.totalPedido ?? 0);
 const getOrderStatus = (order) => order.estado || order.estadoPedido || "Pendiente";

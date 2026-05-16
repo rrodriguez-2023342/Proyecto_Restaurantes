@@ -238,12 +238,11 @@ export const OrderDetail = () => {
                                     disabled={saving}
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:border-orange-400 focus:outline-none disabled:opacity-50"
                                 >
-                                    <option value="pendiente">Pendiente</option>
-                                    <option value="confirmado">Confirmado</option>
-                                    <option value="en preparación">En Preparación</option>
-                                    <option value="listo">Listo</option>
-                                    <option value="entregado">Entregado</option>
-                                    <option value="cancelado">Cancelado</option>
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En preparación">En Preparación</option>
+                                    <option value="Listo para entrega">Listo para entrega</option>
+                                    <option value="Entregado">Entregado</option>
+                                    <option value="Cancelado">Cancelado</option>
                                 </select>
                                 {saving && (
                                     <p className="text-xs text-slate-500 text-center">Actualizando...</p>

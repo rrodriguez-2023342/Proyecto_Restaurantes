@@ -74,7 +74,7 @@ export const AdminLayout = () => {
                 )}
 
                 <aside className={`
-                    fixed inset-y-0 left-0 z-50 w-72 shrink-0 border-r border-white/10 bg-slate-950 text-white transition-transform duration-300 lg:static lg:flex lg:flex-col lg:translate-x-0
+                    fixed inset-y-0 left-0 z-50 w-72 shrink-0 flex flex-col border-r border-white/10 bg-slate-950 text-white transition-transform duration-300 lg:static lg:translate-x-0
                     ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
                 `}>
                     <div className="relative overflow-hidden border-b border-white/10 px-6 py-6">
