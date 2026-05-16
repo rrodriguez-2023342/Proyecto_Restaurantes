@@ -6,7 +6,7 @@ export const Card = ({ title, action, children, footer, className = "", accent =
             className={`group relative overflow-hidden transition duration-300 ${adminTheme.card} ${className}`}
         >
             {accent && (
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-slate-950" />
+                <div className="absolute inset-x-0 top-0 h-1 bg-slate-950" />
             )}
             {(title || action) && (
                 <div className="admin-panel-heading flex items-center justify-between border-b border-slate-900 px-5 py-4">

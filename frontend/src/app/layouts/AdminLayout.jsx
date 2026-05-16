@@ -26,7 +26,7 @@ const secondaryNavItems = [
     { to: "/admin/detail-orders", label: "Detalle pedidos", icon: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" },
     { to: "/admin/reservaciones", label: "Reservaciones", icon: "M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 0 1 1-1v14H4V6a1 1 0 0 1 1-1Z" },
     { to: "/admin/mesas", label: "Mesas", icon: "M4 10h16M6 10v10m12-10v10M8 4h8l2 6H6l2-6Z" },
-    { to: "/admin/reviews", label: "Resenas", icon: "M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27Z" },
+    { to: "/admin/reviews", label: "ReseÑas", icon: "M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27Z" },
     { to: "/admin/invoices", label: "Facturas", icon: "M7 3h10l2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V3Z" },
 ];
 
@@ -136,7 +136,7 @@ export const AdminLayout = () => {
                                 {userRole === "ADMIN_ROLE" ? "Administrador global" : "Administrador restaurante"}
                             </p>
                         </div>
-                        <UserProfileDropdown align="left" placement="up" />
+                        <UserProfileDropdown align="left" placement="up" tone="dark" />
                         <button
                             type="button"
                             onClick={handleLogout}

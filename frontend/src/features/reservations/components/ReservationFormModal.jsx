@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { Building2, CalendarDays, CheckCircle2, Clock, Table2, UsersRound, X } from "lucide-react";
 import { showError, showSuccess } from "../../../shared/utils/toast";
+import { adminTheme } from "../../../constants/theme";
 
 const getRelationId = (value) => {
     if (!value) return "";
@@ -15,6 +17,11 @@ const getReservationDefaults = (reservation) => ({
     hora: reservation?.fecha ? new Date(reservation.fecha).toTimeString().slice(0, 5) : "",
     estado: reservation?.estado || "PENDIENTE",
 });
+
+const labelClass = "mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-slate-500";
+const fieldClass = `w-full ${adminTheme.input}`;
+const selectClass = `w-full ${adminTheme.select}`;
+const errorClass = "mt-1 block text-xs font-semibold text-rose-600";
 
 export const ReservationFormModal = ({
     reservation = null,
@@ -91,79 +98,79 @@ export const ReservationFormModal = ({
     };
 
     return (
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Restaurante
-                </label>
-                <select
-                    {...register("restaurante", {
-                        required: "Restaurante es requerido",
-                        onChange: () => {
-                            if (!reservation) setValue("mesa", "");
-                        },
-                    })}
-                    disabled={!!reservation}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                    <option value="">Selecciona un restaurante</option>
-                    {restaurants.map((r) => (
-                        <option key={r._id || r.id} value={r._id || r.id}>
-                            {r.nombre || r.name}
-                        </option>
-                    ))}
-                </select>
-                {errors.restaurante && (
-                    <span className="text-xs text-red-500">{errors.restaurante.message}</span>
-                )}
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Mesa
-                </label>
-                <select
-                    {...register("mesa", { required: "Mesa es requerida" })}
-                    disabled={!selectedRestaurant}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                    <option value="">
-                        {selectedRestaurant ? "Selecciona una mesa" : "Selecciona un restaurante primero"}
-                    </option>
-                    {reservation?.mesa && !currentMesaExistsInOptions && (
-                        <option value={currentReservationMesaId}>
-                            Mesa {reservation.mesa.numeroMesa || "actual"} - Capacidad: {reservation.mesa.capacidad || selectedTable?.capacidad || "N/A"}
-                        </option>
-                    )}
-                    {tables.map((t) => (
-                        <option key={getRelationId(t)} value={getRelationId(t)}>
-                            Mesa {t.numeroMesa} - Capacidad: {t.capacidad}
-                        </option>
-                    ))}
-                </select>
-                {errors.mesa && (
-                    <span className="text-xs text-red-500">{errors.mesa.message}</span>
-                )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5 p-6">
+            <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className={labelClass}>
+                        <Building2 size={14} className="text-amber-600" />
+                        Restaurante
+                    </label>
+                    <select
+                        {...register("restaurante", {
+                            required: "Restaurante es requerido",
+                            onChange: () => {
+                                if (!reservation) setValue("mesa", "");
+                            },
+                        })}
+                        disabled={!!reservation}
+                        className={selectClass}
+                    >
+                        <option value="">Selecciona un restaurante</option>
+                        {restaurants.map((r) => (
+                            <option key={r._id || r.id} value={r._id || r.id}>
+                                {r.nombre || r.name}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.restaurante && <span className={errorClass}>{errors.restaurante.message}</span>}
+                </div>
+
+                <div>
+                    <label className={labelClass}>
+                        <Table2 size={14} className="text-amber-600" />
+                        Mesa
+                    </label>
+                    <select
+                        {...register("mesa", { required: "Mesa es requerida" })}
+                        disabled={!selectedRestaurant}
+                        className={selectClass}
+                    >
+                        <option value="">
+                            {selectedRestaurant ? "Selecciona una mesa" : "Selecciona un restaurante primero"}
+                        </option>
+                        {reservation?.mesa && !currentMesaExistsInOptions && (
+                            <option value={currentReservationMesaId}>
+                                Mesa {reservation.mesa.numeroMesa || "actual"} - Capacidad: {reservation.mesa.capacidad || selectedTable?.capacidad || "N/A"}
+                            </option>
+                        )}
+                        {tables.map((t) => (
+                            <option key={getRelationId(t)} value={getRelationId(t)}>
+                                Mesa {t.numeroMesa} - Capacidad: {t.capacidad}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.mesa && <span className={errorClass}>{errors.mesa.message}</span>}
+                </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <label className={labelClass}>
+                        <CalendarDays size={14} className="text-amber-600" />
                         Fecha
                     </label>
                     <input
                         type="date"
                         min={today}
                         {...register("fecha", { required: "Fecha es requerida" })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className={fieldClass}
                     />
-                    {errors.fecha && (
-                        <span className="text-xs text-red-500">{errors.fecha.message}</span>
-                    )}
+                    {errors.fecha && <span className={errorClass}>{errors.fecha.message}</span>}
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <label className={labelClass}>
+                        <Clock size={14} className="text-amber-600" />
                         Hora
                     </label>
                     <input
@@ -171,34 +178,31 @@ export const ReservationFormModal = ({
                         min={selectedRestaurantData?.horario?.apertura}
                         max={selectedRestaurantData?.horario?.cierre}
                         {...register("hora", { required: "Hora es requerida" })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className={fieldClass}
                     />
-                    {errors.hora && (
-                        <span className="text-xs text-red-500">{errors.hora.message}</span>
-                    )}
+                    {errors.hora && <span className={errorClass}>{errors.hora.message}</span>}
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-950 p-4 shadow-sm">
+                    <label className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-amber-400">
+                        <UsersRound size={14} />
+                        Personas
+                    </label>
+                    <input
+                        type="number"
+                        value={selectedTable?.capacidad || ""}
+                        disabled
+                        className="w-full rounded-xl border border-white/10 bg-white px-4 py-3 text-sm font-black text-slate-950 shadow-sm disabled:cursor-not-allowed"
+                    />
                 </div>
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Personas
-                </label>
-                <input
-                    type="number"
-                    value={selectedTable?.capacidad || ""}
-                    disabled
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-600"
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <label className={labelClass}>
+                    <CheckCircle2 size={14} className="text-amber-600" />
                     Estado
                 </label>
-                <select
-                    {...register("estado")}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
+                <select {...register("estado")} className={selectClass}>
                     <option value="PENDIENTE">Pendiente</option>
                     <option value="CONFIRMADA">Confirmada</option>
                     <option value="COMPLETADA">Completada</option>
@@ -206,19 +210,21 @@ export const ReservationFormModal = ({
                 </select>
             </div>
 
-            <div className="flex gap-2 justify-end pt-4">
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
                 <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+                    className={`${adminTheme.neutralButton} h-12 gap-2`}
                 >
+                    <X size={15} />
                     Cancelar
                 </button>
                 <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 transition"
+                    className={`${adminTheme.primaryButton} h-12 gap-2`}
                 >
+                    <CheckCircle2 size={15} />
                     {loading ? "Guardando..." : "Guardar"}
                 </button>
             </div>

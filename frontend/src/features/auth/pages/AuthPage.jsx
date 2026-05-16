@@ -9,7 +9,7 @@ export const AuthPage = () => {
     const [view, setView] = useState('login')
 
     const title = view === 'forgot'
-        ? 'Recuperar contraseña'
+        ? 'Recuperar contrasena'
         : view === 'register'
             ? 'Crear una cuenta'
             : 'Bienvenido de nuevo'
@@ -34,22 +34,22 @@ export const AuthPage = () => {
 
             <div className="relative z-10 flex items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen">
                 <div className="w-full max-w-4xl flex flex-col md:flex-row rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/20 bg-white/95 border border-white/30 backdrop-blur-md">
-                    {/* Panel izquierdo — visual (oculto en móvil) */}
-                    <div className="hidden md:flex w-[40%] bg-orange-50 flex-col justify-end p-10 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_30%,rgba(249,115,22,0.15)_0%,transparent_70%)]" />
+                    <div className="hidden md:flex w-[40%] bg-[linear-gradient(160deg,#fff7ed_0%,#ffedd5_52%,#fef3c7_100%)] flex-col justify-end p-10 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_30%,rgba(245,158,11,0.22)_0%,transparent_62%)]" />
+                        <div className="absolute inset-x-10 top-10 h-24 rounded-full bg-white/40 blur-3xl" />
 
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-orange-200/50 border border-orange-50">
-                                <img 
-                                    src={logo} 
-                                    alt="KinalEats logo" 
-                                    className="w-20 h-20 rounded-full object-cover" 
+                            <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-amber-200/60 border border-amber-100">
+                                <img
+                                    src={logo}
+                                    alt="KinalEats logo"
+                                    className="w-20 h-20 rounded-full object-cover"
                                 />
                             </div>
                         </div>
 
                         <div className="relative z-10">
-                            <span className="inline-flex items-center gap-2 bg-orange-100/50 border border-orange-200/50 rounded-full px-3 py-1 text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-4">
+                            <span className="inline-flex items-center gap-2 bg-white/60 border border-amber-200/70 rounded-full px-3 py-1 text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-4 shadow-sm">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                                 Sistema Premium
                             </span>
@@ -58,16 +58,15 @@ export const AuthPage = () => {
                                 <br />
                                 <span className="text-orange-600">restaurante</span>
                             </h2>
-                            <p className="text-slate-500 text-sm leading-relaxed font-medium">
+                            <p className="text-slate-600 text-sm leading-relaxed font-medium">
                                 Pedidos, inventarios y reportes en la palma de tu mano.
                             </p>
                         </div>
                     </div>
 
-                    {/* Panel derecho — formulario */}
                     <div className="flex-1 bg-white p-6 sm:p-10 flex flex-col justify-center min-h-[500px]">
                         <div className="md:hidden flex justify-center mb-8">
-                             <img src={logo} alt="KinalEats" className="h-16 w-16 rounded-full shadow-lg" />
+                            <img src={logo} alt="KinalEats" className="h-16 w-16 rounded-full shadow-lg" />
                         </div>
 
                         <p className="hidden md:block text-orange-600 font-black text-xl mb-8 tracking-tighter">
@@ -96,7 +95,7 @@ export const AuthPage = () => {
                                 {[
                                     ["2K+", "Locales"],
                                     ["99%", "Uptime"],
-                                    ["5★", "Rating"],
+                                    ["5*", "Rating"],
                                 ].map(([v, l]) => (
                                     <div key={l} className="text-center md:text-left">
                                         <p className="text-slate-900 font-black text-sm">{v}</p>
@@ -111,4 +110,3 @@ export const AuthPage = () => {
         </div>
     )
 }
-

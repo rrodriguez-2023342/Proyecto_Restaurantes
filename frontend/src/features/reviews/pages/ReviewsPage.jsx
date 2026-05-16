@@ -1,10 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Card, EmptyState, FormField } from "../../../shared/components";
+import { Camera, MessageSquareText, Plus, Star, Store, UserRound, X } from "lucide-react";
+import { EmptyState, FormField } from "../../../shared/components";
 import { getRestaurants } from "../../../shared/api";
+import { adminTheme } from "../../../constants/theme";
 import { showError, showSuccess } from "../../../shared/utils/toast";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useReviewStore } from "../store/useReviewStore";
+
+const formatDate = (date) => {
+    if (!date) return "Reciente";
+    return new Date(date).toLocaleDateString("es-ES", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+};
+
+const getAuthorName = (user) => {
+    if (!user || typeof user === "string") return user || "Anonimo";
+    return [user.nombre || user.name, user.apellido || user.surname].filter(Boolean).join(" ") || user.username || "Anonimo";
+};
 
 export const ReviewsPage = () => {
     const { reviews, loading, fetchReviews, createReview: storeCreate } = useReviewStore();
@@ -35,17 +51,19 @@ export const ReviewsPage = () => {
         try {
             const { data } = await getRestaurants();
             setRestaurants(data?.data || data?.restaurantes || data || []);
-        } catch (err) {
+        } catch {
             showError("No se pudieron cargar los restaurantes");
         }
     };
 
     useEffect(() => {
         fetchReviews(filters);
-    }, [filters]);
+    }, [fetchReviews, filters]);
 
     useEffect(() => {
-        fetchRestaurants();
+        queueMicrotask(() => {
+            fetchRestaurants();
+        });
     }, []);
 
     useEffect(() => {
@@ -72,12 +90,12 @@ export const ReviewsPage = () => {
                 };
             }
             await storeCreate(payload);
-            showSuccess("Reseña registrada");
+            showSuccess("Resena registrada");
             reset();
             setOpenModal(false);
         } catch (err) {
             const resp = err.response?.data;
-            const message = resp?.message || resp?.error || "No se pudo guardar la reseña";
+            const message = resp?.message || resp?.error || "No se pudo guardar la resena";
             const detailed = resp?.errors && resp.errors.length ? resp.errors[0].message : null;
             showError(detailed || message);
         } finally {
@@ -92,258 +110,280 @@ export const ReviewsPage = () => {
 
     const avgScore = useMemo(() => {
         if (!reviews.length) return 0;
-        const total = reviews.reduce(
-            (acc, item) => acc + Number(item?.calificacion || 0),
-            0
-        );
-        return (total / reviews.length).toFixed(1);
+        const total = reviews.reduce((acc, item) => acc + Number(item?.calificacion || 0), 0);
+        return Number((total / reviews.length).toFixed(1));
     }, [reviews]);
+
+    const totalWithPhoto = useMemo(
+        () => reviews.filter((review) => Boolean(review?.fotoResena)).length,
+        [reviews]
+    );
+
+    const closeModal = () => {
+        setOpenModal(false);
+        reset();
+    };
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <section className="admin-surface rounded-2xl p-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <h2 className="text-2xl font-semibold text-slate-900">Reseñas</h2>
-                        <p className="mt-1 text-sm text-slate-600">
-                            Administra comentarios y calificaciones de restaurantes.
+                        <p className="admin-kicker">Voz del cliente</p>
+                        <h1 className={adminTheme.pageTitle}>Resenas</h1>
+                        <p className="mt-2 text-sm font-medium text-slate-500">
+                            Administra comentarios, calificaciones y feedback por restaurante.
                         </p>
                     </div>
+
+                    <div className="grid grid-cols-3 gap-3 sm:min-w-[28rem]">
+                        <MetricCard label="Total" value={reviews.length} className="bg-slate-950 text-amber-400" />
+                        <MetricCard label="Promedio" value={avgScore || "0.0"} className="bg-amber-50 text-amber-800" />
+                        <MetricCard label="Con foto" value={totalWithPhoto} className="bg-slate-50 text-slate-900" />
+                    </div>
+                </div>
+            </section>
+
+            <section className="admin-surface rounded-2xl p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="grid flex-1 gap-4 md:grid-cols-[1fr_14rem]">
+                        <div>
+                            <label className={adminTheme.label}>Restaurante</label>
+                            <select
+                                name="restaurante"
+                                value={filters.restaurante}
+                                onChange={handleFilterChange}
+                                className={`mt-2 w-full ${adminTheme.select}`}
+                            >
+                                <option value="">Todos los restaurantes</option>
+                                {restaurants.map((r) => (
+                                    <option key={r._id || r.id} value={r._id || r.id}>
+                                        {r.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className={adminTheme.label}>Calificacion</label>
+                            <select
+                                name="calificacion"
+                                value={filters.calificacion}
+                                onChange={handleFilterChange}
+                                className={`mt-2 w-full ${adminTheme.select}`}
+                            >
+                                <option value="">Todas</option>
+                                {[5, 4, 3, 2, 1].map((n) => (
+                                    <option key={n} value={n}>
+                                        {n} {n === 1 ? "estrella" : "estrellas"}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
                     {role === "USER_ROLE" && (
-                        <button
-                            onClick={() => setOpenModal(true)}
-                            className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2 text-white font-medium hover:shadow-lg transition-shadow"
-                        >
-                            + Agregar reseña
+                        <button onClick={() => setOpenModal(true)} className={`${adminTheme.primaryButton} h-12 w-full gap-2 lg:w-auto`}>
+                            <Plus size={16} />
+                            Agregar resena
                         </button>
                     )}
                 </div>
+            </section>
 
-                <div className="mt-6 flex flex-wrap gap-4 border-t border-orange-100 pt-4">
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Filtrar por Restaurante
-                        </label>
-                        <select
-                            name="restaurante"
-                            value={filters.restaurante}
-                            onChange={handleFilterChange}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                        >
-                            <option value="">Todos los restaurantes</option>
-                            {restaurants.map((r) => (
-                                <option key={r._id || r.id} value={r._id || r.id}>
-                                    {r.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="w-full sm:w-48">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Calificación
-                        </label>
-                        <select
-                            name="calificacion"
-                            value={filters.calificacion}
-                            onChange={handleFilterChange}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                        >
-                            <option value="">Todas las estrellas</option>
-                            {[5, 4, 3, 2, 1].map((n) => (
-                                <option key={n} value={n}>
-                                    {"⭐".repeat(n)} {n} {n === 1 ? "estrella" : "estrellas"}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-                <Card title="Resumen" className="md:col-span-1">
-                    <div className="flex flex-col items-center justify-center py-4">
-                        <span className="text-4xl font-bold text-orange-600">{avgScore}</span>
-                        <div className="flex gap-1 my-2">
+            <section className="grid gap-4 md:grid-cols-[18rem_1fr]">
+                <div className="admin-card rounded-2xl p-6">
+                    <p className="admin-kicker">Resumen</p>
+                    <div className="mt-5 flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8">
+                        <span className="text-5xl font-black text-slate-950">{avgScore || "0.0"}</span>
+                        <div className="mt-3 flex gap-1">
                             {[1, 2, 3, 4, 5].map((n) => (
-                                <span key={n} className={n <= Math.round(avgScore) ? "text-amber-400" : "text-slate-200"}>
-                                    ⭐
-                                </span>
+                                <Star
+                                    key={n}
+                                    size={18}
+                                    className={n <= Math.round(avgScore) ? "fill-amber-400 text-amber-400" : "text-slate-200"}
+                                />
                             ))}
                         </div>
-                        <p className="text-xs text-slate-500 font-medium">Puntuación promedio</p>
+                        <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400">Puntuacion promedio</p>
                     </div>
-                </Card>
-                <div className="md:col-span-2 flex flex-col justify-center rounded-2xl bg-orange-50/50 border border-orange-100 p-6">
-                    <h4 className="text-sm font-semibold text-slate-800 mb-2">💡 Tip de Calidad</h4>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                        Las reseñas nos ayudan a mejorar el servicio. Utiliza los filtros para analizar el rendimiento de cada sede y el feedback específico de los clientes.
+                </div>
+
+                <div className="admin-card rounded-2xl p-6">
+                    <p className="admin-kicker">Lectura rapida</p>
+                    <h2 className={`${adminTheme.sectionTitle} mt-2`}>Calidad percibida</h2>
+                    <p className="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-slate-500">
+                        Usa los filtros para revisar el rendimiento de cada sede y detectar patrones en la experiencia de los clientes.
                     </p>
                 </div>
-            </div>
+            </section>
 
-            {/* Modal */}
             {openModal && role === "USER_ROLE" && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="rounded-2xl bg-white shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 flex items-center justify-between border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 p-6">
-                            <h3 className="text-lg font-semibold text-slate-900">Nueva reseña</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_32px_90px_-42px_rgba(15,23,42,0.8)]">
+                        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-900 bg-slate-950 px-6 py-5 text-white">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.34em] text-amber-400">Voz del cliente</p>
+                                <h3 className="mt-2 text-xl font-black uppercase tracking-tight">Nueva resena</h3>
+                                <p className="mt-1 text-sm font-medium text-slate-400">Comparte una calificacion para un restaurante.</p>
+                            </div>
                             <button
-                                onClick={() => {
-                                    setOpenModal(false);
-                                    reset();
-                                }}
-                                className="text-slate-500 hover:text-slate-700"
+                                type="button"
+                                onClick={closeModal}
+                                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-white/70 transition hover:bg-white/10 hover:text-white"
                             >
-                                ✕
+                                <X size={16} />
                             </button>
                         </div>
-                        <div className="p-6">
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                                <FormField label="Restaurante" error={errors.restaurantId?.message}>
-                                    <select
-                                        {...register("restaurantId", { required: "El restaurante es obligatorio" })}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                                    >
-                                        <option value="">Selecciona un restaurante</option>
-                                        {restaurants.map((r) => (
-                                            <option key={r._id || r.id} value={r._id || r.id}>
-                                                {r.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </FormField>
-                                <FormField label="Calificación" error={errors.rating?.message}>
-                                    <select
-                                        {...register("rating", { required: "La calificación es obligatoria" })}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                                    >
-                                        <option value="">Selecciona</option>
-                                        {[1, 2, 3, 4, 5].map((value) => (
-                                            <option key={value} value={value}>
-                                                {"⭐".repeat(value)} {value}/5
-                                            </option>
-                                        ))}
-                                    </select>
-                                </FormField>
-                                <FormField label="Comentario" error={errors.comment?.message}>
-                                    <textarea
-                                        {...register("comment", { required: "El comentario es obligatorio" })}
-                                        rows={4}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                                        placeholder="Escribe tu opinión del restaurante..."
-                                    />
-                                </FormField>
-                                <FormField label="Imagen (opcional)">
-                                    <div className="flex flex-col gap-3">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            {...register("photo")}
-                                            className="w-full rounded-xl border border-dashed border-orange-200 bg-orange-50/30 px-4 py-3 text-sm text-slate-600"
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="max-h-[76vh] space-y-4 overflow-y-auto p-6">
+                            <FormField label="Restaurante" error={errors.restaurantId?.message}>
+                                <select
+                                    {...register("restaurantId", { required: "El restaurante es obligatorio" })}
+                                    className={`w-full ${adminTheme.select}`}
+                                >
+                                    <option value="">Selecciona un restaurante</option>
+                                    {restaurants.map((r) => (
+                                        <option key={r._id || r.id} value={r._id || r.id}>
+                                            {r.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </FormField>
+
+                            <FormField label="Calificacion" error={errors.rating?.message}>
+                                <select
+                                    {...register("rating", { required: "La calificacion es obligatoria" })}
+                                    className={`w-full ${adminTheme.select}`}
+                                >
+                                    <option value="">Selecciona</option>
+                                    {[1, 2, 3, 4, 5].map((value) => (
+                                        <option key={value} value={value}>
+                                            {value}/5
+                                        </option>
+                                    ))}
+                                </select>
+                            </FormField>
+
+                            <FormField label="Comentario" error={errors.comment?.message}>
+                                <textarea
+                                    {...register("comment", { required: "El comentario es obligatorio" })}
+                                    rows={4}
+                                    className={`w-full resize-none ${adminTheme.input}`}
+                                    placeholder="Escribe tu opinion del restaurante..."
+                                />
+                            </FormField>
+
+                            <FormField label="Imagen (opcional)">
+                                <div className="flex flex-col gap-3">
+                                    <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-500 transition hover:border-amber-500/40 hover:bg-amber-50">
+                                        <Camera size={18} className="text-amber-600" />
+                                        Adjuntar imagen
+                                        <input type="file" accept="image/*" {...register("photo")} className="sr-only" />
+                                    </label>
+                                    {previewUrl && (
+                                        <img
+                                            src={previewUrl}
+                                            alt="Preview resena"
+                                            className="h-44 w-full rounded-2xl border border-slate-200 object-cover"
                                         />
-                                        {previewUrl && (
-                                            <img
-                                                src={previewUrl}
-                                                alt="Preview reseña"
-                                                className="h-40 w-full rounded-xl object-cover"
-                                            />
-                                        )}
-                                    </div>
-                                </FormField>
-                                <div className="flex gap-3">
-                                    <button
-                                        type="submit"
-                                        disabled={modalLoading}
-                                        className="flex-1 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 py-2 text-sm font-semibold text-white hover:shadow-lg transition disabled:opacity-60"
-                                    >
-                                        Guardar reseña
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setOpenModal(false);
-                                            reset();
-                                        }}
-                                        className="flex-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
-                                    >
-                                        Cancelar
-                                    </button>
+                                    )}
                                 </div>
-                            </form>
-                        </div>
+                            </FormField>
+
+                            <div className="grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
+                                <button type="submit" disabled={modalLoading} className={`${adminTheme.primaryButton} w-full`}>
+                                    {modalLoading ? "Guardando..." : "Guardar resena"}
+                                </button>
+                                <button type="button" onClick={closeModal} className={`${adminTheme.neutralButton} w-full`}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
 
-            {/* Grid de Reseñas */}
             {loading ? (
-                <div className="text-center py-12">
-                    <p className="text-slate-600">Cargando reseñas...</p>
+                <div className="grid gap-4 md:grid-cols-2">
+                    {[...Array(4)].map((_, index) => (
+                        <div key={index} className="h-60 animate-pulse rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(15,23,42,0.72)]" />
+                    ))}
                 </div>
             ) : reviews.length ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                    {reviews.map((review) => (
-                        <div key={review?._id || review?.id} className="flex flex-col p-6 rounded-3xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="flex items-start justify-between">
-                                <div className="flex gap-4">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 shadow-sm border border-orange-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 600 600">
-                                            <path d="M600,300c0,1.18-.01,2.36-.02,3.54-.01,.63-.02,1.25-.03,1.87-.01,.78-.03,1.56-.05,2.33-.03,1.21-.07,2.42-.11,3.63-.04,.99-.08,1.98-.13,2.97-.03,.8-.08,1.61-.13,2.41-.05,1.07-.11,2.14-.19,3.21-.04,.71-.09,1.42-.14,2.13-.04,.55-.08,1.11-.13,1.67-.06,.8-.13,1.6-.2,2.4-.56,6.58-1.34,13.09-2.33,19.53-.19,1.24-.38,2.48-.59,3.71-.43,2.59-.89,5.17-1.39,7.73-.21,1.11-.43,2.22-.66,3.33-.24,1.2-.5,2.4-.76,3.6,0,.04-.01,.07-.02,.09-.18,.86-.37,1.72-.57,2.58-.13,.59-.27,1.18-.41,1.77-.23,1.02-.48,2.04-.73,3.05-.57,2.35-1.17,4.68-1.8,7.01-1.35,4.98-2.82,9.91-4.42,14.78-.28,.87-.57,1.73-.86,2.6-.07,.22-.14,.44-.22,.65-.29,.85-.58,1.7-.88,2.54-.29,.84-.58,1.67-.89,2.5-.28,.82-.58,1.63-.89,2.44-.3,.84-.62,1.68-.94,2.51-.41,1.08-.82,2.15-1.24,3.22-.56,1.44-1.14,2.87-1.73,4.29-.37,.9-.74,1.79-1.12,2.68-2,4.74-4.12,9.42-6.36,14.02-.4,.84-.81,1.67-1.23,2.51-.01,.02-.01,.04-.02,.05-.52,1.05-1.05,2.09-1.59,3.13-.59,1.18-1.2,2.34-1.82,3.5-.53,1.01-1.06,2.01-1.61,3.02-.58,1.06-1.16,2.12-1.75,3.17-.59,1.06-1.19,2.11-1.79,3.15-.03,.05-.05,.1-.08,.15-1.1,1.91-2.22,3.81-3.36,5.7-.09,.13-.16,.26-.24,.39-.63,1.03-1.26,2.06-1.9,3.08-.64,1.02-1.28,2.04-1.93,3.05-.58,.91-1.16,1.8-1.75,2.7-.14,.22-.28,.43-.42,.64-.6,.9-1.2,1.8-1.81,2.7-.67,1-1.35,1.99-2.04,2.98-.68,.99-1.37,1.97-2.07,2.95-.7,.98-1.4,1.96-2.11,2.93-.71,.97-1.42,1.94-2.14,2.9-2.15,2.89-4.36,5.74-6.63,8.54-.75,.94-1.51,1.87-2.28,2.8-.76,.92-1.53,1.84-2.31,2.76-.77,.92-1.55,1.83-2.34,2.74-.78,.91-1.57,1.81-2.37,2.7-.8,.9-1.6,1.79-2.41,2.68-.69,.77-1.4,1.53-2.1,2.29-1.8,1.95-3.62,3.86-5.47,5.75-.79,.8-1.57,1.59-2.36,2.38-.84,.85-1.7,1.7-2.56,2.53-.86,.84-1.72,1.67-2.59,2.5-.9,.87-1.82,1.73-2.74,2.58-.84,.78-1.68,1.55-2.53,2.32-.89,.81-1.78,1.61-2.68,2.41-.83,.73-1.66,1.46-2.49,2.19-.12,.11-.25,.22-.37,.32-.86,.74-1.72,1.47-2.58,2.2-.85,.72-1.7,1.43-2.55,2.14-.26,.22-.52,.43-.79,.65-2.59,2.13-5.21,4.21-7.88,6.25-.96,.73-1.91,1.46-2.88,2.18-.96,.72-1.93,1.43-2.9,2.14-.97,.71-1.95,1.41-2.93,2.11-.98,.7-1.96,1.39-2.95,2.07-.99,.69-1.98,1.37-2.98,2.04-.8,.54-1.6,1.08-2.4,1.61-.32,.21-.64,.42-.96,.63-.89,.58-1.78,1.16-2.68,1.74-1.01,.65-2.03,1.29-3.05,1.93-2.05,1.28-4.11,2.54-6.2,3.77-2.84,1.68-5.72,3.32-8.63,4.91-.35,.19-.7,.39-1.06,.58-.98,.53-1.97,1.05-2.95,1.57-1.01,.53-2.02,1.06-3.03,1.57-.12,.07-.25,.14-.38,.2-.9,.46-1.8,.92-2.7,1.37-.22,.11-.44,.22-.67,.33-.83,.41-1.67,.82-2.51,1.23-3.49,1.69-7.01,3.31-10.58,4.87-1.96,.85-3.93,1.69-5.91,2.5-1.6,.66-3.21,1.31-4.83,1.93-.86,.35-1.73,.68-2.61,1.01-1.05,.41-2.12,.8-3.18,1.2-.21,.07-.43,.15-.65,.23-.88,.32-1.77,.64-2.66,.96-.82,.29-1.65,.58-2.48,.86-.89,.31-1.79,.61-2.69,.91-.95,.32-1.91,.64-2.88,.95-5.61,1.81-11.3,3.45-17.07,4.93-1.16,.3-2.33,.6-3.5,.89-.97,.23-1.95,.47-2.94,.69-.61,.15-1.23,.29-1.84,.43-.86,.19-1.72,.39-2.58,.57-1.21,.27-2.43,.53-3.65,.77-1.11,.23-2.22,.45-3.34,.66-.17,.04-.35,.08-.53,.11-1.16,.22-2.32,.44-3.49,.64-1.23,.22-2.46,.44-3.7,.64-1.23,.21-2.47,.4-3.71,.59-2.4,.37-4.8,.71-7.22,1.01-.93,.12-1.86,.24-2.8,.34-3.42,.42-6.86,.76-10.32,1.05-.99,.09-1.97,.17-2.97,.24-.54,.04-1.08,.08-1.63,.11-.78,.06-1.57,.11-2.36,.15-.5,.04-.99,.06-1.49,.09-1.07,.06-2.14,.12-3.22,.16-.26,.02-.51,.03-.77,.03-1.09,.05-2.18,.09-3.27,.12-1.77,.06-3.54,.1-5.31,.13-1.44,.02-2.88,.03-4.33,.03C134.31,600,0,465.69,0,300c0-23.04,2.6-45.47,7.52-67.02,6.15-26.95,15.92-52.52,28.8-76.18,14.35-26.37,32.54-50.34,53.82-71.17l22.09,45.95,7.04,3.12,.29,.13,14.05,6.25,181.87,80.79,4.95,2.2,1.11-2.16,3.05-5.91,9.47-.64,11.48,5.3,.5,.23,2.23,1.03,2.46-1.82h.01l142.49-105.7,25.94-19.24c1.09,1.16,2.17,2.33,3.23,3.51,1.02,1.12,2.03,2.25,3.02,3.38,.09,.09,.17,.19,.25,.29,1.03,1.16,2.03,2.33,3.03,3.51,1.04,1.21,2.06,2.43,3.07,3.66,11.49,13.97,21.74,28.99,30.59,44.9,23.98,43.11,37.64,92.76,37.64,145.59Z" fill="#fbb03b"></path>
-                                            <path d="M600,300c0,1.18-.01,2.36-.02,3.54-.01,.63-.02,1.25-.03,1.87-.01,.78-.03,1.56-.05,2.33-.03,1.21-.07,2.42-.11,3.63-.04,.99-.08,1.98-.13,2.97-.03,.8-.08,1.61-.13,2.41-.05,1.07-.11,2.14-.19,3.21-.04,.71-.09,1.42-.14,2.13-.04,.55-.08,1.11-.13,1.67-.06,.8-.13,1.6-.2,2.4-.56,6.58-1.34,13.09-2.33,19.53-.19,1.24-.38,2.48-.59,3.71-.43,2.59-.89,5.17-1.39,7.73-.21,1.11-.43,2.22-.66,3.33-.24,1.2-.5,2.4-.76,3.6,0,.04-.01,.07-.02,.09-.18,.86-.37,1.72-.57,2.58-.13,.59-.27,1.18-.41,1.77-.23,1.02-.48,2.04-.73,3.05-.57,2.35-1.17,4.68-1.8,7.01-1.35,4.98-2.82,9.91-4.42,14.78-.28,.87-.57,1.73-.86,2.6-.07,.22-.14,.44-.22,.65-.29,.85-.58,1.7-.88,2.54-.29,.84-.58,1.67-.89,2.5-.28,.82-.58,1.63-.89,2.44-.3,.84-.62,1.68-.94,2.51-.41,1.08-.82,2.15-1.24,3.22-.56,1.44-1.14,2.87-1.73,4.29-.37,.9-.74,1.79-1.12,2.68-2,4.74-4.12,9.42-6.36,14.02-.4,.84-.81,1.67-1.23,2.51-.01,.02-.01,.04-.02,.05-.52,1.05-1.05,2.09-1.59,3.13-.59,1.18-1.2,2.34-1.82,3.5-.53,1.01-1.06,2.01-1.61,3.02-.58,1.06-1.16,2.12-1.75,3.17-.59,1.06-1.19,2.11-1.79,3.15-.03,.05-.05,.1-.08,.15-1.1,1.91-2.23,3.81-3.36,5.7-.09,.13-.16,.26-.24,.39-.63,1.03-1.26,2.06-1.9,3.08-.64,1.02-1.28,2.04-1.93,3.05-.58,.91-1.16,1.8-1.75,2.7-.14,.22-.28,.43-.42,.64-.6,.9-1.2,1.8-1.81,2.7-.67,1-1.35,1.99-2.04,2.98-.68,.99-1.37,1.97-2.07,2.95-.7,.98-1.4,1.96-2.11,2.93-.71,.98-1.4,1.96-2.11,2.93-.71,.98-1.4,1.96-2.11,2.93-.71,.98-1.4,1.96-2.11,2.93-.71,.98-1.4,1.94-2.14,2.9-2.16,2.89-4.37,5.74-6.63,8.54-.75,.94-1.51,1.87-2.28,2.8-.76,.92-1.53,1.84-2.31,2.76-.77,.92-1.55,1.83-2.34,2.74-.78,.9-1.57,1.81-2.37,2.7-.8,.9-1.6,1.79-2.41,2.68-.69,.77-1.4,1.53-2.1,2.29-1.8,1.95-3.62,3.86-5.47,5.75-.79,.8-1.57,1.59-2.36,2.38-.84,.85-1.7,1.7-2.56,2.53-.86,.84-1.72,1.67-2.59,2.5-.9,.87-1.82,1.73-2.74,2.58-.84,.78-1.68,1.55-2.53,2.32-.89,.81-1.78,1.61-2.68,2.41-.83,.73-1.66,1.46-2.49,2.19-.12,.11-.25,.22-.37,.32-.86,.74-1.72,1.47-2.58,2.2-.85,.72-1.7,1.43-2.55,2.14-.26,.22-.52,.43-.79,.65-2.59,2.13-5.22,4.21-7.88,6.25-.96,.73-1.91,1.46-2.88,2.18-.96,.72-1.93,1.43-2.9,2.14-.97,.71-1.95,1.41-2.93,2.11-.98,.7-1.96,1.39-2.95,2.07-.99,.69-1.98,1.37-2.98,2.04-.8,.54-1.6,1.08-2.4,1.61-.32,.21-.64,.42-.96,.63-.89,.58-1.78,1.16-2.68,1.74-1.01,.65-2.03,1.29-3.05,1.93-2.05,1.28-4.11,2.54-6.2,3.77-2.84,1.68-5.72,3.32-8.63,4.91-.35,.19-.7,.39-1.06,.58-.98,.53-1.97,1.05-2.95,1.57-1.01,.53-2.02,1.06-3.03,1.57-.12,.07-.25,.14-.38,.2-.9,.46-1.8,.92-2.7,1.37-.22,.11-.44,.22-.67,.33-.83,.41-1.67,.82-2.51,1.23-3.49,1.69-7.01,3.31-10.58,4.87-1.96,.85-3.93,1.69-5.91,2.5-1.6,.66-3.21,1.31-4.83,1.93-.86,.35-1.73,.68-2.61,1.01-1.05,.41-2.12,.8-3.18,1.2-.21,.07-.43,.15-.65,.23-.88,.32-1.77,.64-2.66,.96-.82,.29-1.65,.58-2.48,.86-.89,.31-1.79,.61-2.69,.91-.95,.32-1.91,.64-2.88,.95-5.61,1.81-11.3,3.45-17.07,4.93-1.16,.3-2.33,.6-3.5,.89-.97,.23-1.95,.47-2.94,.69-.61,.15-1.23,.29-1.84,.43-.86,.19-1.72,.39-2.58,.57-1.21,.27-2.43,.53-3.65,.77-1.11,.23-2.22,.45-3.34,.66-.17,.04-.35,.08-.53,.11-1.16,.22-2.32,.44-3.49,.64-1.23,.22-2.46,.44-3.7,.64-1.23,.21-2.47,.4-3.71,.59-2.4,.37-4.8,.71-7.22,1.01-.93,.12-1.86,.24-2.8,.34-3.42,.42-6.86,.76-10.32,1.05-.99,.09-1.97,.17-2.97,.24-.54,.04-1.08,.08-1.63,.11-.78,.06-1.57,.11-2.36,.15-.5,.04-.99,.06-1.49,.09-1.07,.06-2.14,.12-3.22,.16-.26,.02-.51,.03-.77,.03-1.09,.05-2.18,.09-3.27,.12-1.77,.06-3.54,.1-5.31,.13-1.44,.02-2.88,.03-4.33,.03C134.31,600,0,465.69,0,300c0-23.04,2.6-45.47,7.52-67.02,6.15-26.95,15.92-52.52,28.8-76.18,24.74-10.1,52.9-7.21,82.95-22.1,1.95-.96,3.91-2,5.87-3.12,2.74,3.24,5.57,6.4,8.47,9.5,45.64,48.72,110.15,79.53,181.87,80.79,1.53,.04,3.06,.05,4.6,.05,.49,0,.98,0,1.46-.01,8.1-.04,16.1-.46,24-1.25,1.73-.16,3.47-.35,5.19-.56h.01c67.68-8.1,127.23-42.65,168.01-93.03,15.15,8.2,29.71,17.34,43.61,27.34,23.98,43.11,37.64,92.76,37.64,145.59Z" fill="gray"></path>
-                                            <path d="M518.75,127.07c-40.78,50.38-100.34,84.94-168.02,93.03-1.54,.18-3.09,.36-4.64,.51-.19,.02-.37,.04-.55,.05-7.9,.79-15.9,1.21-24,1.25-.48,.01-.97,.01-1.46,.01h-.24c-1.46,0-2.91-.01-4.36-.05-71.72-1.26-136.23-32.07-181.87-80.79-2.9-3.1-5.73-6.26-8.47-9.5,29.73-16.99,61.81-30.33,95.64-39.4l104.59,122.3-.78,1.52,9.47-.64,56.27-131.89c36.12,5.76,70.64,16.29,102.9,30.93,8.67,3.92,17.18,8.15,25.52,12.67Z" fill="gray"></path>
-                                            <path d="M416.02,23.26l-25.69,60.21-56.27,131.89-9.47,.64,.78-1.52-104.59-122.3-52.75-61.67c.74-.36,1.48-.72,2.22-1.07,1.06-.51,2.12-1.02,3.19-1.51,1.01-.48,2.03-.94,3.05-1.4,3.78-1.72,7.61-3.35,11.48-4.91,.84-.34,1.68-.68,2.52-1,.85-.34,1.69-.66,2.54-.98,1.11-.43,2.22-.84,3.33-1.25,.93-.35,1.86-.68,2.79-1.02,1.08-.38,2.16-.76,3.24-1.13,1.35-.47,2.71-.93,4.08-1.37,.7-.23,1.41-.46,2.12-.69,1.8-.57,3.61-1.13,5.43-1.67,.67-.21,1.35-.41,2.02-.59,1.07-.32,2.14-.63,3.22-.93,1.23-.34,2.46-.68,3.7-1,2.73-.73,5.48-1.41,8.24-2.06,1.38-.32,2.76-.64,4.15-.94,1.39-.31,2.78-.61,4.18-.89,1.21-.25,2.42-.49,3.63-.72,1.59-.31,3.18-.6,4.78-.88,1.41-.25,2.82-.48,4.24-.71,1.18-.19,2.36-.37,3.55-.54,.6-.1,1.21-.18,1.82-.27,.94-.13,1.89-.26,2.84-.39,.27-.03,.55-.07,.82-.1,1.11-.15,2.23-.29,3.34-.41,.25-.04,.5-.07,.74-.09,1.14-.14,2.28-.26,3.42-.37,3.32-.35,6.66-.64,10.01-.88,1.13-.08,2.27-.15,3.41-.21,.31-.02,.62-.04,.94-.06,.97-.05,1.94-.1,2.91-.14,.53-.03,1.07-.06,1.61-.07,.98-.05,1.96-.08,2.94-.11,.3,0,.6-.02,.9-.03,1.17-.03,2.34-.06,3.52-.08,.27,0,.55-.01,.83-.01,1.4-.02,2.81-.03,4.22-.03s2.88,.01,4.31,.03c1.13,.02,2.26,.04,3.38,.07,1.1,.02,2.2,.06,3.3,.1,.87,.03,1.74,.06,2.61,.11,1.26,.05,2.53,.11,3.78,.19,1.13,.06,2.25,.13,3.37,.21,.49,.03,.98,.06,1.47,.1,1.14,.08,2.28,.17,3.41,.27,.14,.01,.29,.02,.43,.04,1.4,.12,2.8,.25,4.19,.39,1.32,.13,2.64,.27,3.96,.42,.88,.1,1.76,.2,2.64,.32,1.04,.12,2.07,.25,3.1,.39,.75,.1,1.5,.2,2.25,.31,.68,.09,1.37,.19,2.05,.3,.93,.13,1.85,.27,2.77,.42,.07,0,.14,.02,.21,.03,1.38,.21,2.75,.44,4.11,.68,1.05,.18,2.1,.36,3.15,.56,.48,.08,.96,.17,1.43,.26,1.25,.24,2.49,.48,3.72,.73,3.79,.76,7.55,1.6,11.28,2.51,1.07,.25,2.13,.52,3.19,.79,.2,.04,.4,.1,.6,.15,.91,.23,1.82,.47,2.72,.71,.37,.1,.74,.19,1.1,.3,.99,.26,1.98,.54,2.97,.82,.08,.01,.15,.03,.22,.06,1.13,.32,2.26,.64,3.39,.98,1.17,.34,2.34,.7,3.51,1.06,3.52,1.08,7.01,2.23,10.46,3.44,.82,.29,1.64,.58,2.45,.87,.42,.15,.83,.3,1.25,.45,1.04,.38,2.08,.76,3.11,1.16,.81,.3,1.62,.61,2.42,.93,.81,.3,1.62,.62,2.42,.95,.72,.27,1.43,.56,2.13,.85,1.06,.43,2.11,.86,3.16,1.3Z" fill="#a67c52"></path>
-                                        </svg>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <div className="flex gap-2 items-center">
-                                            <p className="font-bold text-slate-900">
-                                                {review?.restaurante?.nombre || review?.restaurante || "Restaurante"}
+                    {reviews.map((review) => {
+                        const rating = Number(review?.calificacion || 0);
+                        return (
+                            <article key={review?._id || review?.id} className="admin-card rounded-2xl p-6 transition hover:-translate-y-1 hover:shadow-xl">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex min-w-0 gap-4">
+                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-amber-400 shadow-lg shadow-slate-900/10">
+                                            <MessageSquareText size={22} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h3 className="truncate text-base font-black text-slate-950">
+                                                    {review?.restaurante?.nombre || review?.restaurante || "Restaurante"}
+                                                </h3>
+                                                <span className="rounded-full border border-amber-500/30 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">
+                                                    Verificado
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-400">
+                                                <UserRound size={13} />
+                                                {getAuthorName(review?.usuario)}
                                             </p>
-                                            <span className="text-[10px] font-bold text-orange-500 uppercase tracking-tighter">Verificado</span>
-                                        </div>
-                                        <div className="text-xs font-medium text-slate-400">
-                                            Autor: {review?.usuario?.nombre ? `${review.usuario.nombre} ${review.usuario.apellido}` : (review?.usuario || "Anónimo")}
                                         </div>
                                     </div>
-                                </div>
-                                <div className="text-amber-400 text-lg tracking-[2px]">
-                                    {"★".repeat(Number(review?.calificacion || 0))}
-                                    <span className="text-slate-200">{"★".repeat(5 - Number(review?.calificacion || 0))}</span>
-                                </div>
-                            </div>
 
-                            <div className="mt-4">
+                                    <div className="flex shrink-0 gap-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                                key={star}
+                                                size={15}
+                                                className={rating >= star ? "fill-amber-400 text-amber-400" : "text-slate-200"}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
                                 {review?.fotoResena && (
                                     <img
                                         src={review.fotoResena}
-                                        alt="Reseña"
-                                        className="mb-4 h-48 w-full rounded-2xl object-cover"
+                                        alt="Resena"
+                                        className="mt-5 h-48 w-full rounded-2xl border border-slate-200 object-cover"
                                     />
                                 )}
-                                <p className="italic text-slate-600 leading-relaxed font-normal">
-                                    "{review?.comentario || "Excelente servicio y comida de calidad."}"
-                                </p>
-                            </div>
 
-                            <div className="flex gap-6 text-slate-400 text-[11px] mt-6 border-t border-slate-50 pt-4 items-center">
-                                <span className="flex items-center gap-1 cursor-pointer hover:text-orange-500 transition font-semibold">
-                                    <span className="text-[8px]">▲</span> Útil
-                                </span>
-                                <span className="cursor-pointer hover:text-orange-500 transition font-semibold">Compartir</span>
-                                <span className="text-slate-300">
-                                    {new Date(review?.createdAt || Date.now()).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
-                                </span>
-                                <span className="ml-auto text-lg text-slate-300">...</span>
-                            </div>
-                        </div>
-                    ))}
+                                <p className="mt-5 text-sm font-medium leading-relaxed text-slate-600">
+                                    {review?.comentario || "Excelente servicio y comida de calidad."}
+                                </p>
+
+                                <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                                    <span className="inline-flex items-center gap-2">
+                                        <Store size={14} />
+                                        Feedback
+                                    </span>
+                                    <span>{formatDate(review?.createdAt)}</span>
+                                </div>
+                            </article>
+                        );
+                    })}
                 </div>
             ) : (
                 <EmptyState
-                    title="Sin reseñas"
-                    description={role === "USER_ROLE" ? "Agrega la primera reseña usando el botón superior." : "Aún no hay reseñas registradas."}
+                    title="Sin resenas"
+                    description={role === "USER_ROLE" ? "Agrega la primera resena usando el boton superior." : "Aun no hay resenas registradas."}
                 />
             )}
         </div>
     );
 };
+
+const MetricCard = ({ label, value, className }) => (
+    <div className={`rounded-2xl border border-slate-200 p-4 ${className}`}>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">{label}</p>
+        <p className="mt-2 text-2xl font-black">{value}</p>
+    </div>
+);

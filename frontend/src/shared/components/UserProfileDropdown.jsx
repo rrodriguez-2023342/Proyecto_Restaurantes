@@ -16,7 +16,7 @@ const InfoItem = ({ label, value }) => (
     </div>
 );
 
-export const UserProfileDropdown = ({ compact = false, align = "right", placement = "down" }) => {
+export const UserProfileDropdown = ({ compact = false, align = "right", placement = "down", tone = "light" }) => {
     const wrapperRef = useRef(null);
     const user = useAuthStore((state) => state.user);
     const loading = useAuthStore((state) => state.loading);
@@ -99,13 +99,16 @@ export const UserProfileDropdown = ({ compact = false, align = "right", placemen
 
     const panelPosition = align === "left" ? "left-0" : "right-0";
     const panelPlacement = placement === "up" ? "bottom-full mb-3" : "top-full mt-3";
+    const isDarkTone = tone === "dark";
 
     return (
         <div ref={wrapperRef} className="relative">
             <button
                 type="button"
                 onClick={() => setIsCardModalOpen(true)}
-                className={`flex items-center gap-3 rounded-full transition hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                className={`flex items-center gap-3 rounded-full transition focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                    isDarkTone ? "hover:bg-white/10" : "hover:bg-orange-50"
+                } ${
                     compact ? "p-1" : "px-2 py-1"
                 }`}
                 aria-label="Abrir perfil de usuario"
@@ -118,10 +121,10 @@ export const UserProfileDropdown = ({ compact = false, align = "right", placemen
                 />
                 {!compact && (
                     <span className="min-w-0 text-left">
-                        <span className="block truncate text-sm font-semibold text-slate-900">
+                        <span className={`block truncate text-sm font-semibold ${isDarkTone ? "text-white" : "text-slate-900"}`}>
                             {getFullName(user)}
                         </span>
-                        <span className="block truncate text-xs text-slate-500">{user.role || "USER_ROLE"}</span>
+                        <span className={`block truncate text-xs ${isDarkTone ? "text-white/55" : "text-slate-500"}`}>{user.role || "USER_ROLE"}</span>
                     </span>
                 )}
             </button>

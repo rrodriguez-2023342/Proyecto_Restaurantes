@@ -1,7 +1,13 @@
 import { useForm } from "react-hook-form";
-import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
+import { ArrowLeft, UserPlus } from "lucide-react";
+import { useAuthStore } from "../store/authStore";
 import { Spinner } from "../../../shared/layouts/Spinner";
+
+const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10";
+const labelClass = "mb-2 block text-[10px] font-black uppercase tracking-[0.24em] text-slate-500";
+const errorClass = "mt-1.5 text-xs font-semibold text-rose-500";
 
 export const RegisterForm = ({ onBack, onSuccess }) => {
     const {
@@ -26,7 +32,7 @@ export const RegisterForm = ({ onBack, onSuccess }) => {
         const result = await registerUser(formData);
 
         if (result.success) {
-            toast.success("Cuenta creada correctamente. Inicia sesión para continuar.", { duration: 4000 });
+            toast.success("Cuenta creada correctamente. Inicia sesion para continuar.", { duration: 4000 });
             onSuccess?.();
         } else {
             toast.error(result.error || "No se pudo crear la cuenta. Intenta de nuevo.", { duration: 4000 });
@@ -35,40 +41,25 @@ export const RegisterForm = ({ onBack, onSuccess }) => {
 
     return (
         <form onSubmit={handleSubmit(submit)} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                        Nombre
-                    </label>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Nombre" error={errors.name?.message}>
                     <input
                         {...register("name", { required: "El nombre es obligatorio" })}
                         type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                        className={inputClass}
                     />
-                    {errors.name && (
-                        <p className="text-rose-400 text-xs mt-1.5">{errors.name.message}</p>
-                    )}
-                </div>
-                <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                        Apellido
-                    </label>
+                </Field>
+                <Field label="Apellido" error={errors.surname?.message}>
                     <input
                         {...register("surname", { required: "El apellido es obligatorio" })}
                         type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                        className={inputClass}
                     />
-                    {errors.surname && (
-                        <p className="text-rose-400 text-xs mt-1.5">{errors.surname.message}</p>
-                    )}
-                </div>
+                </Field>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                        Nombre de usuario
-                    </label>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Usuario" error={errors.username?.message}>
                     <input
                         {...register("username", {
                             required: "El nombre de usuario es obligatorio",
@@ -78,112 +69,94 @@ export const RegisterForm = ({ onBack, onSuccess }) => {
                             },
                         })}
                         type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                        className={inputClass}
                     />
-                    {errors.username && (
-                        <p className="text-rose-400 text-xs mt-1.5">{errors.username.message}</p>
-                    )}
-                </div>
-                <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                        Teléfono
-                    </label>
+                </Field>
+                <Field label="Telefono" error={errors.phone?.message}>
                     <input
                         {...register("phone", {
-                            required: "El teléfono es obligatorio",
+                            required: "El telefono es obligatorio",
                             pattern: {
                                 value: /^[0-9]{8}$/,
-                                message: "Debe ser un número de 8 dígitos",
+                                message: "Debe ser un numero de 8 digitos",
                             },
                         })}
                         type="tel"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                        className={inputClass}
                     />
-                    {errors.phone && (
-                        <p className="text-rose-400 text-xs mt-1.5">{errors.phone.message}</p>
-                    )}
-                </div>
+                </Field>
             </div>
 
-            <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                    Email
-                </label>
+            <Field label="Email" error={errors.email?.message}>
                 <input
                     {...register("email", {
                         required: "El email es obligatorio",
                         pattern: {
                             value: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
-                            message: "Formato de email inválido",
+                            message: "Formato de email invalido",
                         },
                     })}
                     type="email"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                    className={inputClass}
                 />
-                {errors.email && (
-                    <p className="text-rose-400 text-xs mt-1.5">{errors.email.message}</p>
-                )}
-            </div>
+            </Field>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                        Contraseña
-                    </label>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Contrasena" error={errors.password?.message}>
                     <input
                         {...register("password", {
-                            required: "La contraseña es obligatoria",
+                            required: "La contrasena es obligatoria",
                             minLength: {
                                 value: 8,
                                 message: "Debe tener al menos 8 caracteres",
                             },
                         })}
                         type="password"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                        className={inputClass}
                     />
-                    {errors.password && (
-                        <p className="text-rose-400 text-xs mt-1.5">{errors.password.message}</p>
-                    )}
-                </div>
-                <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-                        Confirmar contraseña
-                    </label>
+                </Field>
+                <Field label="Confirmar contrasena" error={errors.confirmPassword?.message}>
                     <input
                         {...register("confirmPassword", {
-                            required: "Debe confirmar su contraseña",
+                            required: "Debe confirmar su contrasena",
                             validate: {
                                 matchesPassword: (value) =>
                                     value === getValues("password") ||
-                                    "Las contraseñas no coinciden",
+                                    "Las contrasenas no coinciden",
                             },
                         })}
                         type="password"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-orange-400 transition"
+                        className={inputClass}
                     />
-                    {errors.confirmPassword && (
-                        <p className="text-rose-400 text-xs mt-1.5">{errors.confirmPassword.message}</p>
-                    )}
-                </div>
+                </Field>
             </div>
 
-            <div className="flex flex-col gap-3 pt-4 border-t">
+            <div className="grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
                 <button
                     type="button"
                     onClick={onBack}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-600 transition hover:border-slate-950 hover:text-slate-950 active:scale-[0.98]"
                 >
-                    Volver al ingreso
+                    <ArrowLeft size={15} />
+                    Volver
                 </button>
 
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 py-3 text-sm font-semibold text-white transition disabled:from-orange-400 disabled:to-orange-500 disabled:cursor-not-allowed cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition hover:bg-amber-500 hover:text-slate-950 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {loading ? <Spinner small label="Registrando..." /> : "Crear cuenta"}
+                    {loading ? <Spinner small label="Registrando..." /> : <><UserPlus size={15} /> Crear cuenta</>}
                 </button>
             </div>
         </form>
     );
 };
+
+const Field = ({ label, error, children }) => (
+    <div>
+        <label className={labelClass}>{label}</label>
+        {children}
+        {error && <p className={errorClass}>{error}</p>}
+    </div>
+);

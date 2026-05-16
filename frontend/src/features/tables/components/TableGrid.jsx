@@ -1,9 +1,10 @@
+import { Armchair, UsersRound } from "lucide-react";
+
 export const TableGrid = ({ tables = [], loading = false, onTableClick = null }) => {
     const getTableStatus = (table, reservations = []) => {
-        // Check if table has a reservation today
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const hasReservation = reservations.some((res) => {
             const resDate = new Date(res.fecha);
             resDate.setHours(0, 0, 0, 0);
@@ -18,20 +19,17 @@ export const TableGrid = ({ tables = [], loading = false, onTableClick = null })
     const getStatusColor = (status) => {
         const colors = {
             available: {
-                bg: "bg-emerald-50",
-                border: "border-emerald-200",
+                card: "border-emerald-200 bg-emerald-50/70",
                 badge: "bg-emerald-100 text-emerald-800",
                 dot: "bg-emerald-500",
             },
             occupied: {
-                bg: "bg-red-50",
-                border: "border-red-200",
-                badge: "bg-red-100 text-red-800",
-                dot: "bg-red-500",
+                card: "border-rose-200 bg-rose-50/70",
+                badge: "bg-rose-100 text-rose-800",
+                dot: "bg-rose-500",
             },
             reserved: {
-                bg: "bg-amber-50",
-                border: "border-amber-200",
+                card: "border-amber-200 bg-amber-50/80",
                 badge: "bg-amber-100 text-amber-800",
                 dot: "bg-amber-500",
             },
@@ -50,11 +48,11 @@ export const TableGrid = ({ tables = [], loading = false, onTableClick = null })
 
     if (loading) {
         return (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {[...Array(8)].map((_, i) => (
                     <div
                         key={i}
-                        className="h-32 bg-slate-200 rounded-lg animate-pulse"
+                        className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(15,23,42,0.72)]"
                     />
                 ))}
             </div>
@@ -63,72 +61,58 @@ export const TableGrid = ({ tables = [], loading = false, onTableClick = null })
 
     return (
         <div className="space-y-4">
-            {/* Legend */}
-            <div className="flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm text-slate-600">Disponible</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-sm text-slate-600">Ocupada</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                    <span className="text-sm text-slate-600">Reservada</span>
-                </div>
+            <div className="flex flex-wrap gap-3">
+                <LegendItem className="bg-emerald-500" label="Disponible" />
+                <LegendItem className="bg-rose-500" label="Ocupada" />
+                <LegendItem className="bg-amber-500" label="Reservada" />
             </div>
 
-            {/* Grid */}
             {tables.length === 0 ? (
-                <div className="text-center py-12">
-                    <p className="text-slate-500">No hay mesas disponibles</p>
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+                    <p className="text-sm font-bold text-slate-500">No hay mesas disponibles</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                     {tables.map((table) => {
                         const status = getTableStatus(table);
                         const colors = getStatusColor(status);
                         const isClickable = onTableClick && status === "available";
 
                         return (
-                            <div
+                            <button
                                 key={table._id || table.id}
+                                type="button"
                                 onClick={() => isClickable && onTableClick(table)}
                                 className={`
-                                    p-4 rounded-lg border-2 transition
-                                    ${colors.bg} ${colors.border}
-                                    ${isClickable ? "cursor-pointer hover:shadow-lg transform hover:scale-105" : ""}
+                                    rounded-2xl border p-4 text-left shadow-sm transition
+                                    ${colors.card}
+                                    ${isClickable ? "hover:-translate-y-1 hover:border-amber-500/40 hover:bg-white hover:shadow-xl" : ""}
                                 `}
                             >
-                                <div className="flex items-center justify-between mb-3">
+                                <div className="mb-4 flex items-start justify-between gap-3">
+                                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-amber-400">
+                                        <Armchair size={20} />
+                                    </span>
+                                    <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${colors.badge}`}>
+                                        {getStatusLabel(status)}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
-                                        <h3 className="font-semibold text-slate-900">
+                                        <span className={`h-2 w-2 rounded-full ${colors.dot}`} />
+                                        <h3 className="text-lg font-black text-slate-950">
                                             Mesa {table.numeroMesa}
                                         </h3>
                                     </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-slate-600">Capacidad:</span>
-                                        <span className="text-sm font-semibold text-slate-900">
+                                    <div className="flex items-center gap-2 rounded-xl border border-white/70 bg-white/80 px-3 py-2">
+                                        <UsersRound size={15} className="text-slate-400" />
+                                        <span className="text-sm font-bold text-slate-700">
                                             {table.capacidad} personas
                                         </span>
                                     </div>
-                                    <div>
-                                        <span
-                                            className={`
-                                                inline-block px-2 py-1 rounded text-xs font-medium
-                                                ${colors.badge}
-                                            `}
-                                        >
-                                            {getStatusLabel(status)}
-                                        </span>
-                                    </div>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -136,3 +120,10 @@ export const TableGrid = ({ tables = [], loading = false, onTableClick = null })
         </div>
     );
 };
+
+const LegendItem = ({ className, label }) => (
+    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2">
+        <span className={`h-2.5 w-2.5 rounded-full ${className}`} />
+        <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">{label}</span>
+    </div>
+);

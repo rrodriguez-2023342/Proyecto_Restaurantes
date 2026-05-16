@@ -1,96 +1,103 @@
-import { useForm } from "react-hook-form"
-import { useAuthStore } from "../store/authStore";
-import { useNavigate } from "react-router-dom"
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Lock, Mail, UserPlus } from "lucide-react";
+import { useAuthStore } from "../store/authStore";
 import { Spinner } from "../../../shared/layouts/Spinner";
+
+const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-11 text-sm font-semibold text-slate-900 placeholder:text-slate-400 transition focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10";
+const labelClass = "mb-2 block text-[10px] font-black uppercase tracking-[0.24em] text-slate-500";
 
 export const LoginForm = ({ onForgot, onRegister }) => {
     const navigate = useNavigate();
     const { register, handleSubmit, formState: { errors } } = useForm();
-    const login = useAuthStore(state => state.login);
-    const loading = useAuthStore(state => state.loading);
+    const login = useAuthStore((state) => state.login);
+    const loading = useAuthStore((state) => state.loading);
 
     const onSubmit = async (data) => {
         const res = await login(data);
         if (res.success) {
             navigate("/principal");
-            toast.success("¡Bienvenido de nuevo!", { duration: 4000 });
+            toast.success("Bienvenido de nuevo", { duration: 4000 });
         } else {
-            const errorMsg = res.error || res.message || "Error al iniciar sesión";
+            const errorMsg = res.error || res.message || "Error al iniciar sesion";
             toast.error(errorMsg, { duration: 4000 });
         }
-    }
+    };
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Email o usuario */}
             <div>
-                <label htmlFor="emailOrUsername" className="block text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
+                <label htmlFor="emailOrUsername" className={labelClass}>
                     Email o usuario
                 </label>
-                <input
-                    id="emailOrUsername"
-                    type="text"
-                    placeholder="correo@restaurante.com"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-400 focus:bg-orange-50 transition"
-                    {...register("emailOrUsername", { required: "Este campo es requerido" })}
-                />
+                <div className="relative">
+                    <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                        id="emailOrUsername"
+                        type="text"
+                        placeholder="correo@restaurante.com"
+                        className={inputClass}
+                        {...register("emailOrUsername", { required: "Este campo es requerido" })}
+                    />
+                </div>
                 {errors.emailOrUsername && (
-                    <p className="text-rose-400 text-xs mt-1.5">{errors.emailOrUsername.message}</p>
+                    <p className="mt-1.5 text-xs font-semibold text-rose-500">{errors.emailOrUsername.message}</p>
                 )}
             </div>
 
-            {/* Contraseña */}
             <div>
-                <div className="flex items-center justify-between mb-2">
-                    <label htmlFor="password" className="text-[11px] font-semibold text-slate-700 uppercase tracking-widest">
-                        Contraseña
+                <div className="mb-2 flex items-center justify-between gap-3">
+                    <label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
+                        Contrasena
                     </label>
                     <button
                         type="button"
                         onClick={onForgot}
-                        className="text-xs font-medium text-orange-400 hover:text-orange-300 transition cursor-pointer"
+                        className="text-xs font-bold text-amber-700 transition hover:text-slate-950"
                     >
-                        ¿Olvidaste tu contraseña?
+                        Olvide mi contrasena
                     </button>
                 </div>
-                <input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-400 focus:bg-orange-50 transition"
-                    {...register("password", { required: "La contraseña es obligatoria" })}
-                />
+                <div className="relative">
+                    <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                        id="password"
+                        type="password"
+                        placeholder="********"
+                        className={inputClass}
+                        {...register("password", { required: "La contrasena es obligatoria" })}
+                    />
+                </div>
                 {errors.password && (
-                    <p className="text-rose-400 text-xs mt-1.5">{errors.password.message}</p>
+                    <p className="mt-1.5 text-xs font-semibold text-rose-500">{errors.password.message}</p>
                 )}
             </div>
 
-            {/* Botón principal */}
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 rounded-xl py-3 text-sm font-semibold text-white transition disabled:from-orange-400 disabled:to-orange-500 disabled:cursor-not-allowed cursor-pointer mt-1"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition hover:bg-amber-500 hover:text-slate-950 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-                {loading ? <Spinner small label="Cargando..." /> : "Iniciar sesión"}
+                {loading ? <Spinner small label="Cargando..." /> : "Iniciar sesion"}
             </button>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-[11px] text-slate-400">o</span>
-                <div className="flex-1 h-px bg-slate-200" />
+            <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">o</span>
+                <div className="h-px flex-1 bg-slate-200" />
             </div>
 
-            {/* Botón registro */}
             <button
                 type="button"
                 disabled={loading}
                 onClick={onRegister}
-                className="w-full border border-orange-500/30 hover:bg-orange-500/8 hover:border-orange-500/50 rounded-xl py-3 text-sm font-medium text-orange-400 transition disabled:opacity-50 cursor-pointer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-amber-700 transition hover:border-amber-500 hover:bg-amber-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-                {loading ? <Spinner small label="Cargando..." /> : "Crear una cuenta"}
+                <UserPlus size={15} />
+                Crear una cuenta
             </button>
         </form>
-    )
-}
+    );
+};

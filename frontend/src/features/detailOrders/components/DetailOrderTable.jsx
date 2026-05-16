@@ -1,4 +1,5 @@
 import { DataTable, Card } from "../../../shared/components";
+import { adminTheme } from "../../../constants/theme";
 
 export const DetailOrderTable = ({ items = [], onEdit, onDelete, loading }) => {
     const columns = [
@@ -37,7 +38,7 @@ export const DetailOrderTable = ({ items = [], onEdit, onDelete, loading }) => {
                 <div className="flex gap-2">
                     <button
                         onClick={() => onEdit?.(row)}
-                        className="rounded-lg bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600 hover:bg-orange-100 transition"
+                        className={adminTheme.outlineButton}
                     >
                         Editar
                     </button>
@@ -47,7 +48,7 @@ export const DetailOrderTable = ({ items = [], onEdit, onDelete, loading }) => {
                                 onDelete?.(row.detailOrderId || row._id || row.id);
                             }
                         }}
-                        className="rounded-lg bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-200 transition"
+                        className={adminTheme.destructiveButton}
                     >
                         Eliminar
                     </button>

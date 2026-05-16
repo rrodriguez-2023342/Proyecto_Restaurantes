@@ -1,33 +1,35 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { adminTheme } from "../../../constants/theme";
 import { FormField } from "../../../shared/components";
 import { useInventoryStore } from "../../inventory/store/useInventoryStore";
 
-export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing = false, isLoading = false, restaurantId = "" }) => {
+export const DishForm = ({ onSubmit, onCancel, menus = [], defaultValues = {}, isEditing = false, isLoading = false, restaurantId = "" }) => {
     const { inventarios, fetchInventarios, clearInventarios } = useInventoryStore();
+
     const parseIngredients = (ingredients) => {
         if (!ingredients) return [];
         if (Array.isArray(ingredients)) return ingredients;
         try {
             return typeof ingredients === "string" ? JSON.parse(ingredients) : [];
-        } catch (e) {
-            console.error("Error parsing ingredients:", e);
+        } catch (error) {
+            console.error("Error parsing ingredients:", error);
             return [];
         }
     };
 
     const [selectedIngredients, setSelectedIngredients] = useState(parseIngredients(defaultValues.ingredients));
-    
+
     const {
         register,
         handleSubmit,
         reset,
         formState: { errors },
-    } = useForm({ 
+    } = useForm({
         defaultValues: {
             ...defaultValues,
-            ingredients: "" // Limpiamos el campo de texto viejo
-        } 
+            ingredients: "",
+        },
     });
 
     useEffect(() => {
@@ -35,7 +37,6 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
             clearInventarios();
             return;
         }
-
         fetchInventarios(1, 50, restaurantId);
     }, [clearInventarios, fetchInventarios, restaurantId]);
 
@@ -59,8 +60,7 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
     };
 
     const handleCreate = (values) => {
-        // Filtramos ingredientes vacíos o con cantidad 0
-        const finalIngredients = selectedIngredients.filter(ing => ing.itemInventario && ing.cantidad > 0);
+        const finalIngredients = selectedIngredients.filter((ingredient) => ingredient.itemInventario && ingredient.cantidad > 0);
         onSubmit?.({ ...values, ingredients: JSON.stringify(finalIngredients) });
         if (!isEditing) {
             reset();
@@ -69,12 +69,13 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
     };
 
     return (
-        <form onSubmit={handleSubmit(handleCreate)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+        <form onSubmit={handleSubmit(handleCreate)} className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
                 <FormField label="Nombre del plato" error={errors.name?.message}>
                     <input
                         {...register("name", { required: "El nombre es obligatorio" })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
+                        className={`w-full ${adminTheme.input}`}
+                        placeholder="Ej. Plato especial"
                     />
                 </FormField>
                 <FormField label="Precio (Q)" error={errors.price?.message}>
@@ -82,19 +83,16 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
                         type="number"
                         step="0.01"
                         {...register("price", { required: "El precio es obligatorio" })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
+                        className={`w-full ${adminTheme.input}`}
                         placeholder="0.00"
                     />
                 </FormField>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-                <FormField label="Menú" error={errors.menuId?.message}>
-                    <select
-                        {...register("menuId", { required: "El menú es obligatorio" })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                    >
-                        <option value="">Selecciona un menú</option>
+                <FormField label="Menu" error={errors.menuId?.message}>
+                    <select {...register("menuId", { required: "El menu es obligatorio" })} className={`w-full ${adminTheme.select}`}>
+                        <option value="">Selecciona un menu</option>
                         {menus.map((menu) => (
                             <option key={menu._id || menu.id} value={menu._id || menu.id}>
                                 {menu.nombreMenu || menu.nombre}
@@ -103,10 +101,7 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
                     </select>
                 </FormField>
                 <FormField label="Tipo de plato" error={errors.type?.message}>
-                    <select
-                        {...register("type", { required: "El tipo es obligatorio" })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
-                    >
+                    <select {...register("type", { required: "El tipo es obligatorio" })} className={`w-full ${adminTheme.select}`}>
                         <option value="">Selecciona</option>
                         <option value="ENTRADA">Entrada</option>
                         <option value="PLATO_FUERTE">Plato fuerte</option>
@@ -116,28 +111,28 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
                 </FormField>
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Ingredientes (Descuento de Inventario)</label>
-                    <button
-                        type="button"
-                        onClick={handleAddIngredient}
-                        className="text-xs font-bold text-orange-600 hover:text-orange-700"
-                    >
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <label className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-500">
+                        Ingredientes
+                    </label>
+                    <button type="button" onClick={handleAddIngredient} className={adminTheme.outlineButton}>
                         + Agregar ingrediente
                     </button>
                 </div>
-                
+
                 {selectedIngredients.length === 0 && (
-                    <p className="text-center text-xs text-slate-400 py-2 italic">No hay ingredientes vinculados.</p>
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center">
+                        <p className="text-sm font-semibold text-slate-500">No hay ingredientes vinculados.</p>
+                    </div>
                 )}
 
-                {selectedIngredients.map((ing, index) => (
-                    <div key={index} className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                {selectedIngredients.map((ingredient, index) => (
+                    <div key={index} className="grid gap-2 animate-in fade-in slide-in-from-left-2 duration-200 sm:grid-cols-[minmax(0,1fr)_110px_auto]">
                         <select
-                            value={ing.itemInventario?._id || ing.itemInventario}
-                            onChange={(e) => handleIngredientChange(index, "itemInventario", e.target.value)}
-                            className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-orange-400 focus:outline-none"
+                            value={ingredient.itemInventario?._id || ingredient.itemInventario}
+                            onChange={(event) => handleIngredientChange(index, "itemInventario", event.target.value)}
+                            className={`w-full ${adminTheme.select}`}
                         >
                             <option value="">Seleccionar ingrediente</option>
                             {inventarios.map((inv) => (
@@ -149,50 +144,50 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
                         <input
                             type="number"
                             step="0.01"
-                            value={ing.cantidad}
-                            onChange={(e) => handleIngredientChange(index, "cantidad", parseFloat(e.target.value))}
+                            value={ingredient.cantidad}
+                            onChange={(event) => handleIngredientChange(index, "cantidad", parseFloat(event.target.value))}
                             placeholder="Cant."
-                            className="w-20 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-orange-400 focus:outline-none"
+                            className={`w-full ${adminTheme.input}`}
                         />
                         <button
                             type="button"
                             onClick={() => handleRemoveIngredient(index)}
-                            className="rounded-xl bg-rose-50 px-3 text-rose-600 hover:bg-rose-100 transition-colors"
+                            className="inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-rose-700 active:scale-[0.98]"
                         >
-                            ✕
+                            X
                         </button>
                     </div>
                 ))}
             </div>
 
-            <FormField label="Descripción">
+            <FormField label="Descripcion">
                 <textarea
                     {...register("description")}
-                    rows={2}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
+                    rows={3}
+                    className={`w-full resize-none ${adminTheme.input}`}
                     placeholder="Describe el plato..."
                 />
             </FormField>
 
             <FormField label="Imagen del plato">
-                <div className="relative">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        {...register("photo")}
-                        className="w-full rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-700 hover:border-orange-300 transition-all cursor-pointer"
-                    />
-                </div>
+                <input
+                    type="file"
+                    accept="image/*"
+                    {...register("photo")}
+                    className="w-full rounded-xl border border-dashed border-amber-500/40 bg-white px-4 py-3 text-sm font-semibold text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-[10px] file:font-black file:uppercase file:tracking-[0.18em] file:text-white"
+                />
             </FormField>
 
-            <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:shadow-xl hover:shadow-orange-300 disabled:opacity-60"
-            >
-                {isLoading ? "Guardando..." : isEditing ? "Actualizar Plato" : "Crear Plato"}
-            </button>
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                {onCancel && (
+                    <button type="button" onClick={onCancel} className={adminTheme.neutralButton}>
+                        Cancelar
+                    </button>
+                )}
+                <button type="submit" disabled={isLoading} className={adminTheme.primaryButton}>
+                    {isLoading ? "Guardando..." : isEditing ? "Actualizar plato" : "Crear plato"}
+                </button>
+            </div>
         </form>
     );
 };
-

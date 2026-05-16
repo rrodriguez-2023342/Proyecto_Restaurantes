@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Dialog, DialogBody, DialogHeader, DialogFooter, Spinner } from "@material-tailwind/react";
+import { useEffect, useMemo, useState } from "react";
+import { Dialog, DialogBody, DialogFooter, DialogHeader, Spinner } from "@material-tailwind/react";
+import { Armchair, Building2, Pencil, Plus, Trash2, UsersRound } from "lucide-react";
 import { showError, showSuccess } from "../../../shared/utils/toast";
 import { useTableStore } from "../store/useTableStore";
 import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
@@ -28,21 +29,24 @@ export const TablesPage = () => {
         disponibilidad: true,
     });
 
+    const autoRestaurantId = useMemo(() => {
+        if (selectedRestaurant || restaurants.length !== 1) return "";
+        return restaurants[0]._id || restaurants[0].id || "";
+    }, [restaurants, selectedRestaurant]);
+
+    const activeRestaurant = selectedRestaurant || autoRestaurantId;
+    const availableTables = restaurantTables.filter((table) => table.disponibilidad).length;
+    const unavailableTables = restaurantTables.length - availableTables;
+
     useEffect(() => {
         fetchRestaurants();
     }, [fetchRestaurants]);
 
     useEffect(() => {
-        if (!selectedRestaurant && restaurants.length === 1) {
-            setSelectedRestaurant(restaurants[0]._id || restaurants[0].id);
+        if (activeRestaurant) {
+            fetchRestaurantTables(activeRestaurant);
         }
-    }, [restaurants, selectedRestaurant]);
-
-    useEffect(() => {
-        if (selectedRestaurant) {
-            fetchRestaurantTables(selectedRestaurant);
-        }
-    }, [fetchRestaurantTables, selectedRestaurant]);
+    }, [activeRestaurant, fetchRestaurantTables]);
 
     const handleOpenModal = (table = null) => {
         setEditing(table);
@@ -78,7 +82,7 @@ export const TablesPage = () => {
     };
 
     const handleSubmit = async () => {
-        if (!selectedRestaurant) {
+        if (!activeRestaurant) {
             showError("Selecciona un restaurante");
             return;
         }
@@ -98,7 +102,7 @@ export const TablesPage = () => {
         setSaving(true);
         try {
             const payload = {
-                restaurante: selectedRestaurant,
+                restaurante: activeRestaurant,
                 capacidad: parseInt(formData.capacidad),
                 disponibilidad: formData.disponibilidad,
             };
@@ -136,62 +140,80 @@ export const TablesPage = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="admin-surface rounded-2xl p-6">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">Gestión de Mesas</h1>
-                <p className="text-slate-600">Administra las mesas de tus restaurantes</p>
-            </div>
+            <section className="admin-surface rounded-2xl p-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <p className="admin-kicker">Mapa operativo</p>
+                        <h1 className={adminTheme.pageTitle}>Gestion de mesas</h1>
+                        <p className="mt-2 text-sm font-medium text-slate-500">
+                            Administra disponibilidad, capacidad y numeracion por restaurante.
+                        </p>
+                    </div>
 
-            {/* Actions */}
-            <div className="admin-surface rounded-2xl p-6 space-y-4">
+                    <div className="grid grid-cols-3 gap-3 sm:min-w-[26rem]">
+                        <MetricCard label="Total" value={restaurantTables.length} className="bg-slate-950 text-amber-400" />
+                        <MetricCard label="Disponibles" value={availableTables} className="bg-emerald-50 text-emerald-800" />
+                        <MetricCard label="No disponibles" value={unavailableTables} className="bg-rose-50 text-rose-800" />
+                    </div>
+                </div>
+            </section>
+
+            <section className="admin-surface rounded-2xl p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <div className="flex-1 w-full md:w-auto">
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Selecciona un restaurante
-                        </label>
-                        <select
-                            value={selectedRestaurant}
-                            onChange={(e) => setSelectedRestaurant(e.target.value)}
-                            className={`w-full ${adminTheme.select}`}
-                        >
-                            <option value="">Elige un restaurante</option>
-                            {restaurants.map((r) => (
-                                <option key={r._id || r.id} value={r._id || r.id}>
-                                    {r.nombre || r.name}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="w-full flex-1">
+                        <label className={adminTheme.label}>Restaurante</label>
+                        <div className="relative mt-2">
+                            <Building2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <select
+                                value={activeRestaurant}
+                                onChange={(e) => setSelectedRestaurant(e.target.value)}
+                                className={`w-full pl-11 ${adminTheme.select}`}
+                            >
+                                <option value="">Elige un restaurante</option>
+                                {restaurants.map((r) => (
+                                    <option key={r._id || r.id} value={r._id || r.id}>
+                                        {r.nombre || r.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <button
                         onClick={() => handleOpenModal()}
-                        disabled={!selectedRestaurant}
-                        className={`${adminTheme.primaryButton} h-12 w-full md:w-auto`}
+                        disabled={!activeRestaurant}
+                        className={`${adminTheme.primaryButton} h-12 w-full gap-2 md:w-auto`}
                     >
-                        + Nueva Mesa
+                        <Plus size={16} />
+                        Nueva mesa
                     </button>
                 </div>
-            </div>
+            </section>
 
-            {/* Table Grid */}
-            <div className="admin-surface rounded-2xl p-6">
-                {!selectedRestaurant ? (
-                    <div className="text-center py-12">
-                        <p className="text-slate-500">Selecciona un restaurante para ver sus mesas</p>
+            <section className="admin-surface rounded-2xl p-6">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                    <div>
+                        <p className="admin-kicker">Plano de mesas</p>
+                        <h2 className={adminTheme.sectionTitle}>Disponibilidad visual</h2>
+                    </div>
+                </div>
+
+                {!activeRestaurant ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+                        <p className="text-sm font-bold text-slate-500">Selecciona un restaurante para ver sus mesas</p>
                     </div>
                 ) : loading ? (
-                    <div className="flex justify-center items-center h-64">
+                    <div className="flex h-64 items-center justify-center">
                         <Spinner className="h-12 w-12 text-amber-500" />
                     </div>
                 ) : (
                     <TableGrid tables={restaurantTables} loading={loading} />
                 )}
-            </div>
+            </section>
 
-            {/* Tables List (Admin View) */}
-            {selectedRestaurant && (
-                <div className="admin-card rounded-2xl bg-white overflow-hidden">
-                    <div className="admin-panel-heading p-6 border-b border-slate-900">
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.28em] text-white">Mesas Registradas</h2>
+            {activeRestaurant && (
+                <section className="admin-card overflow-hidden rounded-2xl bg-white">
+                    <div className="admin-panel-heading border-b border-slate-900 p-6">
+                        <h2 className="text-[11px] font-black uppercase tracking-[0.28em] !text-white">Mesas registradas</h2>
                     </div>
                     {restaurantTables.length === 0 ? (
                         <div className="p-12 text-center">
@@ -202,35 +224,34 @@ export const TablesPage = () => {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-slate-800 bg-slate-950">
-                                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
-                                            Mesa
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
-                                            Capacidad
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
-                                            Disponibilidad
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
-                                            Acciones
-                                        </th>
+                                        {["Mesa", "Capacidad", "Disponibilidad", "Acciones"].map((heading) => (
+                                            <th key={heading} className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.24em] text-slate-300">
+                                                {heading}
+                                            </th>
+                                        ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {restaurantTables.map((table) => (
                                         <tr
                                             key={table._id || table.id}
-                                            className="border-b border-slate-100 hover:bg-amber-50/60 transition"
+                                            className="border-b border-slate-100 transition hover:bg-amber-50/60"
                                         >
-                                            <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                                                Mesa {table.numeroMesa}
+                                            <td className="px-6 py-4 text-sm font-black text-slate-900">
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Armchair size={16} className="text-amber-600" />
+                                                    Mesa {table.numeroMesa}
+                                                </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
-                                                {table.capacidad} personas
+                                            <td className="px-6 py-4 text-sm font-semibold text-slate-600">
+                                                <span className="inline-flex items-center gap-2">
+                                                    <UsersRound size={15} className="text-slate-400" />
+                                                    {table.capacidad} personas
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span
-                                                    className={`px-2 py-1 rounded text-xs font-medium ${
+                                                    className={`rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] ${
                                                         table.disponibilidad
                                                             ? "bg-emerald-100 text-emerald-800"
                                                             : "bg-rose-100 text-rose-800"
@@ -239,19 +260,23 @@ export const TablesPage = () => {
                                                     {table.disponibilidad ? "Disponible" : "No disponible"}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 space-x-2">
-                                                <button
-                                                    onClick={() => handleOpenModal(table)}
-                                                    className="rounded-lg border border-amber-500/30 bg-white px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    onClick={() => setDeleteConfirm(table)}
-                                                    className="rounded-lg bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-700"
-                                                >
-                                                    Eliminar
-                                                </button>
+                                            <td className="px-6 py-4">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenModal(table)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-white px-3 py-2 text-xs font-black text-amber-700 transition hover:bg-amber-50"
+                                                    >
+                                                        <Pencil size={14} />
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteConfirm(table)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-black text-white transition hover:bg-rose-700"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Eliminar
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -259,21 +284,25 @@ export const TablesPage = () => {
                             </table>
                         </div>
                     )}
-                </div>
+                </section>
             )}
 
-            {/* Modal */}
-            <Dialog open={openModal} handler={handleCloseModal}>
-                <DialogHeader className="text-slate-900">
-                    {editing ? "Editar Mesa" : "Nueva Mesa"}
+            <Dialog open={openModal} handler={handleCloseModal} className="overflow-hidden rounded-2xl">
+                <DialogHeader className="border-b border-slate-900 bg-slate-950 px-6 py-5 text-white">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.34em] text-amber-400">
+                            Mapa operativo
+                        </p>
+                        <h2 className="mt-2 text-xl font-black uppercase tracking-tight">
+                            {editing ? "Editar mesa" : "Nueva mesa"}
+                        </h2>
+                    </div>
                 </DialogHeader>
-                <DialogBody>
+                <DialogBody className="p-6">
                     <div className="space-y-4">
                         {!editing && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Numero de Mesa
-                                </label>
+                                <label className={adminTheme.label}>Numero de mesa</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -281,28 +310,24 @@ export const TablesPage = () => {
                                     onChange={(e) =>
                                         setFormData({ ...formData, numeroMesa: e.target.value })
                                     }
-                                    className={`w-full ${adminTheme.input}`}
+                                    className={`mt-2 w-full ${adminTheme.input}`}
                                 />
                             </div>
                         )}
                         {editing && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Número de Mesa
-                                </label>
+                                <label className={adminTheme.label}>Numero de mesa</label>
                                 <input
                                     type="number"
                                     value={editing.numeroMesa}
                                     disabled
-                                    className={`w-full ${adminTheme.input} bg-slate-100 text-slate-600`}
+                                    className={`mt-2 w-full ${adminTheme.input} bg-slate-100 text-slate-600`}
                                 />
                             </div>
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Capacidad (personas)
-                            </label>
+                            <label className={adminTheme.label}>Capacidad</label>
                             <input
                                 type="number"
                                 min="1"
@@ -311,11 +336,15 @@ export const TablesPage = () => {
                                 onChange={(e) =>
                                     setFormData({ ...formData, capacidad: e.target.value })
                                 }
-                                className={`w-full ${adminTheme.input}`}
+                                className={`mt-2 w-full ${adminTheme.input}`}
                             />
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <label className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <span>
+                                <span className="block text-sm font-black text-slate-900">Disponible</span>
+                                <span className="block text-xs font-semibold text-slate-500">La mesa puede usarse para nuevas reservaciones.</span>
+                            </span>
                             <input
                                 type="checkbox"
                                 id="disponibilidad"
@@ -323,51 +352,33 @@ export const TablesPage = () => {
                                 onChange={(e) =>
                                     setFormData({ ...formData, disponibilidad: e.target.checked })
                                 }
-                                className="w-4 h-4 rounded border-slate-300"
+                                className="h-5 w-5 rounded border-slate-300 accent-amber-500"
                             />
-                            <label htmlFor="disponibilidad" className="text-sm text-slate-700">
-                                Disponible
-                            </label>
-                        </div>
+                        </label>
                     </div>
                 </DialogBody>
-                <DialogFooter>
-                    <button
-                        onClick={handleCloseModal}
-                        className={`${adminTheme.neutralButton} mr-2`}
-                    >
+                <DialogFooter className="border-t border-slate-100">
+                    <button onClick={handleCloseModal} className={`${adminTheme.neutralButton} mr-2`}>
                         Cancelar
                     </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={saving}
-                        className={adminTheme.primaryButton}
-                    >
+                    <button onClick={handleSubmit} disabled={saving} className={adminTheme.primaryButton}>
                         {saving ? "Guardando..." : "Guardar"}
                     </button>
                 </DialogFooter>
             </Dialog>
 
-            {/* Delete Confirmation */}
-            <Dialog open={!!deleteConfirm} handler={() => setDeleteConfirm(null)}>
-                <DialogHeader className="text-slate-900">Confirmar eliminación</DialogHeader>
+            <Dialog open={!!deleteConfirm} handler={() => setDeleteConfirm(null)} className="rounded-2xl">
+                <DialogHeader className="text-slate-900">Confirmar eliminacion</DialogHeader>
                 <DialogBody>
                     <p className="text-slate-600">
-                        ¿Estás seguro de que deseas eliminar esta mesa?
+                        Estas seguro de que deseas eliminar esta mesa?
                     </p>
                 </DialogBody>
                 <DialogFooter>
-                    <button
-                        onClick={() => setDeleteConfirm(null)}
-                        className={`${adminTheme.neutralButton} mr-2`}
-                    >
+                    <button onClick={() => setDeleteConfirm(null)} className={`${adminTheme.neutralButton} mr-2`}>
                         Cancelar
                     </button>
-                    <button
-                        onClick={handleDelete}
-                        disabled={saving}
-                        className={adminTheme.destructiveButton}
-                    >
+                    <button onClick={handleDelete} disabled={saving} className={adminTheme.destructiveButton}>
                         {saving ? "Eliminando..." : "Eliminar"}
                     </button>
                 </DialogFooter>
@@ -375,3 +386,10 @@ export const TablesPage = () => {
         </div>
     );
 };
+
+const MetricCard = ({ label, value, className }) => (
+    <div className={`rounded-2xl border border-slate-200 p-4 ${className}`}>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">{label}</p>
+        <p className="mt-2 text-2xl font-black">{value}</p>
+    </div>
+);

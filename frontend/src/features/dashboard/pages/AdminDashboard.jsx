@@ -125,9 +125,9 @@ export const AdminDashboard = () => {
                             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-amber-400">KinalEats Operations</span>
                         </div>
                         <div>
-                            <h2 className="max-w-3xl text-4xl font-black uppercase leading-none tracking-tight md:text-6xl">
+                            <h1 className="max-w-3xl text-4xl font-black uppercase leading-none tracking-tight text-white md:text-6xl">
                                 Centro de control
-                            </h2>
+                            </h1>
                             <p className="mt-5 max-w-2xl text-sm font-medium leading-relaxed text-slate-400">
                                 Monitorea restaurantes, ventas, pedidos y actividad operativa desde una vista ejecutiva preparada para decisiones rapidas.
                             </p>

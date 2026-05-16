@@ -160,7 +160,7 @@ export const UsersPage = () => {
                 <button 
                     type="button" 
                     onClick={() => setOpenCreate(true)} 
-                    className="w-full rounded-lg bg-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-amber-500 hover:text-slate-950 active:scale-95 sm:w-auto"
+                    className="w-full rounded-lg bg-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white shadow-lg shadow-slate-900/10 transition-all hover:!bg-amber-500 hover:!text-slate-950 active:scale-95 sm:w-auto"
                 >
                     + Agregar usuario
                 </button>
