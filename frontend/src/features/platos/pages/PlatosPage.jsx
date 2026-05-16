@@ -59,11 +59,7 @@ export const PlatosPage = () => {
     const [modalLoading, setModalLoading] = useState(false);
     const [menuLoading, setMenuLoading] = useState(false);
 
-    const { inventarios, fetchInventarios } = useInventoryStore();
-
-    useEffect(() => {
-        fetchInventarios();
-    }, [fetchInventarios]);
+    const { inventarios, fetchInventarios, clearInventarios } = useInventoryStore();
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -87,10 +83,12 @@ export const PlatosPage = () => {
             if (!selectedRestaurant) {
                 setMenus([]);
                 setSelectedMenu("");
+                clearInventarios();
                 return;
             }
             try {
                 setMenuLoading(true);
+                await fetchInventarios(1, 50, selectedRestaurant);
                 const { data } = await getMenus({ restaurante: selectedRestaurant });
                 const loadedMenus = data?.data || data?.menus || data || [];
                 setMenus(loadedMenus);
@@ -107,7 +105,7 @@ export const PlatosPage = () => {
         };
 
         loadMenus();
-    }, [selectedRestaurant]);
+    }, [clearInventarios, fetchInventarios, selectedRestaurant]);
 
     useEffect(() => {
         if (!selectedMenu) return;
@@ -219,6 +217,7 @@ export const PlatosPage = () => {
                                 setEditing(null);
                                 setOpenModal(true);
                             }}
+                            disabled={!selectedRestaurant || !selectedMenu}
                             className="w-full lg:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm"
                         >
                             + Agregar plato
@@ -258,6 +257,7 @@ export const PlatosPage = () => {
                                 onSubmit={handleSubmit}
                                 isEditing={!!editing}
                                 isLoading={modalLoading}
+                                restaurantId={selectedRestaurant}
                             />
                         </div>
                     </div>

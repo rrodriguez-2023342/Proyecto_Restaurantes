@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { FormField } from "../../../shared/components";
 import { useInventoryStore } from "../../inventory/store/useInventoryStore";
 
-export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing = false, isLoading = false }) => {
-    const { inventarios, fetchInventarios } = useInventoryStore();
+export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing = false, isLoading = false, restaurantId = "" }) => {
+    const { inventarios, fetchInventarios, clearInventarios } = useInventoryStore();
     const parseIngredients = (ingredients) => {
         if (!ingredients) return [];
         if (Array.isArray(ingredients)) return ingredients;
@@ -31,8 +31,13 @@ export const DishForm = ({ onSubmit, menus = [], defaultValues = {}, isEditing =
     });
 
     useEffect(() => {
-        fetchInventarios();
-    }, [fetchInventarios]);
+        if (!restaurantId) {
+            clearInventarios();
+            return;
+        }
+
+        fetchInventarios(1, 50, restaurantId);
+    }, [clearInventarios, fetchInventarios, restaurantId]);
 
     useEffect(() => {
         reset(defaultValues);
