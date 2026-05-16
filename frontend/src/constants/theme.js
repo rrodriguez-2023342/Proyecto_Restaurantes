@@ -1,16 +1,16 @@
 export const adminTheme = {
-    card: "rounded-2xl border border-slate-200 bg-white shadow-sm",
-    panel: "rounded-2xl border border-slate-200 bg-white p-6 shadow-sm",
-    input: "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-orange-400 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500/10",
-    select: "rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500/10",
-    primaryButton: "rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-orange-400 hover:to-orange-500 disabled:cursor-not-allowed disabled:opacity-60",
-    outlineButton: "rounded-xl border border-orange-500/30 bg-white px-4 py-2 text-sm font-semibold text-orange-600 transition hover:bg-orange-50 hover:border-orange-500/50 disabled:cursor-not-allowed disabled:opacity-60",
-    neutralButton: "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60",
-    destructiveButton: "rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60",
-    pageTitle: "text-2xl font-bold tracking-tight text-slate-900",
-    sectionTitle: "text-xl font-semibold text-slate-900",
-    label: "block text-[11px] font-semibold uppercase tracking-widest text-slate-700",
-    mutedText: "text-sm text-slate-600",
+    card: "admin-card rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-50px_rgba(15,23,42,0.72)]",
+    panel: "admin-card rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_24px_70px_-50px_rgba(15,23,42,0.72)]",
+    input: "rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 transition focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10",
+    select: "rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/10",
+    primaryButton: "inline-flex items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition hover:bg-amber-500 hover:text-slate-950 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+    outlineButton: "inline-flex items-center justify-center rounded-xl border border-amber-500/40 bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-amber-700 transition hover:border-amber-500 hover:bg-amber-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+    neutralButton: "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-600 transition hover:border-slate-950 hover:text-slate-950 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+    destructiveButton: "inline-flex items-center justify-center rounded-xl bg-rose-600 px-5 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-rose-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+    pageTitle: "text-3xl font-black uppercase tracking-tight text-slate-950 md:text-4xl",
+    sectionTitle: "text-xl font-black uppercase tracking-tight text-slate-950",
+    label: "block text-[10px] font-black uppercase tracking-[0.26em] text-slate-500",
+    mutedText: "text-sm font-medium text-slate-500",
 };
 
 export const statusClasses = {

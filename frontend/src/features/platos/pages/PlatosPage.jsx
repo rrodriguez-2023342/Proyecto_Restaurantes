@@ -176,9 +176,10 @@ export const PlatosPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-6">
+            <div className="admin-surface rounded-lg p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
+                        <p className="admin-kicker">Produccion culinaria</p>
                         <h2 className="text-2xl font-semibold text-slate-900">Gestión de platos</h2>
                         <p className="mt-1 text-sm text-slate-600">
                             Crea, edita y administra platos por menú con la misma experiencia visual del resto.
@@ -218,7 +219,7 @@ export const PlatosPage = () => {
                                 setOpenModal(true);
                             }}
                             disabled={!selectedRestaurant || !selectedMenu}
-                            className="w-full lg:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm"
+                            className="w-full rounded-lg bg-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-amber-500 hover:text-slate-950 active:scale-95 disabled:opacity-50 lg:w-auto"
                         >
                             + Agregar plato
                         </button>

@@ -16,7 +16,7 @@ export const DateRangeFilter = ({ onFilter, isExporting, onExportCSV, onExportPD
     };
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="admin-surface rounded-2xl p-5">
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
                 <div className="grid gap-4 md:grid-cols-[minmax(0,220px)_minmax(0,220px)_auto] md:items-end">
                     <label>

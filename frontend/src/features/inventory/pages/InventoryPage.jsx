@@ -95,9 +95,10 @@ export const InventoryPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-6">
+            <div className="admin-surface rounded-lg p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
+                        <p className="admin-kicker">Control de insumos</p>
                         <h2 className="text-2xl font-semibold text-slate-900">Gestión de Inventario</h2>
                         <p className="mt-1 text-sm text-slate-600">
                             Controla los ingredientes y suministros de tu restaurante para evitar quiebres de stock.
@@ -123,7 +124,7 @@ export const InventoryPage = () => {
                                 setEditing(null);
                                 setOpenModal(true);
                             }}
-                            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 disabled:opacity-50"
+                            className="rounded-lg bg-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-amber-500 hover:text-slate-950 active:scale-95 disabled:opacity-50"
                             disabled={!selectedRestaurant}
                         >
                             + Nuevo Ingrediente

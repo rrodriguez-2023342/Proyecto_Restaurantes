@@ -185,16 +185,19 @@ export const OrdersPage = () => {
     return (
         <div className="space-y-6">
             <div className="mx-auto max-w-7xl space-y-6">
+                <div className="admin-surface rounded-lg p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
+                        <p className="admin-kicker">Operacion comercial</p>
                         <h2 className={adminTheme.pageTitle}>Gestion de Pedidos</h2>
-                        <p className="mt-1 text-sm text-slate-600">Administra todos los pedidos del sistema.</p>
+                        <p className="mt-2 text-sm font-medium text-slate-500">Administra flujo, estado e ingresos de pedidos en tiempo real.</p>
                     </div>
                     {!isAdminRestaurant && (
                         <button onClick={() => navigate("/admin/orders/create")} className={adminTheme.primaryButton}>
                             Nuevo Pedido
                         </button>
                     )}
+                </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-4">
@@ -211,7 +214,7 @@ export const OrdersPage = () => {
                     ))}
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="admin-surface rounded-lg p-5">
                     <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <h3 className="text-sm font-semibold text-slate-900">Lista de Pedidos</h3>

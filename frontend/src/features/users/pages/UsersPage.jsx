@@ -150,18 +150,21 @@ export const UsersPage = () => {
 
     return (
         <div className="space-y-6">
+            <div className="admin-surface rounded-lg p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
+                    <p className="admin-kicker">Gobierno de acceso</p>
                     <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">Gestión de Usuarios</h2>
                     <p className="mt-1 text-xs sm:text-sm text-slate-500">Administra usuarios, revisa su información y cambia roles.</p>
                 </div>
                 <button 
                     type="button" 
                     onClick={() => setOpenCreate(true)} 
-                    className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 text-white font-bold shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all active:scale-95 text-sm"
+                    className="w-full rounded-lg bg-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-amber-500 hover:text-slate-950 active:scale-95 sm:w-auto"
                 >
                     + Agregar usuario
                 </button>
+            </div>
             </div>
 
             <Card title="Búsqueda y Filtros">

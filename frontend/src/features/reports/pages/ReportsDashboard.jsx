@@ -31,18 +31,18 @@ const normalizeStats = (raw = {}) => ({
 });
 
 const MetricCard = ({ label, value, helper }) => (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-500">{label}</p>
-        <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
-        <p className="mt-2 text-sm text-slate-500">{helper}</p>
+    <div className="admin-card rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">{label}</p>
+        <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">{value}</p>
+        <p className="mt-2 text-sm font-medium text-slate-500">{helper}</p>
     </div>
 );
 
 const SectionPanel = ({ title, subtitle, children }) => (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+    <section className="admin-card overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="admin-panel-heading border-b border-slate-900 px-5 py-4">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.28em] text-white">{title}</h2>
+            <p className="mt-1 text-xs font-medium text-slate-400">{subtitle}</p>
         </div>
         <div className="p-5">{children}</div>
     </section>
@@ -115,12 +115,13 @@ export const ReportsDashboard = () => {
 
     return (
         <div className="space-y-6 pb-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="admin-surface rounded-2xl p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
+                    <p className="admin-kicker">Inteligencia comercial</p>
                     <h2 className={adminTheme.pageTitle}>Reportes</h2>
-                    <p className="mt-1 text-sm text-slate-600">Consulta ingresos, pedidos, propinas y productos destacados.</p>
+                    <p className="mt-2 text-sm font-medium text-slate-500">Consulta ingresos, pedidos, propinas y productos destacados.</p>
                 </div>
-                <span className="w-fit rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+                <span className="w-fit rounded-full bg-slate-950 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">
                     {selectedRange}
                 </span>
             </div>

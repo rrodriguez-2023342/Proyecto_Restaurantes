@@ -22,7 +22,7 @@ const getCount = (res, key) => {
 const formatCurrency = (value) => `Q${Number(value || 0).toLocaleString("es-GT", { minimumFractionDigits: 2 })}`;
 
 const StatIcon = ({ path }) => (
-    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+    <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600">
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={path} />
         </svg>
@@ -114,11 +114,45 @@ export const AdminDashboard = () => {
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 pb-10">
+            <section className="relative overflow-hidden rounded-lg bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.18),transparent_34%)]" />
+                <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(90deg,#fff_1px,transparent_1px),linear-gradient(#fff_1px,transparent_1px)] [background-size:48px_48px]" />
+                <div className="relative grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
+                    <div className="space-y-5">
+                        <div className="flex items-center gap-4">
+                            <div className="h-px w-12 bg-amber-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-amber-400">KinalEats Operations</span>
+                        </div>
+                        <div>
+                            <h2 className="max-w-3xl text-4xl font-black uppercase leading-none tracking-tight md:text-6xl">
+                                Centro de control
+                            </h2>
+                            <p className="mt-5 max-w-2xl text-sm font-medium leading-relaxed text-slate-400">
+                                Monitorea restaurantes, ventas, pedidos y actividad operativa desde una vista ejecutiva preparada para decisiones rapidas.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-5 backdrop-blur">
+                        <p className="text-[10px] font-black uppercase tracking-[0.34em] text-white/40">Pulso actual</p>
+                        <div className="mt-5 grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-3xl font-black text-white">{stats.orders}</p>
+                                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-amber-400">Pedidos</p>
+                            </div>
+                            <div>
+                                <p className="text-3xl font-black text-white">{formatCurrency(stats.revenue)}</p>
+                                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-amber-400">Ingresos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h2 className={adminTheme.pageTitle}>Dashboard</h2>
-                    <p className="mt-1 text-sm text-slate-600">Resumen operativo de pedidos, restaurantes y ventas.</p>
+                    <p className="admin-kicker">Resumen ejecutivo</p>
+                    <h2 className={adminTheme.pageTitle}>Indicadores</h2>
                 </div>
                 <button type="button" onClick={fetchStats} className={adminTheme.primaryButton}>
                     {loading ? "Actualizando..." : "Actualizar datos"}
@@ -127,11 +161,11 @@ export const AdminDashboard = () => {
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {statCards.map((item) => (
-                    <Card key={item.label}>
+                    <Card key={item.label} accent>
                         <div className="flex items-start justify-between gap-4">
                             <div>
-                                <p className="text-sm text-slate-500">{item.label}</p>
-                                <p className="mt-2 text-2xl font-bold text-slate-900">{loading ? "..." : item.value}</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">{item.label}</p>
+                                <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">{loading ? "..." : item.value}</p>
                             </div>
                             <StatIcon path={item.icon} />
                         </div>
@@ -145,9 +179,9 @@ export const AdminDashboard = () => {
                     ["Resenas recientes", stats.reviews, "/admin/reviews"],
                     ["Reportes", "Ver metricas", "/admin/reports"],
                 ].map(([label, value, to]) => (
-                    <Link key={label} to={to} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40">
-                        <p className="text-sm font-semibold text-slate-900">{label}</p>
-                        <p className="mt-2 text-sm text-slate-500">{value}</p>
+                    <Link key={label} to={to} className="group rounded-lg border border-slate-200 bg-white p-5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.45)] transition hover:border-amber-300 hover:bg-amber-50/40">
+                        <p className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-400 group-hover:text-amber-600">{label}</p>
+                        <p className="mt-3 text-lg font-black text-slate-950">{value}</p>
                     </Link>
                 ))}
             </div>

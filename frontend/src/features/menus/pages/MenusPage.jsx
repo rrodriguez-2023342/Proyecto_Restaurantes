@@ -115,9 +115,10 @@ export const MenusPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-6">
+            <div className="admin-surface rounded-lg p-6">
                 <div className="flex items-center justify-between">
                     <div>
+                        <p className="admin-kicker">Catalogo comercial</p>
                         <h2 className="text-2xl font-semibold text-slate-900">Menús y platos</h2>
                         <p className="mt-1 text-sm text-slate-600">
                             Organiza menús por restaurante y agrega platos destacados.
@@ -128,7 +129,7 @@ export const MenusPage = () => {
                             setEditing(null);
                             setOpenModal(true);
                         }}
-                        className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2 text-white font-medium hover:shadow-lg transition-shadow"
+                        className="rounded-lg bg-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white shadow-lg shadow-slate-900/10 transition hover:bg-amber-500 hover:text-slate-950"
                     >
                         + Agregar menú
                     </button>

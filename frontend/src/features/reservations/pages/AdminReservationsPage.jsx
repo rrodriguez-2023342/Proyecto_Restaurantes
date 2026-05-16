@@ -6,6 +6,7 @@ import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { useTableStore } from "../../tables/store/useTableStore";
 import { ReservationFormModal } from "../components/ReservationFormModal";
 import { ReservationStatusBadge } from "../components/ReservationStatusBadge";
+import { adminTheme } from "../../../constants/theme";
 
 const getRelationId = (value) => {
     if (!value) return "";
@@ -195,13 +196,14 @@ export const AdminReservationsPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">Gestión de Reservaciones</h1>
-                <p className="text-slate-600">Administra todas las reservaciones del sistema</p>
+            <div className="admin-surface rounded-2xl p-6">
+                <p className="admin-kicker">Agenda operativa</p>
+                <h1 className={adminTheme.pageTitle}>Gestión de Reservaciones</h1>
+                <p className="mt-2 text-sm font-medium text-slate-500">Administra ocupación, mesas y estados por restaurante.</p>
             </div>
 
             {/* Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+            <div className="admin-surface rounded-2xl p-6 space-y-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div className="flex-1 w-full md:w-auto">
                         <Input
@@ -216,7 +218,7 @@ export const AdminReservationsPage = () => {
                     </div>
                     <button
                         onClick={() => handleOpenModal()}
-                        className="flex h-11 w-full items-center justify-center rounded-lg bg-amber-500 px-6 text-sm font-medium text-white transition hover:bg-amber-600 md:w-auto"
+                        className={`${adminTheme.primaryButton} h-12 w-full md:w-auto`}
                     >
                         + Nueva Reservación
                     </button>
@@ -234,7 +236,7 @@ export const AdminReservationsPage = () => {
                                 setFilterStatus(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className={`w-full ${adminTheme.select}`}
                         >
                             <option value="">Todos los estados</option>
                             <option value="PENDIENTE">Pendiente</option>
@@ -251,7 +253,7 @@ export const AdminReservationsPage = () => {
                         <select
                             value={filterRestaurant}
                             onChange={(e) => handleRestaurantFilterChange(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className={`w-full ${adminTheme.select}`}
                         >
                             <option value="">Todos los restaurantes</option>
                             {restaurants.map((r) => (
@@ -266,7 +268,7 @@ export const AdminReservationsPage = () => {
 
             {/* Results */}
             {!filterRestaurant ? (
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="admin-surface rounded-2xl p-6">
                     {loading ? (
                         <div className="flex justify-center items-center h-64">
                             <Spinner className="h-12 w-12 text-amber-500" />
@@ -280,7 +282,7 @@ export const AdminReservationsPage = () => {
                             {restaurantSummaries.map((summary) => (
                                 <div
                                     key={summary.id}
-                                    className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                                    className="admin-card rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1"
                                 >
                                     <div className="flex items-start justify-between gap-3 mb-4">
                                         <div>
@@ -291,27 +293,27 @@ export const AdminReservationsPage = () => {
                                                 {summary.total} reservaciones
                                             </p>
                                         </div>
-                                        <span className="rounded bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+                                        <span className="rounded-xl bg-slate-950 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-300">
                                             Total {summary.total}
                                         </span>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="rounded border border-yellow-200 bg-yellow-50 p-3">
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                                             <p className="text-xs font-semibold uppercase text-yellow-700">Pendientes</p>
                                             <p className="text-2xl font-bold text-yellow-900">{summary.PENDIENTE}</p>
                                         </div>
-                                        <div className="rounded border border-blue-200 bg-blue-50 p-3">
-                                            <p className="text-xs font-semibold uppercase text-blue-700">Confirmadas</p>
-                                            <p className="text-2xl font-bold text-blue-900">{summary.CONFIRMADA}</p>
+                                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                            <p className="text-xs font-semibold uppercase text-slate-600">Confirmadas</p>
+                                            <p className="text-2xl font-bold text-slate-950">{summary.CONFIRMADA}</p>
                                         </div>
-                                        <div className="rounded border border-emerald-200 bg-emerald-50 p-3">
+                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                                             <p className="text-xs font-semibold uppercase text-emerald-700">Completas</p>
                                             <p className="text-2xl font-bold text-emerald-900">{summary.COMPLETADA}</p>
                                         </div>
-                                        <div className="rounded border border-red-200 bg-red-50 p-3">
-                                            <p className="text-xs font-semibold uppercase text-red-700">Canceladas</p>
-                                            <p className="text-2xl font-bold text-red-900">{summary.CANCELADA}</p>
+                                        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3">
+                                            <p className="text-xs font-semibold uppercase text-rose-700">Canceladas</p>
+                                            <p className="text-2xl font-bold text-rose-900">{summary.CANCELADA}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -320,7 +322,7 @@ export const AdminReservationsPage = () => {
                     )}
                 </div>
             ) : (
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="admin-card rounded-2xl bg-white overflow-hidden">
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
                         <Spinner className="h-12 w-12 text-amber-500" />
@@ -333,29 +335,29 @@ export const AdminReservationsPage = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50">
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                <tr className="border-b border-slate-800 bg-slate-950">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Usuario
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Restaurante
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Mesa
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Fecha
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Personas
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Estado
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase">
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-300 uppercase tracking-[0.24em]">
                                         Acciones
                                     </th>
                                 </tr>
@@ -364,7 +366,7 @@ export const AdminReservationsPage = () => {
                                 {paginatedReservations.map((reservation) => (
                                     <tr
                                         key={reservation._id || reservation.id}
-                                        className="border-b border-slate-200 hover:bg-slate-50 transition"
+                                        className="border-b border-slate-100 hover:bg-amber-50/60 transition"
                                     >
                                         <td className="px-6 py-4 text-sm text-slate-600">
                                             {(reservation._id || reservation.id)?.slice(-6)}
@@ -395,13 +397,13 @@ export const AdminReservationsPage = () => {
                                                         getRelationId(reservation.restaurante)
                                                     )
                                                 }
-                                                className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+                                                className="rounded-lg border border-amber-500/30 bg-white px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
                                             >
                                                 Editar
                                             </button>
                                             <button
                                                 onClick={() => setDeleteConfirm(reservation)}
-                                                className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
+                                                className="rounded-lg bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-700"
                                             >
                                                 Eliminar
                                             </button>
@@ -419,7 +421,7 @@ export const AdminReservationsPage = () => {
                                     type="button"
                                     onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                                     disabled={safeCurrentPage === 1}
-                                    className="px-3 py-1.5 rounded border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={adminTheme.neutralButton}
                                 >
                                     Anterior
                                 </button>
@@ -430,7 +432,7 @@ export const AdminReservationsPage = () => {
                                     type="button"
                                     onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                                     disabled={safeCurrentPage === totalPages}
-                                    className="px-3 py-1.5 rounded border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={adminTheme.neutralButton}
                                 >
                                     Siguiente
                                 </button>
@@ -472,14 +474,14 @@ export const AdminReservationsPage = () => {
                 <DialogFooter>
                     <button
                         onClick={() => setDeleteConfirm(null)}
-                        className="px-4 py-2 mr-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                        className={`${adminTheme.neutralButton} mr-2`}
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleDelete}
                         disabled={saving}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                        className={adminTheme.destructiveButton}
                     >
                         {saving ? "Eliminando..." : "Eliminar"}
                     </button>

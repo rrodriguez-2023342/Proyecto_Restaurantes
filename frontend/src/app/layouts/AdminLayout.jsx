@@ -36,10 +36,10 @@ const pageTitles = [...navItems, ...secondaryNavItems].reduce((acc, item) => {
 }, {});
 
 const linkClass = ({ isActive }) => {
-    const base = "flex items-center gap-3 border-l-4 px-4 py-2.5 text-sm font-medium transition";
+    const base = "group mx-3 flex items-center gap-3 rounded-lg border border-transparent px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] transition";
     return isActive
-        ? `${base} border-orange-500 bg-orange-50 text-orange-700`
-        : `${base} border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900`;
+        ? `${base} border-amber-500/30 bg-white text-slate-950 shadow-lg shadow-slate-950/10`
+        : `${base} text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-white`;
 };
 
 export const AdminLayout = () => {
@@ -64,43 +64,44 @@ export const AdminLayout = () => {
     const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
     return (
-        <PrincipalContainer className="h-screen overflow-hidden bg-slate-50">
+        <PrincipalContainer className="admin-shell h-screen overflow-hidden bg-slate-50">
             <div className="flex h-screen min-h-0 overflow-hidden">
-                {/* Overlay para móvil */}
                 {isMobileMenuOpen && (
-                    <div 
-                        className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+                    <div
+                        className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
                         onClick={toggleMobileMenu}
                     />
                 )}
 
-                {/* Sidebar */}
                 <aside className={`
-                    fixed inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:flex lg:flex-col lg:translate-x-0
-                    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                    fixed inset-y-0 left-0 z-50 w-72 shrink-0 border-r border-white/10 bg-slate-950 text-white transition-transform duration-300 lg:static lg:flex lg:flex-col lg:translate-x-0
+                    ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
                 `}>
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5">
-                        <div className="flex items-center gap-3">
-                            <img src={logo} alt="KinalEats logo" className="h-11 w-11 rounded-full object-cover shadow-sm" />
-                            <div>
-                                <p className="text-lg font-extrabold tracking-tight text-orange-600">KinalEats</p>
-                                <p className="text-xs font-medium text-slate-500">Admin Panel</p>
+                    <div className="relative overflow-hidden border-b border-white/10 px-6 py-6">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_35%)]" />
+                        <div className="relative flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <img src={logo} alt="KinalEats logo" className="h-12 w-12 object-contain" />
+                                <div>
+                                    <p className="text-sm font-black uppercase tracking-[0.2em] text-white">Kinal<span className="text-amber-500">Eats</span></p>
+                                    <p className="mt-1 text-[8px] font-black uppercase tracking-[0.32em] text-amber-500/80">Operations Suite</p>
+                                </div>
                             </div>
+                            <button onClick={toggleMobileMenu} className="rounded-lg p-2 text-white/50 hover:bg-white/10 hover:text-white lg:hidden">
+                                X
+                            </button>
                         </div>
-                        <button onClick={toggleMobileMenu} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
-                            ✕
-                        </button>
                     </div>
 
-                    <nav className="custom-scrollbar flex-1 space-y-6 overflow-y-auto py-5">
+                    <nav className="custom-scrollbar flex-1 space-y-8 overflow-y-auto py-6">
                         <div>
-                            <p className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Principal</p>
-                            <div className="space-y-1">
+                            <p className="mb-3 px-6 text-[9px] font-black uppercase tracking-[0.42em] text-amber-500/70">Principal</p>
+                            <div className="space-y-1.5">
                                 {visibleNavItems.map((item) => (
-                                    <NavLink 
-                                        key={item.to} 
-                                        to={item.to} 
-                                        className={linkClass} 
+                                    <NavLink
+                                        key={item.to}
+                                        to={item.to}
+                                        className={linkClass}
                                         end={item.to === "/admin"}
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
@@ -111,12 +112,12 @@ export const AdminLayout = () => {
                             </div>
                         </div>
                         <div>
-                            <p className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Operacion</p>
-                            <div className="space-y-1">
+                            <p className="mb-3 px-6 text-[9px] font-black uppercase tracking-[0.42em] text-amber-500/70">Operacion</p>
+                            <div className="space-y-1.5">
                                 {visibleSecondaryNavItems.map((item) => (
-                                    <NavLink 
-                                        key={item.to} 
-                                        to={item.to} 
+                                    <NavLink
+                                        key={item.to}
+                                        to={item.to}
                                         className={linkClass}
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
@@ -128,44 +129,50 @@ export const AdminLayout = () => {
                         </div>
                     </nav>
 
-                    <div className="border-t border-slate-100 p-4">
+                    <div className="border-t border-white/10 p-5">
+                        <div className="mb-4 rounded-lg border border-white/10 bg-white/5 p-4">
+                            <p className="text-[9px] font-black uppercase tracking-[0.34em] text-white/35">Sesion activa</p>
+                            <p className="mt-2 text-xs font-black uppercase tracking-[0.18em] text-amber-400">
+                                {userRole === "ADMIN_ROLE" ? "Administrador global" : "Administrador restaurante"}
+                            </p>
+                        </div>
                         <UserProfileDropdown align="left" placement="up" />
                         <button
                             type="button"
                             onClick={handleLogout}
-                            className="mt-4 w-full rounded-xl border border-orange-500/30 bg-white px-3 py-2 text-sm font-semibold text-orange-600 transition hover:bg-orange-50"
+                            className="mt-4 w-full rounded-lg border border-amber-500/30 bg-amber-500 px-3 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-950 transition hover:bg-white"
                         >
                             Cerrar sesion
                         </button>
                     </div>
                 </aside>
 
-                <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-50">
-                    <header className="shrink-0 border-b border-slate-200 bg-white">
-                        <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
+                <section className="admin-workspace flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <header className="shrink-0 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+                        <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-8">
                             <div className="flex items-center gap-3">
-                                <button 
+                                <button
                                     onClick={toggleMobileMenu}
-                                    className="rounded-xl border border-slate-200 p-2 text-slate-500 lg:hidden"
+                                    className="rounded-lg border border-slate-200 p-2 text-slate-500 lg:hidden"
                                 >
                                     <Icon path="M4 6h16M4 12h16M4 18h16" />
                                 </button>
                                 <div>
-                                    <h1 className="text-lg font-semibold text-slate-900 sm:text-xl leading-none">{pageTitle}</h1>
-                                    <p className="hidden sm:block text-xs text-slate-500 mt-1">Gestion centralizada en tiempo real.</p>
+                                    <p className="admin-kicker hidden sm:block">Panel empresarial</p>
+                                    <h1 className="mt-1 text-xl font-black uppercase tracking-tight text-slate-950 sm:text-2xl leading-none">{pageTitle}</h1>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 sm:gap-3">
-                                <button className="hidden rounded-xl border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 sm:inline-flex" title="Notificaciones">
+                                <button className="hidden rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600 sm:inline-flex" title="Notificaciones">
                                     <Icon path="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0" />
                                 </button>
                                 <UserProfileDropdown compact />
                             </div>
                         </div>
                     </header>
-                    <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+                    <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">
                         <Outlet />
-                    </div>
+                    </main>
                 </section>
             </div>
         </PrincipalContainer>
