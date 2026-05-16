@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, EmptyState } from "../../../shared/components";
+import { getAllowedRestaurantIds, getOwnedRestaurants, isRestaurantAdmin } from "../../../shared/utils/restaurantAccess";
 import { showError, showSuccess } from "../../../shared/utils/toast";
+import { useAuthStore } from "../../auth/store/authStore";
+import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { InventoryForm } from "../components/InventoryForm.jsx";
 import { useInventoryStore } from "../store/useInventoryStore";
-import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 
 export const InventoryPage = () => {
-    const { inventarios, loading, fetchInventarios, createItem, updateItem, deleteItem } = useInventoryStore();
+    const { inventarios, loading, fetchInventarios, createItem, updateItem, deleteItem, clearInventarios } = useInventoryStore();
     const { restaurants, fetchRestaurants } = useRestaurantStore();
+    const user = useAuthStore((state) => state.user);
+    const isAdminRestaurant = isRestaurantAdmin(user);
     const [selectedRestaurant, setSelectedRestaurant] = useState("");
     const [openModal, setOpenModal] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -28,10 +32,32 @@ export const InventoryPage = () => {
         loadInitialData();
     }, [fetchRestaurants]);
 
+    const availableRestaurants = useMemo(
+        () => getOwnedRestaurants(user, restaurants),
+        [restaurants, user]
+    );
+
+    const allowedRestaurantIds = useMemo(
+        () => getAllowedRestaurantIds(user, restaurants),
+        [restaurants, user]
+    );
+
     useEffect(() => {
-        if (!selectedRestaurant) return;
+        if (!isAdminRestaurant) return;
+
+        const onlyRestaurantId = allowedRestaurantIds[0] || (availableRestaurants.length === 1 ? availableRestaurants[0]._id || availableRestaurants[0].id : "");
+        if (onlyRestaurantId && selectedRestaurant !== onlyRestaurantId) {
+            setSelectedRestaurant(onlyRestaurantId);
+        }
+    }, [allowedRestaurantIds, availableRestaurants, isAdminRestaurant, selectedRestaurant]);
+
+    useEffect(() => {
+        if (!selectedRestaurant) {
+            clearInventarios();
+            return;
+        }
         fetchInventarios(1, 50, selectedRestaurant).catch(() => showError("No se pudo cargar el inventario"));
-    }, [fetchInventarios, selectedRestaurant]);
+    }, [clearInventarios, fetchInventarios, selectedRestaurant]);
 
     const handleSubmit = async (values) => {
         try {
@@ -81,10 +107,12 @@ export const InventoryPage = () => {
                         <select
                             value={selectedRestaurant}
                             onChange={(e) => setSelectedRestaurant(e.target.value)}
+                            disabled={isAdminRestaurant && availableRestaurants.length <= 1}
                             className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-orange-400 focus:outline-none"
                         >
-                            <option value="">Selecciona un restaurante</option>
-                            {restaurants.map((rest) => (
+                            {!isAdminRestaurant && <option value="">Selecciona un restaurante</option>}
+                            {isAdminRestaurant && !availableRestaurants.length && <option value="">Sin restaurante asignado</option>}
+                            {availableRestaurants.map((rest) => (
                                 <option key={rest._id || rest.id} value={rest._id || rest.id}>
                                     {rest.nombre}
                                 </option>
@@ -132,7 +160,7 @@ export const InventoryPage = () => {
                                 onSubmit={handleSubmit}
                                 isEditing={!!editing}
                                 isLoading={modalLoading}
-                                restaurants={restaurants}
+                                restaurants={availableRestaurants}
                             />
                         </div>
                     </div>
@@ -194,7 +222,7 @@ export const InventoryPage = () => {
             ) : (
                 <EmptyState
                     title={!selectedRestaurant ? "Selecciona un restaurante" : "Inventario vacío"}
-                    description={!selectedRestaurant ? "Elige un restaurante arriba para gestionar su inventario." : "No hay ingredientes registrados aún para este restaurante."} 
+                    description={!selectedRestaurant ? "No hay un restaurante asignado para consultar inventario." : "No hay ingredientes registrados aún para este restaurante."} 
                 />
             )}
         </div>

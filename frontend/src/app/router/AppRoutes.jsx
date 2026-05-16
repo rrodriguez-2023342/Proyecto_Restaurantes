@@ -18,7 +18,6 @@ import { PlatosPage } from "../../features/platos/pages/PlatosPage.jsx";
 import { ReviewsPage } from "../../features/reviews/pages/ReviewsPage.jsx";
 
 import { UsersPage } from "../../features/users/pages/UsersPage.jsx";
-import { StatisticsPage } from "../../features/dashboard/pages/StatisticsPage.jsx";
 import { ResetPasswordPage } from "../../features/auth/pages/ResetPasswordPage.jsx";
 import { OrdersPage } from "../../features/orders/pages/OrdersPage.jsx";
 import { CreateOrderPage } from "../../features/orders/pages/CreateOrderPage.jsx";
@@ -67,8 +66,14 @@ export const AppRoutes = () => {
                 <Route path="/admin/menus" element={<MenusPage />} />
                 <Route path="/admin/platos" element={<PlatosPage />} />
                 <Route path="/admin/reviews" element={<ReviewsPage />} />
-                <Route path="/admin/users" element={<UsersPage />} />
-                <Route path="/admin/stats" element={<StatisticsPage />} />
+                <Route
+                    path="/admin/users"
+                    element={
+                        <RoleGuard allowedRoles={["ADMIN_ROLE"]}>
+                            <UsersPage />
+                        </RoleGuard>
+                    }
+                />
                 <Route path="/admin/orders" element={<OrdersPage />} />
                 <Route path="/admin/orders/create" element={<CreateOrderPage />} />
                 <Route path="/admin/orders/:id" element={<OrderDetail />} />
@@ -101,7 +106,6 @@ export const AppRoutes = () => {
                 <Route path="/reservaciones/crear" element={<CreateReservationPage />} />
                 <Route path="/reservaciones/modificar/:reservationId" element={<CreateReservationPage />} />
                 <Route path="/home/orders/:id" element={<UserOrderDetail />} />
-                <Route path="/home/stats" element={<StatisticsPage />} />
                 <Route path="/home/invoices" element={<InvoicesPage />} />
                 <Route path="/home/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/home/checkout" element={<CheckoutPage />} />

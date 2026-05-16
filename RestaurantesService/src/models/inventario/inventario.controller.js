@@ -44,7 +44,7 @@ export const createInventario = async (req, res) => {
 
 export const getInventarios = async (req, res) => {
     try {
-        const { page = 1, limit = 10} = req.query;
+        const { page = 1, limit = 10, restaurante } = req.query;
         let query = {};
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
@@ -56,6 +56,8 @@ export const getInventarios = async (req, res) => {
                 });
             }
             query.restaurante = adminRestaurantId;
+        } else if (restaurante) {
+            query.restaurante = restaurante;
         }
 
         const [inventarios, total] = await Promise.all([

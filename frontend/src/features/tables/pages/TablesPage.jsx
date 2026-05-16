@@ -32,6 +32,12 @@ export const TablesPage = () => {
     }, [fetchRestaurants]);
 
     useEffect(() => {
+        if (!selectedRestaurant && restaurants.length === 1) {
+            setSelectedRestaurant(restaurants[0]._id || restaurants[0].id);
+        }
+    }, [restaurants, selectedRestaurant]);
+
+    useEffect(() => {
         if (selectedRestaurant) {
             fetchRestaurantTables(selectedRestaurant);
         }

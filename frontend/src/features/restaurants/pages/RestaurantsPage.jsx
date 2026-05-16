@@ -3,6 +3,7 @@ import { BadgeEstado, Card, EmptyState } from "../../../shared/components";
 import { showError, showSuccess } from "../../../shared/utils/toast";
 import { RestaurantForm } from "../components/RestaurantForm.jsx";
 import { useRestaurantStore } from "../store/useRestaurantStore";
+import { useAuthStore } from "../../auth/store/authStore";
 import { getUsersByRole } from "../../../shared/api/users";
 import { 
     LayoutDashboard, 
@@ -47,6 +48,8 @@ const mapPayload = (values) => {
 
 export const RestaurantsPage = () => {
     const { restaurants, loading, fetchRestaurants, createRestaurant: storeCreate, updateRestaurant: storeUpdate, deleteRestaurant: storeDelete } = useRestaurantStore();
+    const userRole = useAuthStore((state) => state.user?.role);
+    const isSuperAdmin = userRole === "ADMIN_ROLE";
     const [openModal, setOpenModal] = useState(false);
     const [editing, setEditing] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
@@ -57,6 +60,7 @@ export const RestaurantsPage = () => {
     useEffect(() => {
         fetchRestaurants();
         (async () => {
+            if (!isSuperAdmin) return;
             try {
                 const [ownerRes, adminRes] = await Promise.allSettled([
                     getUsersByRole('ADMIN_RESTAURANT_ROLE'),
@@ -69,7 +73,7 @@ export const RestaurantsPage = () => {
                 setOwners(unique);
             } catch (e) { /* ignore */ }
         })();
-    }, []);
+    }, [fetchRestaurants, isSuperAdmin]);
 
     const filteredRestaurants = restaurants.filter(r => 
         r.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,6 +88,10 @@ export const RestaurantsPage = () => {
                 await storeUpdate(editing._id || editing.id, payload);
                 showSuccess("Restaurante actualizado con éxito");
             } else {
+                if (!isSuperAdmin) {
+                    showError("Solo un administrador puede crear restaurantes");
+                    return;
+                }
                 await storeCreate(payload);
                 showSuccess("Nuevo restaurante registrado");
             }
@@ -118,9 +126,9 @@ export const RestaurantsPage = () => {
     };
 
     const stats = {
-        total: restaurants.length,
-        active: restaurants.filter(r => r.isActive).length,
-        inactive: restaurants.filter(r => !r.isActive).length
+        total: filteredRestaurants.length,
+        active: filteredRestaurants.filter(r => r.isActive).length,
+        inactive: filteredRestaurants.filter(r => !r.isActive).length
     };
 
     return (
@@ -157,13 +165,15 @@ export const RestaurantsPage = () => {
                                 <p className="text-2xl font-black text-white leading-none">{stats.inactive}</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => { setEditing(null); setOpenModal(true); }}
-                            className="flex items-center gap-3 rounded-2xl bg-orange-500 px-8 py-4 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
-                        >
-                            <Plus size={20} strokeWidth={3} />
-                            Nuevo Registro
-                        </button>
+                        {isSuperAdmin && (
+                            <button
+                                onClick={() => { setEditing(null); setOpenModal(true); }}
+                                className="flex items-center gap-3 rounded-2xl bg-orange-500 px-8 py-4 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
+                            >
+                                <Plus size={20} strokeWidth={3} />
+                                Nuevo Registro
+                            </button>
+                        )}
                     </div>
                 </div>
             </section>
@@ -185,7 +195,7 @@ export const RestaurantsPage = () => {
             </div>
 
             {/* ── MODAL SYSTEM ── */}
-            {openModal && (
+            {openModal && (editing || isSuperAdmin) && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-white shadow-2xl animate-in zoom-in-95 duration-300">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50">
@@ -294,12 +304,14 @@ export const RestaurantsPage = () => {
                                             <Eye size={14} />
                                             Ficha Técnica
                                         </button>
-                                        <button
-                                            onClick={() => handleDelete(restaurant)}
-                                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-300 hover:text-rose-500 hover:bg-rose-50 border border-slate-100 transition-all active:scale-75"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                        {isSuperAdmin && (
+                                            <button
+                                                onClick={() => handleDelete(restaurant)}
+                                                className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-300 hover:text-rose-500 hover:bg-rose-50 border border-slate-100 transition-all active:scale-75"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -309,9 +321,9 @@ export const RestaurantsPage = () => {
             ) : (
                 <EmptyState 
                     title="No hay registros activos" 
-                    description="Comienza por crear el primer restaurante de la red para que los usuarios puedan descubrirlo." 
-                    actionLabel="+ Nuevo Restaurante"
-                    onAction={() => { setEditing(null); setOpenModal(true); }}
+                    description={isSuperAdmin ? "Comienza por crear el primer restaurante de la red para que los usuarios puedan descubrirlo." : "No tienes restaurantes asignados todavia."}
+                    actionLabel={isSuperAdmin ? "+ Nuevo Restaurante" : undefined}
+                    onAction={isSuperAdmin ? () => { setEditing(null); setOpenModal(true); } : undefined}
                 />
             )}
 

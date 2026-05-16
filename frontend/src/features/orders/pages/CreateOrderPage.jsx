@@ -22,6 +22,7 @@ export const CreateOrderPage = () => {
         register,
         handleSubmit,
         control,
+        setValue,
         formState: { errors },
     } = useForm({
         defaultValues: {
@@ -63,6 +64,11 @@ export const CreateOrderPage = () => {
                 const { data } = await getRestaurants();
                 const restData = data?.data || data?.restaurantes || data || [];
                 setRestaurants(Array.isArray(restData) ? restData : []);
+                if (Array.isArray(restData) && restData.length === 1) {
+                    const restaurantId = restData[0]._id || restData[0].id;
+                    setSelectedRestaurant(restaurantId);
+                    setValue("restaurante", restaurantId);
+                }
                 if (!restData || restData.length === 0) {
                     showError("No hay restaurantes disponibles");
                 }
@@ -73,7 +79,7 @@ export const CreateOrderPage = () => {
             }
         };
         loadRestaurants();
-    }, []);
+    }, [setValue]);
 
     useEffect(() => {
         if (!selectedRestaurant) {

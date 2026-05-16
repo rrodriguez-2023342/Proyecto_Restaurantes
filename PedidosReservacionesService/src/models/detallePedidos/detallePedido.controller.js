@@ -107,6 +107,14 @@ export const createDetallePedido = async (req, res) => {
             });
         }
 
+        const access = await canViewDetallePedido(req.usuario, pedidoExistente);
+        if (!access.allowed) {
+            return res.status(403).json({
+                success: false,
+                message: access.message,
+            });
+        }
+
         const detalleExistente = await DetallePedido.findOne({ pedido });
         if (detalleExistente) {
             return res.status(400).json({
@@ -244,16 +252,55 @@ export const createDetallePedido = async (req, res) => {
 
 export const getDetallesPedidos = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, restaurante } = req.query;
+        let pedidoFilter = {};
+
+        if (req.usuario?.role === 'USER_ROLE') {
+            const userId = getAuthUserId(req.usuario);
+            const userEmail = String(req.usuario?.email || '').trim();
+            pedidoFilter = userEmail
+                ? {
+                    $or: [
+                        { usuario: userId },
+                        { email: { $regex: new RegExp(`^${userEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+                    ],
+                }
+                : { usuario: userId };
+        }
+
+        if (req.usuario?.role === 'ADMIN_RESTAURANT_ROLE') {
+            let adminRestaurantId = req.usuario?.restaurante ? String(req.usuario.restaurante) : null;
+            if (!adminRestaurantId) {
+                const restaurante = await Restaurante.findOne({ dueño: getAuthUserId(req.usuario) }).select('_id').lean();
+                adminRestaurantId = restaurante?._id ? String(restaurante._id) : null;
+            }
+
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado',
+                });
+            }
+
+            pedidoFilter.restaurante = adminRestaurantId;
+        } else if (restaurante) {
+            pedidoFilter.restaurante = restaurante;
+        }
+
+        const allowedPedidos = await Pedido.find(pedidoFilter).select('_id').lean();
+        const allowedPedidoIds = allowedPedidos.map((pedido) => pedido._id);
+        const detailFilter = req.usuario?.role === 'ADMIN_ROLE'
+            ? {}
+            : { pedido: { $in: allowedPedidoIds } };
 
         const [detalles, total] = await Promise.all([
-            DetallePedido.find()
-                .populate('pedido', 'tipoPedido estadoPedido totalPedido')
+            DetallePedido.find(detailFilter)
+                .populate('pedido', 'numeroPedido tipoPedido estadoPedido totalPedido restaurante')
                 .populate('items.plato', 'nombrePlato precio')
                 .limit(limit * 1)
                 .skip((page - 1) * limit)
                 .sort({ createdAt: -1 }),
-            DetallePedido.countDocuments(),
+            DetallePedido.countDocuments(detailFilter),
         ]);
 
         const orphanDetailIds = detalles
@@ -384,6 +431,14 @@ export const updateDetallePedido = async (req, res) => {
             });
         }
 
+        const access = await canViewDetallePedido(req.usuario, detalle.pedido);
+        if (!access.allowed) {
+            return res.status(403).json({
+                success: false,
+                message: access.message,
+            });
+        }
+
         const itemsConPrecio = [];
         for (const item of items) {
             const platoObj = await Plato.findById(item.plato).lean();
@@ -441,6 +496,14 @@ export const deleteDetallePedido = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 message: 'Solo el usuario que creo el pedido puede eliminar el detalle',
+            });
+        }
+
+        const access = await canViewDetallePedido(req.usuario, detalle.pedido);
+        if (!access.allowed) {
+            return res.status(403).json({
+                success: false,
+                message: access.message,
             });
         }
 

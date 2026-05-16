@@ -64,6 +64,12 @@ export const UsersPage = () => {
 
     const handleUpdateUser = async (userId, payload) => {
         try {
+            const target = users.find((user) => user.id === userId || user._id === userId);
+            const isCurrentUser = userId === currentUser?.id || userId === currentUser?._id;
+            if (target?.role === "ADMIN_ROLE" && !isCurrentUser) {
+                showError("No puedes editar a otro administrador");
+                return false;
+            }
             await useUserStore.getState().updateUser(userId, payload);
             showSuccess("Usuario actualizado");
             setSelectedUser(null);
@@ -78,6 +84,10 @@ export const UsersPage = () => {
         const userId = user.id || user._id;
         if (userId === currentUser?.id) {
             showError("No puedes eliminarte a ti mismo");
+            return;
+        }
+        if (user.role === "ADMIN_ROLE") {
+            showError("No puedes eliminar a otro administrador");
             return;
         }
         if (!confirm(`Estas seguro de eliminar a ${getFullName(user)}?`)) return;
@@ -109,18 +119,32 @@ export const UsersPage = () => {
         {
             key: "actions",
             header: "Acciones",
-            render: (user) => (
-                <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setSelectedUser(user)} className="rounded-lg border border-orange-500/30 bg-white px-3 py-1 text-xs font-semibold text-orange-600 transition hover:bg-orange-50">
-                        Editar
-                    </button>
-                    {(user.id !== currentUser?.id && user._id !== currentUser?.id) && (
-                        <button type="button" onClick={() => handleDelete(user)} className="rounded-lg bg-rose-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-600">
-                            Eliminar
+            render: (user) => {
+                const userId = user.id || user._id;
+                const isCurrentUser = userId === currentUser?.id || userId === currentUser?._id;
+                const isProtectedAdmin = user.role === "ADMIN_ROLE" && !isCurrentUser;
+
+                if (isProtectedAdmin) {
+                    return (
+                        <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                            Administrador protegido
+                        </span>
+                    );
+                }
+
+                return (
+                    <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => setSelectedUser(user)} className="rounded-lg border border-orange-500/30 bg-white px-3 py-1 text-xs font-semibold text-orange-600 transition hover:bg-orange-50">
+                            Editar
                         </button>
-                    )}
-                </div>
-            ),
+                        {!isCurrentUser && (
+                            <button type="button" onClick={() => handleDelete(user)} className="rounded-lg bg-rose-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-600">
+                                Eliminar
+                            </button>
+                        )}
+                    </div>
+                );
+            },
         },
     ];
 

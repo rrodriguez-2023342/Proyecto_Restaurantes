@@ -36,11 +36,31 @@ const isOrderOwner = (pedido, usuario) => {
 
 export const createPedido = async (req, res) => {
     try {
-        const { restaurante, items, direccionEntrega, notas, tipoPedido, cliente, email, telefono, metodoPago } = req.body;
+        let { restaurante } = req.body;
+        const { items, direccionEntrega, notas, tipoPedido, cliente, email, telefono, metodoPago } = req.body;
         const usuarioId = String(req.usuario.id || req.usuario._id);
 
         if (!items || items.length === 0) {
             return res.status(400).json({ success: false, message: 'El pedido debe tener al menos un item' });
+        }
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes un restaurante asignado para crear pedidos',
+                });
+            }
+
+            if (restaurante && String(restaurante) !== adminRestaurantId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No puedes crear pedidos para otro restaurante',
+                });
+            }
+
+            restaurante = adminRestaurantId;
         }
 
         // 1. Calcular total y preparar items del detalle
@@ -155,6 +175,7 @@ export const getPedidos = async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page, 10) || 1);
         const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
+        const { restaurante } = req.query;
         let query = {};
 
         if (req.usuario.role === 'USER_ROLE') {
@@ -176,6 +197,8 @@ export const getPedidos = async (req, res) => {
                 });
             }
             query.restaurante = adminRestaurantId;
+        } else if (restaurante) {
+            query.restaurante = restaurante;
         }
 
         const [pedidos, total] = await Promise.all([
@@ -209,6 +232,13 @@ export const getPedidoById = async (req, res) => {
 
         if (req.usuario.role === 'USER_ROLE' && !isOrderOwner(pedido, req.usuario)) {
             return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
+        }
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            if (!adminRestaurantId || String(pedido.restaurante?._id || pedido.restaurante) !== adminRestaurantId) {
+                return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
+            }
         }
 
         res.status(200).json({ success: true, message: 'Pedido obtenido exitosamente', data: pedido });

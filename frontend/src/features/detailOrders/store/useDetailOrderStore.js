@@ -60,10 +60,10 @@ export const useDetailOrderStore = create((set, get) => ({
     loading: false,
     error: null,
 
-    fetchDetailOrders: async () => {
+    fetchDetailOrders: async (params = {}) => {
         try {
             set({ loading: true, error: null });
-            const { data } = await getDetailOrders();
+            const { data } = await getDetailOrders(params);
             const detailOrders = normalizeDetailOrders(data?.data || data?.detallePedidos || data || []);
             set({ detailOrders, loading: false });
             return detailOrders;
@@ -73,6 +73,8 @@ export const useDetailOrderStore = create((set, get) => ({
             throw err;
         }
     },
+
+    clearDetailOrders: () => set({ detailOrders: [], error: null }),
 
     fetchDetailOrdersByOrderId: async (orderId) => {
         try {

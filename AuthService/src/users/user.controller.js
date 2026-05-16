@@ -32,6 +32,12 @@ const ensureAdmin = async (req) => {
     return { allowed: true };
 };
 
+const isOtherAdminUser = async (targetUserId, currentUserId) => {
+    if (String(targetUserId) === String(currentUserId)) return false;
+    const roles = await getUserRoleNames(targetUserId);
+    return roles.includes(ADMIN_ROLE);
+};
+
 export const updateUserRole = [
     validateJWT,
     asyncHandler(async (req, res) => {
@@ -62,6 +68,13 @@ export const updateUserRole = [
         const user = await findUserById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+        }
+
+        if (await isOtherAdminUser(userId, req.userId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'No puedes modificar a otro administrador',
+            });
         }
 
         const { updatedUser } = await setUserSingleRole(user, normalized, sequelize);
@@ -233,6 +246,13 @@ export const updateUser = [
             return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
         }
 
+        if (await isOtherAdminUser(userId, req.userId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'No puedes editar a otro administrador',
+            });
+        }
+
         // Si viene un rol y no es el suyo propio, actualizarlo
         if (roleName && !isOwnProfile) {
             const normalized = roleName.trim().toUpperCase();
@@ -301,6 +321,13 @@ export const deleteUserById = [
             return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
         }
 
+        if (await isOtherAdminUser(userId, req.userId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'No puedes eliminar a otro administrador',
+            });
+        }
+
         const userEmail = user.Email;
         const userName = user.Name;
 
@@ -338,6 +365,13 @@ export const adminDeactivateUser = [
         const user = await findUserById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+        }
+
+        if (await isOtherAdminUser(userId, req.userId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'No puedes desactivar a otro administrador',
+            });
         }
 
         if (!user.Status) {

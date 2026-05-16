@@ -12,10 +12,10 @@ const resolveImageSrc = (src) => {
     return src;
 };
 
-const buildDefaults = (menu) => ({
+const buildDefaults = (menu, restaurants = []) => ({
     name: menu?.nombreMenu || "",
     description: menu?.descripcionMenu || "",
-    restaurantId: menu?.restaurante || "",
+    restaurantId: menu?.restaurante?._id || menu?.restaurante?.id || menu?.restaurante || (restaurants.length === 1 ? restaurants[0]._id || restaurants[0].id : ""),
     active: menu?.isActive ?? true,
 });
 
@@ -26,7 +26,7 @@ export const MenuForm = ({ defaultValues, onSubmit, onCancel, isLoading, restaur
         reset,
         control,
         formState: { errors },
-    } = useForm({ defaultValues: buildDefaults(defaultValues) });
+    } = useForm({ defaultValues: buildDefaults(defaultValues, restaurants) });
 
     const photoFile = useWatch({ control, name: "photo" });
     const previewUrl = useMemo(() => {
@@ -40,8 +40,8 @@ export const MenuForm = ({ defaultValues, onSubmit, onCancel, isLoading, restaur
     }, [defaultValues?.fotoMenu]);
 
     useEffect(() => {
-        reset(buildDefaults(defaultValues));
-    }, [defaultValues, reset]);
+        reset(buildDefaults(defaultValues, restaurants));
+    }, [defaultValues, restaurants, reset]);
 
     useEffect(() => {
         return () => {

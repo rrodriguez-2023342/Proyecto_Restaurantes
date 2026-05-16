@@ -29,6 +29,8 @@ export const useInventoryStore = create((set, get) => ({
         }
     },
 
+    clearInventarios: () => set({ inventarios: [], pagination: null, error: null }),
+
     createItem: async (payload) => {
         try {
             set({ loading: true, error: null });

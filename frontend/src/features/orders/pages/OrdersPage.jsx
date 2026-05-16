@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminTheme } from "../../../constants/theme";
 import { Card, DataTable } from "../../../shared/components";
+import { getAllowedRestaurantIds, getRelationRestaurantId, isRestaurantAdmin } from "../../../shared/utils/restaurantAccess";
 import { showError, showSuccess } from "../../../shared/utils/toast";
+import { useAuthStore } from "../../auth/store/authStore";
 import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
+import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { OrderStatus } from "../components/OrderStatus.jsx";
 import { useOrderStore } from "../store/useOrderStore";
 
@@ -19,7 +22,11 @@ const formatCurrency = (value) => `Q${Number(value || 0).toFixed(2)}`;
 
 export const OrdersPage = () => {
     const navigate = useNavigate();
-    const { orders, loading, fetchOrders, deleteOrder, updateOrder } = useOrderStore();
+    const user = useAuthStore((state) => state.user);
+    const isAdminRestaurant = isRestaurantAdmin(user);
+    const { restaurants, fetchRestaurants } = useRestaurantStore();
+    const allowedRestaurantIds = useMemo(() => getAllowedRestaurantIds(user, restaurants), [restaurants, user]);
+    const { orders, loading, fetchOrders, deleteOrder, updateOrder, clearOrders } = useOrderStore();
     const { detailOrders, fetchDetailOrders, fetchDetailOrdersByOrderId, deleteDetailOrder } = useDetailOrderStore();
     const [deleting, setDeleting] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -28,15 +35,31 @@ export const OrdersPage = () => {
     const [savingEdit, setSavingEdit] = useState(false);
 
     useEffect(() => {
-        fetchOrders();
+        if (isAdminRestaurant) {
+            fetchRestaurants().catch(() => {});
+        }
+    }, [fetchRestaurants, isAdminRestaurant]);
+
+    useEffect(() => {
+        if (isAdminRestaurant && !allowedRestaurantIds.length) {
+            clearOrders();
+            return;
+        }
+
+        const params = allowedRestaurantIds.length === 1 ? { restaurante: allowedRestaurantIds[0] } : {};
+        fetchOrders(params);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [allowedRestaurantIds.join("|"), isAdminRestaurant]);
 
     const filteredOrders = useMemo(() => {
+        const scopedOrders =
+            isAdminRestaurant && allowedRestaurantIds.length
+                ? orders.filter((order) => allowedRestaurantIds.includes(getRelationRestaurantId(order)))
+                : orders;
         const normalizedSearch = searchTerm.trim().toLowerCase();
-        if (!normalizedSearch) return orders;
+        if (!normalizedSearch) return scopedOrders;
 
-        return orders.filter((order) => {
+        return scopedOrders.filter((order) => {
             const values = [
                 order.numeroPedido,
                 order._id,
@@ -53,7 +76,7 @@ export const OrdersPage = () => {
             ];
             return values.some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
         });
-    }, [orders, searchTerm]);
+    }, [allowedRestaurantIds, isAdminRestaurant, orders, searchTerm]);
 
     const handleDelete = async (order) => {
         const orderLabel = order.numeroPedido || (order._id || order.id)?.slice(-6) || "seleccionado";
@@ -65,7 +88,8 @@ export const OrdersPage = () => {
         try {
             const orderId = order._id || order.id;
             setDeleting(orderId);
-            const latestDetails = await fetchDetailOrders();
+            const params = allowedRestaurantIds.length === 1 ? { restaurante: allowedRestaurantIds[0] } : {};
+            const latestDetails = await fetchDetailOrders(params);
             const relatedDetailIds = [
                 ...new Set(
                     (latestDetails || detailOrders)
@@ -166,9 +190,11 @@ export const OrdersPage = () => {
                         <h2 className={adminTheme.pageTitle}>Gestion de Pedidos</h2>
                         <p className="mt-1 text-sm text-slate-600">Administra todos los pedidos del sistema.</p>
                     </div>
-                    <button onClick={() => navigate("/admin/orders/create")} className={adminTheme.primaryButton}>
-                        Nuevo Pedido
-                    </button>
+                    {!isAdminRestaurant && (
+                        <button onClick={() => navigate("/admin/orders/create")} className={adminTheme.primaryButton}>
+                            Nuevo Pedido
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-4">

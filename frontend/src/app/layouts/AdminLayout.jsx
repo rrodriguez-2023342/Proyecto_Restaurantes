@@ -15,7 +15,7 @@ const navItems = [
     { to: "/admin", label: "Dashboard", icon: "M3 13h8V3H3v10Zm10 8h8V3h-8v18ZM3 21h8v-6H3v6Z" },
     { to: "/admin/orders", label: "Pedidos", icon: "M9 5h6m-8 4h10m-11 4h12m-9 4h6M5 3h14v18H5z" },
     { to: "/admin/restaurants", label: "Restaurantes", icon: "M4 10h16M6 10v10h12V10M8 10V7a4 4 0 0 1 8 0v3" },
-    { to: "/admin/users", label: "Usuarios", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
+    { to: "/admin/users", label: "Usuarios", allowedRoles: ["ADMIN_ROLE"], icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
     { to: "/admin/menus", label: "Menu", icon: "M4 6h16M4 12h16M4 18h10" },
     { to: "/admin/platos", label: "Productos", icon: "M12 3v18M5 7h14M7 7v4a5 5 0 0 0 10 0V7" },
     { to: "/admin/inventory", label: "Inventarios", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
@@ -27,7 +27,6 @@ const secondaryNavItems = [
     { to: "/admin/reservaciones", label: "Reservaciones", icon: "M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 0 1 1-1v14H4V6a1 1 0 0 1 1-1Z" },
     { to: "/admin/mesas", label: "Mesas", icon: "M4 10h16M6 10v10m12-10v10M8 4h8l2 6H6l2-6Z" },
     { to: "/admin/reviews", label: "Resenas", icon: "M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27Z" },
-    { to: "/admin/stats", label: "Estadisticas", icon: "M4 19h16M7 16V9m5 7V5m5 11v-4" },
     { to: "/admin/invoices", label: "Facturas", icon: "M7 3h10l2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V3Z" },
 ];
 
@@ -45,9 +44,12 @@ const linkClass = ({ isActive }) => {
 
 export const AdminLayout = () => {
     const logout = useAuthStore((state) => state.logout);
+    const userRole = useAuthStore((state) => state.user?.role);
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const visibleNavItems = navItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(userRole));
+    const visibleSecondaryNavItems = secondaryNavItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(userRole));
 
     const pageTitle =
         pageTitles[pathname] ||
@@ -94,7 +96,7 @@ export const AdminLayout = () => {
                         <div>
                             <p className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Principal</p>
                             <div className="space-y-1">
-                                {navItems.map((item) => (
+                                {visibleNavItems.map((item) => (
                                     <NavLink 
                                         key={item.to} 
                                         to={item.to} 
@@ -111,7 +113,7 @@ export const AdminLayout = () => {
                         <div>
                             <p className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Operacion</p>
                             <div className="space-y-1">
-                                {secondaryNavItems.map((item) => (
+                                {visibleSecondaryNavItems.map((item) => (
                                     <NavLink 
                                         key={item.to} 
                                         to={item.to} 

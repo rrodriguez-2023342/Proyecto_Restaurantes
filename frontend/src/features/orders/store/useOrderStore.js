@@ -39,18 +39,21 @@ export const useOrderStore = create((set, get) => ({
     loading: false,
     error: null,
 
-    fetchOrders: async () => {
+    fetchOrders: async (params = {}) => {
         try {
             set({ loading: true, error: null });
-            const { data } = await getOrders();
+            const { data } = await getOrders(params);
             const orders = (data?.data || data?.pedidos || data || []).map(normalizeOrder);
             set({ orders, loading: false });
+            return orders;
         } catch (err) {
             const message = err.response?.data?.message || "Error al cargar pedidos";
             set({ error: message, loading: false });
             throw err;
         }
     },
+
+    clearOrders: () => set({ orders: [], error: null }),
 
     createOrder: async (payload) => {
         try {

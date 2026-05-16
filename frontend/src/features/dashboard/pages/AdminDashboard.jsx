@@ -4,6 +4,7 @@ import { Card, DataTable } from "../../../shared/components";
 import { getMenus, getOrders, getRestaurants, getReviews, getUsers } from "../../../shared/api";
 import { adminTheme } from "../../../constants/theme";
 import { OrderStatus } from "../../orders/components/OrderStatus.jsx";
+import { useAuthStore } from "../../auth/store/authStore";
 
 const getItems = (res, key) => {
     const data = res?.value?.data || res?.data || {};
@@ -29,6 +30,8 @@ const StatIcon = ({ path }) => (
 );
 
 export const AdminDashboard = () => {
+    const userRole = useAuthStore((state) => state.user?.role);
+    const isSuperAdmin = userRole === "ADMIN_ROLE";
     const [stats, setStats] = useState({
         orders: 0,
         restaurants: 0,
@@ -48,7 +51,7 @@ export const AdminDashboard = () => {
                 getMenus({ isActive: true }),
                 getReviews(),
                 getOrders(),
-                getUsers(),
+                isSuperAdmin ? getUsers() : Promise.resolve({ data: [] }),
             ]);
 
             const orders = ordersRes.status === "fulfilled" ? getItems(ordersRes, "pedidos") : [];
@@ -78,9 +81,9 @@ export const AdminDashboard = () => {
     const statCards = useMemo(() => [
         { label: "Total pedidos", value: stats.orders, icon: "M9 5h6m-8 4h10m-11 4h12m-9 4h6M5 3h14v18H5z" },
         { label: "Restaurantes", value: stats.restaurants, icon: "M4 10h16M6 10v10h12V10M8 10V7a4 4 0 0 1 8 0v3" },
-        { label: "Usuarios", value: stats.users, icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
+        ...(isSuperAdmin ? [{ label: "Usuarios", value: stats.users, icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" }] : []),
         { label: "Ingresos", value: formatCurrency(stats.revenue), icon: "M12 8c-2.5 0-4 1.2-4 3s1.5 3 4 3 4 1.2 4 3-1.5 3-4 3m0-12V5m0 16v-3" },
-    ], [stats]);
+    ], [isSuperAdmin, stats]);
 
     const columns = [
         {

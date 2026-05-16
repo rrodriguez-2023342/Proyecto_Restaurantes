@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, DataTable } from "../../../shared/components";
+import { getAllowedRestaurantIds, getRelationRestaurantId, isRestaurantAdmin } from "../../../shared/utils/restaurantAccess";
+import { useAuthStore } from "../../auth/store/authStore";
+import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { useDetailOrderStore } from "../store/useDetailOrderStore";
 import { showError, showSuccess } from "../../../shared/utils/toast";
 
@@ -10,12 +13,20 @@ const getPlatoId = (item) =>
 export const DetailOrdersPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const user = useAuthStore((state) => state.user);
+    const isAdminRestaurant = isRestaurantAdmin(user);
+    const { restaurants, fetchRestaurants } = useRestaurantStore();
+    const allowedRestaurantIds = useMemo(
+        () => getAllowedRestaurantIds(user, restaurants),
+        [restaurants, user]
+    );
     const orderId = searchParams.get("orderId");
     const detailOrderIdParam = searchParams.get("detailOrderId");
     const {
         detailOrders,
         loading,
         fetchDetailOrders,
+        clearDetailOrders,
         deleteDetailOrder,
         updateDetailOrder,
     } = useDetailOrderStore();
@@ -26,9 +37,21 @@ export const DetailOrdersPage = () => {
     const [savingEdit, setSavingEdit] = useState(false);
 
     useEffect(() => {
+        if (isAdminRestaurant) {
+            fetchRestaurants().catch(() => {});
+        }
+    }, [fetchRestaurants, isAdminRestaurant]);
+
+    useEffect(() => {
         const loadDetails = async () => {
+            if (isAdminRestaurant && !allowedRestaurantIds.length) {
+                clearDetailOrders();
+                return;
+            }
+
             try {
-                await fetchDetailOrders();
+                const params = allowedRestaurantIds.length === 1 ? { restaurante: allowedRestaurantIds[0] } : {};
+                await fetchDetailOrders(params);
             } catch (err) {
                 const resp = err.response?.data;
                 const message =
@@ -39,16 +62,21 @@ export const DetailOrdersPage = () => {
         };
 
         loadDetails();
-    }, [orderId]);
+    }, [allowedRestaurantIds, clearDetailOrders, fetchDetailOrders, isAdminRestaurant, orderId]);
 
     useEffect(() => {
         setSearchTerm(detailOrderIdParam || "");
     }, [detailOrderIdParam]);
 
     const visibleDetails = useMemo(() => {
+        const restaurantScopedDetails =
+            isAdminRestaurant && allowedRestaurantIds.length
+                ? detailOrders.filter((detail) => allowedRestaurantIds.includes(getRelationRestaurantId(detail.pedido)))
+                : detailOrders;
+
         const scopedDetails = !orderId
-            ? detailOrders
-            : detailOrders.filter(
+            ? restaurantScopedDetails
+            : restaurantScopedDetails.filter(
                 (detail) =>
                     detail.pedido === orderId ||
                     detail.pedido?._id === orderId ||
@@ -82,7 +110,7 @@ export const DetailOrdersPage = () => {
                 quantity.includes(normalizedSearch)
             );
         });
-    }, [detailOrders, orderId, searchTerm]);
+    }, [allowedRestaurantIds, detailOrders, isAdminRestaurant, orderId, searchTerm]);
 
     const handleDelete = async (id) => {
         const confirmed = window.confirm(
