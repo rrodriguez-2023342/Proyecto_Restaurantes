@@ -1,4 +1,9 @@
 import Restaurante from './restaurante.model.js';
+import Menu from '../menus/menu.model.js';
+import Plato from '../platos/plato.model.js';
+import Mesa from '../mesas/mesa.model.js';
+import Inventario from '../inventario/inventario.model.js';
+import Reseña from '../reseñas/reseña.model.js';
 
 //CREAR RESTAURANTE
 //Regla: Solo ADMIN_ROLE puede crear.
@@ -42,13 +47,24 @@ export const getRestaurantes = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!req.usuario.restaurante) {
+            const userId = String(req.usuario.id || req.usuario._id || req.usuario.uid || "");
+            let queryConditions = [];
+            
+            if (userId) {
+                queryConditions.push({ dueño: userId });
+            }
+            if (req.usuario.restaurante) {
+                queryConditions.push({ _id: req.usuario.restaurante });
+            }
+
+            if (queryConditions.length > 0) {
+                filter = { ...filter, $or: queryConditions };
+            } else {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes un restaurante asignado'
                 });
             }
-            filter._id = req.usuario.restaurante;
         }
 
         const [restaurantes, total] = await Promise.all([
@@ -78,15 +94,18 @@ export const getRestaurantesById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if (
-            req.usuario.role === 'ADMIN_RESTAURANT_ROLE' &&
-            (!req.usuario.restaurante || id !== req.usuario.restaurante.toString())
-        ) {
-            return res.status(403).json({ message: 'No tienes permiso para ver otros restaurantes' });
-        }
-
         const restaurante = await Restaurante.findById(id);
         if (!restaurante) return res.status(404).json({ message: 'Restaurante no encontrado' });
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const userId = String(req.usuario.id || req.usuario._id || req.usuario.uid || "");
+            const isOwner = String(restaurante.dueño) === userId;
+            const isAssigned = req.usuario.restaurante && id === req.usuario.restaurante.toString();
+
+            if (!isOwner && !isAssigned) {
+                return res.status(403).json({ message: 'No tienes permiso para ver otros restaurantes' });
+            }
+        }
 
         res.status(200).json({ success: true, data: restaurante });
     } catch (error) {
@@ -103,11 +122,17 @@ export const updateRestaurante = async (req, res) => {
         const OWNER_FIELD = 'due\u00F1o';
         const restauranteData = { ...req.body };
 
-        if (
-            req.usuario.role === 'ADMIN_RESTAURANT_ROLE' &&
-            (!req.usuario.restaurante || id !== req.usuario.restaurante.toString())
-        ) {
-            return res.status(403).json({ message: 'Solo puedes actualizar tu propio restaurante' });
+        const existingRestaurante = await Restaurante.findById(id);
+        if (!existingRestaurante) return res.status(404).json({ message: 'Restaurante no encontrado' });
+
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const userId = String(req.usuario.id || req.usuario._id || req.usuario.uid || "");
+            const isOwner = String(existingRestaurante.dueño) === userId;
+            const isAssigned = req.usuario.restaurante && id === req.usuario.restaurante.toString();
+
+            if (!isOwner && !isAssigned) {
+                return res.status(403).json({ message: 'Solo puedes actualizar tu propio restaurante' });
+            }
         }
 
         if (
@@ -148,9 +173,23 @@ export const deleteRestaurante = async (req, res) => {
         const restauranteEliminado = await Restaurante.findByIdAndDelete(id);
         if (!restauranteEliminado) return res.status(404).json({ message: 'Restaurante no encontrado' });
 
+        // Borrar menús y platos asociados
+        const menus = await Menu.find({ restaurante: id }).select('_id');
+        const menuIds = menus.map(m => m._id);
+
+        if (menuIds.length > 0) {
+            await Plato.deleteMany({ menu: { $in: menuIds } });
+        }
+        await Menu.deleteMany({ restaurante: id });
+
+        // Borrar mesas, inventario y reseñas
+        await Mesa.deleteMany({ restaurante: id });
+        await Inventario.deleteMany({ restaurante: id });
+        await Reseña.deleteMany({ restaurante: id });
+
         res.status(200).json({
             success: true,
-            message: 'Restaurante eliminado correctamente'
+            message: 'Restaurante y todo su contenido relacionado (menús, platos, mesas, inventario y reseñas) eliminados correctamente'
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });

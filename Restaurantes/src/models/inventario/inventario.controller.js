@@ -17,24 +17,56 @@ const getAdminRestaurantId = async (usuario) => {
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
+const getRestaurantesFromUser = async (usuario) => {
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return [];
+    
+    const userId = usuario.id || usuario._id || usuario.uid || "";
+    const queryConditions = [];
+    
+    if (userId) {
+        queryConditions.push({ dueño: String(userId) });
+        if (!isNaN(Number(userId))) {
+            queryConditions.push({ dueño: Number(userId) });
+        }
+    }
+    if (usuario.restaurante) {
+        queryConditions.push({ _id: usuario.restaurante });
+    }
+    
+    if (queryConditions.length === 0) return [];
+    
+    const list = await Restaurante.find({ $or: queryConditions }).select('_id').lean();
+    return list.map(r => r._id.toString());
+};
+
 export const createInventario = async (req, res) => {
     try {
         const inventarioData = { ...req.body };
 
         // Forzar asignación de restaurante si es admin de restaurante
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE' || req.usuario.role === 'ADMIN_ROLE') {
-            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
             
-            // Si el body ya trae un restaurante (elegido por el admin), lo usamos.
-            // Si no trae nada, intentamos usar el asignado automáticamente.
-            if (!inventarioData.restaurante) {
-                if (!adminRestaurantId) {
+            // Si el body ya trae un restaurante (elegido por el admin), validamos que tenga acceso.
+            // Si no trae nada, intentamos usar el primero asignado automáticamente.
+            if (inventarioData.restaurante) {
+                if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+                    const hasAccess = restauranteIds.includes(inventarioData.restaurante.toString());
+                    if (!hasAccess) {
+                        return res.status(403).json({
+                            success: false,
+                            message: 'No tienes permiso para crear inventario en este restaurante',
+                        });
+                    }
+                }
+            } else {
+                if (!restauranteIds || restauranteIds.length === 0) {
                     return res.status(403).json({
                         success: false,
                         message: `No se encontró un restaurante asociado a tu cuenta. (ID: ${req.usuario.id}, Rol: ${req.usuario.role}). Si eres Super Admin, debes seleccionar un restaurante.`,
                     });
                 }
-                inventarioData.restaurante = adminRestaurantId;
+                inventarioData.restaurante = restauranteIds[0];
             }
         }
 
@@ -60,16 +92,27 @@ export const getInventarios = async (req, res) => {
         const { page = 1, limit = 50, restaurante } = req.query;
         let query = {};
 
-        // Si hay un usuario logueado como admin, filtramos por su restaurante
+        // Si hay un usuario logueado como admin, filtramos por sus restaurantes
         if (req.usuario && req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
-            if (!adminRestaurantId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes un restaurante asignado para ver inventario',
                 });
             }
-            query.restaurante = adminRestaurantId;
+            if (restaurante) {
+                const hasAccess = restauranteIds.includes(restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para ver el inventario de este restaurante',
+                    });
+                }
+                query.restaurante = restaurante;
+            } else {
+                query.restaurante = { $in: restauranteIds };
+            }
         } else if (restaurante) {
             // Si es consulta pública y pasaron el restaurante, filtramos
             query.restaurante = restaurante;
@@ -116,13 +159,8 @@ export const getInventarioById = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            if (!inventario.restaurante || !req.usuario.restaurante) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Acceso denegado a este inventario'
-                });
-            }
-            if (inventario.restaurante._id.toString() !== req.usuario.restaurante.toString()) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0 || !inventario.restaurante || !restauranteIds.includes(inventario.restaurante._id.toString())) {
                 return res.status(403).json({
                     success: false,
                     message: 'Acceso denegado a este inventario'
@@ -158,22 +196,20 @@ export const updateInventario = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            adminRestaurantId = await getAdminRestaurantId(req.usuario);
-            if (!inventarioExistente.restaurante || !adminRestaurantId) {
-                return res.status(403).json({ success: false, message: 'No tienes permiso para editar este inventario' });
-            }
-            if (String(inventarioExistente.restaurante) !== adminRestaurantId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0 || !inventarioExistente.restaurante || !restauranteIds.includes(inventarioExistente.restaurante.toString())) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para editar este inventario' });
             }
 
-            // Evita reasignar inventario a otro restaurante.
-            if (inventarioData.restaurante && String(inventarioData.restaurante) !== adminRestaurantId) {
-                return res.status(403).json({ success: false, message: 'No puedes mover inventario a otro restaurante' });
+            // Evita reasignar inventario a un restaurante del cual no es dueño.
+            if (inventarioData.restaurante) {
+                const hasAccess = restauranteIds.includes(inventarioData.restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({ success: false, message: 'No tienes permiso para mover inventario a este restaurante' });
+                }
+            } else {
+                inventarioData.restaurante = inventarioExistente.restaurante.toString();
             }
-        }
-
-        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            inventarioData.restaurante = adminRestaurantId;
         }
 
         const inventario = await Inventario.findByIdAndUpdate(
@@ -210,11 +246,8 @@ export const deleteInventario = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
-            if (!inventario.restaurante || !adminRestaurantId) {
-                return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este inventario' });
-            }
-            if (String(inventario.restaurante) !== adminRestaurantId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0 || !inventario.restaurante || !restauranteIds.includes(inventario.restaurante.toString())) {
                 return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este inventario' });
             }
         }

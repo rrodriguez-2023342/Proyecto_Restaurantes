@@ -1,4 +1,5 @@
 import { toast } from "react-hot-toast";
+import Swal from "sweetalert2";
 
 // Colores y estilos personalizados
 const baseStyle = {
@@ -51,3 +52,33 @@ export const showInfo = (message) =>
             secondary: "#fff",
         },
     });
+
+export const showConfirm = async ({
+    title = "¿Estás seguro?",
+    text = "Esta acción no se puede deshacer.",
+    confirmButtonText = "Sí, eliminar",
+    cancelButtonText = "Cancelar",
+    icon = "warning"
+}) => {
+    const result = await Swal.fire({
+        title,
+        text,
+        icon,
+        showCancelButton: true,
+        confirmButtonColor: "#f43f5e", // Elegant rose-500
+        cancelButtonColor: "#64748b", // slate-500
+        confirmButtonText,
+        cancelButtonText,
+        background: "#050505", // Shell dark background
+        color: "#ffffff", // White text
+        iconColor: "#f59e0b", // Amber warning
+        customClass: {
+            popup: "rounded-2xl border border-slate-800 shadow-2xl p-6 font-sans",
+            title: "text-lg font-black tracking-tight text-white",
+            htmlContainer: "text-sm text-slate-400 font-medium",
+            confirmButton: "rounded-xl px-5 py-3 text-xs font-black uppercase tracking-widest cursor-pointer",
+            cancelButton: "rounded-xl px-5 py-3 text-xs font-black uppercase tracking-widest cursor-pointer"
+        }
+    });
+    return result.isConfirmed;
+};

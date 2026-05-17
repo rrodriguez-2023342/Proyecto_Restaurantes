@@ -15,6 +15,28 @@ const getAdminRestaurantId = async (usuario) => {
     return restaurante?._id ? String(restaurante._id) : null;
 };
 
+const getRestaurantesFromUser = async (usuario) => {
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return [];
+    
+    const userId = usuario.id || usuario._id || usuario.uid || "";
+    const queryConditions = [];
+    
+    if (userId) {
+        queryConditions.push({ dueño: String(userId) });
+        if (!isNaN(Number(userId))) {
+            queryConditions.push({ dueño: Number(userId) });
+        }
+    }
+    if (usuario.restaurante) {
+        queryConditions.push({ _id: usuario.restaurante });
+    }
+    
+    if (queryConditions.length === 0) return [];
+    
+    const list = await Restaurante.find({ $or: queryConditions }).select('_id').lean();
+    return list.map(r => r._id.toString());
+};
+
 export const createPedido = async (req, res) => {
     try {
         const data = req.body;
@@ -40,14 +62,14 @@ export const getPedidos = async (req, res) => {
         if (req.usuario.role === 'USER_ROLE') {
             query.usuario = req.usuario.id;
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
-            if (!adminRestaurantId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes un restaurante asignado para ver pedidos',
                 });
             }
-            query.restaurante = adminRestaurantId;
+            query.restaurante = { $in: restauranteIds };
         }
 
         const [pedidos, total] = await Promise.all([
@@ -79,8 +101,12 @@ export const getPedidoById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
-        if (req.usuario.role === 'USER_ROLE' && pedido.usuario.toString() !== req.usuario.id.toString()) {
-            return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
+        if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            const orderRestaurantId = String(pedido.restaurante?._id || pedido.restaurante);
+            if (!restauranteIds || restauranteIds.length === 0 || !restauranteIds.includes(orderRestaurantId)) {
+                return res.status(403).json({ success: false, message: 'No tienes permiso para ver este pedido' });
+            }
         }
 
         res.status(200).json({ success: true, message: 'Pedido obtenido exitosamente', data: pedido });
@@ -104,19 +130,12 @@ export const editarPedido = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
-
-            if (!adminRestaurantId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            const orderRestaurantId = String(pedidoExistente.restaurante?._id || pedidoExistente.restaurante);
+            if (!restauranteIds || restauranteIds.length === 0 || !restauranteIds.includes(orderRestaurantId)) {
                 return res.status(403).json({
                     success: false,
-                    message: 'No tienes un restaurante asignado para editar pedidos',
-                });
-            }
-
-            if (String(pedidoExistente.restaurante) !== adminRestaurantId) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No puedes editar pedidos de otro restaurante',
+                    message: 'No tienes permiso para editar pedidos de este restaurante',
                 });
             }
         }
@@ -148,19 +167,12 @@ export const eliminarPedido = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const adminRestaurantId = await getAdminRestaurantId(req.usuario);
-
-            if (!adminRestaurantId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            const orderRestaurantId = String(pedido.restaurante?._id || pedido.restaurante);
+            if (!restauranteIds || restauranteIds.length === 0 || !restauranteIds.includes(orderRestaurantId)) {
                 return res.status(403).json({
                     success: false,
-                    message: 'No tienes un restaurante asignado para eliminar pedidos',
-                });
-            }
-
-            if (String(pedido.restaurante) !== adminRestaurantId) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No puedes eliminar pedidos de otro restaurante',
+                    message: 'No tienes permiso para eliminar pedidos de este restaurante',
                 });
             }
         }

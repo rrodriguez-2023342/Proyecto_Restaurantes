@@ -93,14 +93,47 @@ export const UserOrdersPage = () => {
         return map;
     }, [detailOrders]);
 
-    const visibleOrders = useMemo(() => {
+    const groupedOrders = useMemo(() => {
         const sorted = [...orders].sort(
             (a, b) => new Date(b.fechaPedido || b.createdAt || 0) - new Date(a.fechaPedido || a.createdAt || 0)
         );
+        
+        const groups = [];
+        for (const order of sorted) {
+            const orderTime = new Date(order.fechaPedido || order.createdAt || 0).getTime();
+            // Find an existing group where the time difference is less than 5000ms
+            const matchingGroup = groups.find(group => {
+                const groupTime = new Date(group.fechaPedido || group.createdAt || 0).getTime();
+                return Math.abs(groupTime - orderTime) < 5000;
+            });
+            
+            if (matchingGroup) {
+                matchingGroup.subOrders.push(order);
+                matchingGroup.totalPedido = (matchingGroup.totalPedido || 0) + (order.totalPedido || 0);
+                matchingGroup.total = (matchingGroup.total || 0) + (order.total || 0);
+                if (order.restaurante?.nombre && !matchingGroup.restaurantNames.includes(order.restaurante.nombre)) {
+                    matchingGroup.restaurantNames.push(order.restaurante.nombre);
+                }
+            } else {
+                groups.push({
+                    ...order,
+                    restaurantNames: order.restaurante?.nombre ? [order.restaurante.nombre] : [],
+                    subOrders: [order]
+                });
+            }
+        }
+        return groups;
+    }, [orders]);
+
+    const visibleOrders = useMemo(() => {
         const filter = filterOptions.find((item) => item.label === activeFilter);
-        if (!filter || filter.statuses.length === 0) return sorted;
-        return sorted.filter((order) => filter.statuses.includes(normalize(order.estado || order.estadoPedido)));
-    }, [activeFilter, orders]);
+        if (!filter || filter.statuses.length === 0) return groupedOrders;
+        return groupedOrders.filter((order) => {
+            return order.subOrders.some(subOrder => 
+                filter.statuses.includes(normalize(subOrder.estado || subOrder.estadoPedido))
+            );
+        });
+    }, [activeFilter, groupedOrders]);
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -125,7 +158,7 @@ export const UserOrdersPage = () => {
                     <div className="mt-8 flex items-center gap-4">
                         <div className="flex items-center gap-2 bg-white/10 border border-white/10 rounded-2xl px-4 py-2.5">
                             <ShoppingBag size={16} className="text-orange-500" />
-                            <span className="text-white font-bold text-sm">{orders.length} pedidos en total</span>
+                            <span className="text-white font-bold text-sm">{groupedOrders.length} pedidos en total</span>
                         </div>
                     </div>
                 </div>
@@ -191,13 +224,30 @@ export const UserOrdersPage = () => {
                             const status = statusConfig[normalizedStatus] || statusConfig.pendiente;
                             const StatusIcon = status.icon;
                             const isExpanded = expandedOrderId === orderId;
-                            const orderDetails = detailsByOrder.get(orderId) || [];
+                            
+                            // Combine details of all sub-orders in the group
+                            const orderDetails = [];
+                            for (const subOrder of order.subOrders) {
+                                const subOrderId = getOrderId(subOrder);
+                                const subOrderDetails = detailsByOrder.get(subOrderId) || [];
+                                orderDetails.push(...subOrderDetails);
+                            }
+
                             const items = orderDetails.length
                                 ? orderDetails
-                                : [{ nombrePlato: "Detalle no disponible", cantidad: 1, precioUnitario: order.total ?? order.totalPedido ?? 0 }];
+                                : order.subOrders.map(sub => ({
+                                    nombrePlato: "Detalle no disponible",
+                                    cantidad: 1,
+                                    precioUnitario: sub.total ?? sub.totalPedido ?? 0
+                                  }));
+
                             const visibleItems = isExpanded ? items : items.slice(0, 3);
                             const hiddenCount = items.length - 3;
-                            const restaurantName = order.restaurante?.nombre || "Restaurante";
+                            
+                            const restaurantName = order.restaurantNames && order.restaurantNames.length > 0
+                                ? order.restaurantNames.join(", ")
+                                : (order.restaurante?.nombre || "Restaurante");
+                                
                             const orderNumber = order.numeroPedido
                                 ? `#${order.numeroPedido}`
                                 : `#${String(orderId || "").slice(-6).toUpperCase()}`;
@@ -263,7 +313,7 @@ export const UserOrdersPage = () => {
                                                 ))}
                                                 {!isExpanded && hiddenCount > 0 && (
                                                     <button
-                                                        onClick={() => setExpandedOrderId(orderId)}
+                                                        onClick={(e) => { e.stopPropagation(); setExpandedOrderId(orderId); }}
                                                         className="ml-10 text-xs font-bold text-orange-500 hover:underline"
                                                     >
                                                         + {hiddenCount} más

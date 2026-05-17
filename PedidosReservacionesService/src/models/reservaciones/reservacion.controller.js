@@ -10,6 +10,28 @@ const getRestauranteId = async (usuario) => {
     return r?._id ?? null;
 };
 
+const getRestaurantesFromUser = async (usuario) => {
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return [];
+    
+    const userId = usuario.id || usuario._id || usuario.uid || "";
+    const queryConditions = [];
+    
+    if (userId) {
+        queryConditions.push({ dueño: String(userId) });
+        if (!isNaN(Number(userId))) {
+            queryConditions.push({ dueño: Number(userId) });
+        }
+    }
+    if (usuario.restaurante) {
+        queryConditions.push({ _id: usuario.restaurante });
+    }
+    
+    if (queryConditions.length === 0) return [];
+    
+    const list = await Restaurante.find({ $or: queryConditions }).select('_id').lean();
+    return list.map(r => r._id.toString());
+};
+
 const getUsuarioId = (usuario) => String(usuario.id || usuario._id);
 
 // Dispara el correo sin bloquear la respuesta
@@ -79,9 +101,19 @@ export const getReservaciones = async (req, res) => {
         } else if (req.usuario.role === 'ADMIN_ROLE' && restaurante) {
             query.restaurante = restaurante;
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteId(req.usuario);
-            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
-            query.restaurante = restauranteId;
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
+                return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            }
+            if (restaurante) {
+                const hasAccess = restauranteIds.includes(restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({ message: 'No tienes permiso para ver las reservaciones de este restaurante' });
+                }
+                query.restaurante = restaurante;
+            } else {
+                query.restaurante = { $in: restauranteIds };
+            }
         }
 
         const [reservaciones, total] = await Promise.all([
@@ -112,10 +144,12 @@ export const getReservacionById = async (req, res) => {
                 return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
             }
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteId(req.usuario);
-            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
+                return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            }
             const resRestauranteId = (reservacion.restaurante?._id ?? reservacion.restaurante)?.toString();
-            if (resRestauranteId !== restauranteId.toString()) {
+            if (!restauranteIds.includes(resRestauranteId)) {
                 return res.status(403).json({ message: 'No tienes permiso para ver esta reservación' });
             }
         }
@@ -145,10 +179,12 @@ export const updateReservacion = async (req, res) => {
                 return res.status(400).json({ message: 'Solo puedes editar reservaciones en estado PENDIENTE' });
             }
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteId(req.usuario);
-            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
+                return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            }
             const resRestauranteId = (reservacionExistente.restaurante?._id ?? reservacionExistente.restaurante)?.toString?.() ?? '';
-            if (resRestauranteId !== restauranteId.toString()) {
+            if (!restauranteIds.includes(resRestauranteId)) {
                 return res.status(403).json({ message: 'Solo puedes editar reservaciones de tu restaurante' });
             }
         }
@@ -204,24 +240,27 @@ export const deleteReservacion = async (req, res) => {
                 return res.status(403).json({ message: 'No puedes cancelar una reservación ajena' });
             }
         } else if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteId(req.usuario);
-            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
+                return res.status(403).json({ message: 'No tienes un restaurante asignado' });
+            }
             const resRestauranteId = (reservacion.restaurante?._id ?? reservacion.restaurante)?.toString?.() ?? '';
-            if (resRestauranteId !== restauranteId.toString()) {
+            if (!restauranteIds.includes(resRestauranteId)) {
                 return res.status(403).json({ message: 'Solo puedes cancelar reservaciones de tu restaurante' });
             }
         }
 
-        reservacion.estado = 'CANCELADA';
-        await reservacion.save();
+        await Reservacion.findByIdAndDelete(id);
 
-        // Al cancelar la reservacion, la mesa vuelve a estar disponible.
-        await Mesa.findByIdAndUpdate(reservacion.mesa, { disponibilidad: true });
+        // Al cancelar/eliminar la reservacion, la mesa vuelve a estar disponible.
+        if (reservacion.mesa) {
+            await Mesa.findByIdAndUpdate(reservacion.mesa, { disponibilidad: true });
+        }
 
         const restaurante = await Restaurante.findById(reservacion.restaurante).select('nombre').lean();
         notificar(req.usuario.email, req.usuario.name, 'cancelada', reservacion, restaurante?.nombre ?? 'Restaurante');
 
-        res.status(200).json({ success: true, message: 'Reservación cancelada correctamente' });
+        res.status(200).json({ success: true, message: 'Reservación eliminada correctamente' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

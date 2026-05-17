@@ -37,16 +37,18 @@ export const getRestaurantOwnerId = (restaurant) => {
 export const getOwnedRestaurants = (user, restaurants = []) => {
     if (!isRestaurantAdmin(user)) return restaurants;
 
+    const userId = getUserId(user);
+    if (!userId) return restaurants;
+
+    // 1. Primero intentamos filtrar por el ID del dueño (dueno/owner) para obtener todos sus restaurantes
+    const ownedRestaurants = restaurants.filter((restaurant) => getRestaurantOwnerId(restaurant) === userId);
+    if (ownedRestaurants.length) return ownedRestaurants;
+
+    // 2. Si no hay coincidencias directas por dueño, usamos el ID de restaurante individual del perfil del usuario
     const userRestaurantId = getUserRestaurantId(user);
     if (userRestaurantId) {
         return restaurants.filter((restaurant) => getEntityId(restaurant) === userRestaurantId);
     }
-
-    const userId = getUserId(user);
-    if (!userId) return restaurants;
-
-    const ownedRestaurants = restaurants.filter((restaurant) => getRestaurantOwnerId(restaurant) === userId);
-    if (ownedRestaurants.length) return ownedRestaurants;
 
     return restaurants.length === 1 ? restaurants : [];
 };
@@ -54,14 +56,16 @@ export const getOwnedRestaurants = (user, restaurants = []) => {
 export const getAllowedRestaurantIds = (user, restaurants = []) => {
     if (!isRestaurantAdmin(user)) return [];
 
-    const userRestaurantId = getUserRestaurantId(user);
-    if (userRestaurantId) return [userRestaurantId];
-
+    // 1. Obtener los IDs de todos los restaurantes de los cuales es dueño
     const ownedIds = getOwnedRestaurants(user, restaurants)
         .map(getEntityId)
         .filter(Boolean);
 
     if (ownedIds.length) return ownedIds;
+
+    // 2. Alternativa: ID de restaurante individual del perfil del usuario
+    const userRestaurantId = getUserRestaurantId(user);
+    if (userRestaurantId) return [userRestaurantId];
 
     if (restaurants.length === 1) {
         const onlyRestaurantId = getEntityId(restaurants[0]);

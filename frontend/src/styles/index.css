@@ -133,9 +133,10 @@ body {
   color: #fff;
 }
 
+.admin-shell .admin-panel-heading h2,
 .admin-shell .admin-panel-heading h3,
 .admin-shell .admin-panel-heading p {
-  color: inherit;
+  color: inherit !important;
 }
 
 .admin-shell .bg-white.shadow-sm,

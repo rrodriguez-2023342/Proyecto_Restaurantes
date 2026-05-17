@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BadgeEstado, Card, EmptyState } from "../../../shared/components";
-import { showError, showSuccess } from "../../../shared/utils/toast";
+import { showError, showSuccess, showConfirm } from "../../../shared/utils/toast";
 import { RestaurantForm } from "../components/RestaurantForm.jsx";
 import { useRestaurantStore } from "../store/useRestaurantStore";
 import { useAuthStore } from "../../auth/store/authStore";
@@ -69,6 +69,15 @@ export const RestaurantsPage = () => {
                 let allOwners = [];
                 if (ownerRes.status === 'fulfilled') allOwners = [...allOwners, ...(ownerRes.value.data || [])];
                 if (adminRes.status === 'fulfilled') allOwners = [...allOwners, ...(adminRes.value.data || [])];
+                
+                // Excluir al super admin (username 'admin', rol 'ADMIN_ROLE' o nombre 'Admin Admin')
+                allOwners = allOwners.filter(user => 
+                    user &&
+                    user.username !== 'admin' && 
+                    user.role !== 'ADMIN_ROLE' &&
+                    `${user.name || ''} ${user.surname || ''}`.trim().toLowerCase() !== 'admin admin'
+                );
+
                 const unique = Array.from(new Map(allOwners.map(item => [item.id || item._id, item])).values());
                 setOwners(unique);
             } catch (e) { /* ignore */ }
@@ -106,7 +115,14 @@ export const RestaurantsPage = () => {
     };
 
     const handleDelete = async (restaurant) => {
-        if (!confirm("¿Estás seguro de eliminar este restaurante permanentemente?")) return;
+        const confirmed = await showConfirm({
+            title: "¿Eliminar restaurante?",
+            text: `¿Estás seguro de eliminar el restaurante "${restaurant.nombre || restaurant.name}" permanentemente? Se eliminarán todos sus menús, platos, mesas y reseñas en cascada.`,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+        if (!confirmed) return;
+
         try {
             await storeDelete(restaurant._id || restaurant.id);
             showSuccess("Registro eliminado");

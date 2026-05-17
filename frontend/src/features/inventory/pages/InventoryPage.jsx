@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminTheme } from "../../../constants/theme";
 import { Card, EmptyState } from "../../../shared/components";
 import { getAllowedRestaurantIds, getOwnedRestaurants, isRestaurantAdmin } from "../../../shared/utils/restaurantAccess";
-import { showError, showSuccess } from "../../../shared/utils/toast";
+import { showError, showSuccess, showConfirm } from "../../../shared/utils/toast";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { InventoryForm } from "../components/InventoryForm.jsx";
@@ -45,6 +45,10 @@ export const InventoryPage = () => {
 
     useEffect(() => {
         if (!isAdminRestaurant) return;
+        
+        // Si ya hay un restaurante seleccionado y es válido dentro de los permitidos, no lo sobrescribimos
+        if (selectedRestaurant && allowedRestaurantIds.includes(selectedRestaurant)) return;
+
         const onlyRestaurantId = allowedRestaurantIds[0] || (availableRestaurants.length === 1 ? availableRestaurants[0]._id || availableRestaurants[0].id : "");
         if (onlyRestaurantId && selectedRestaurant !== onlyRestaurantId) {
             setSelectedRestaurant(onlyRestaurantId);
@@ -83,7 +87,14 @@ export const InventoryPage = () => {
     };
 
     const handleDelete = async (item) => {
-        if (!confirm(`Eliminar ${item.nombreItem} del inventario?`)) return;
+        const confirmed = await showConfirm({
+            title: "¿Eliminar ingrediente?",
+            text: `¿Estás seguro de que deseas eliminar permanentemente "${item.nombreItem}" del inventario de este restaurante?`,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+        if (!confirmed) return;
+
         try {
             await deleteItem(item._id || item.id);
             showSuccess("Item eliminado");

@@ -41,7 +41,7 @@ const MetricCard = ({ label, value, helper }) => (
 const SectionPanel = ({ title, subtitle, children }) => (
     <section className="admin-card overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="admin-panel-heading border-b border-slate-900 px-5 py-4">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.28em] text-white">{title}</h2>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.28em] text-white">{title}</h3>
             <p className="mt-1 text-xs font-medium text-slate-400">{subtitle}</p>
         </div>
         <div className="p-5">{children}</div>

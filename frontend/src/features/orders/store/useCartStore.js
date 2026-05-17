@@ -16,15 +16,6 @@ export const useCartStore = create(
                 const finalRestId = restId || product.restaurantId || currentRestaurantId;
                 const finalQuantity = Math.max(1, Number(quantity) || 1);
 
-                // Si el producto es de un restaurante diferente, limpiar el carrito anterior
-                if (currentRestaurantId && finalRestId && currentRestaurantId !== finalRestId) {
-                    set({
-                        items: [{ ...product, restaurantId: finalRestId, quantity: finalQuantity }],
-                        restaurantId: finalRestId
-                    });
-                    return;
-                }
-
                 const existingItem = items.find((item) => item.id === product.id);
 
                 if (existingItem) {
@@ -34,12 +25,12 @@ export const useCartStore = create(
                                 ? { ...item, quantity: item.quantity + finalQuantity }
                                 : item
                         ),
-                        restaurantId: finalRestId
+                        restaurantId: currentRestaurantId || finalRestId
                     });
                 } else {
                     set({
                         items: [...items, { ...product, restaurantId: finalRestId, quantity: finalQuantity }],
-                        restaurantId: finalRestId
+                        restaurantId: currentRestaurantId || finalRestId
                     });
                 }
             },

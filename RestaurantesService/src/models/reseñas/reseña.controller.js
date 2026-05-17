@@ -8,6 +8,28 @@ const getRestauranteId = async (usuario) => {
     return r?._id ?? null;
 };
 
+const getRestaurantesFromUser = async (usuario) => {
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return [];
+    
+    const userId = usuario.id || usuario._id || usuario.uid || "";
+    const queryConditions = [];
+    
+    if (userId) {
+        queryConditions.push({ dueño: String(userId) });
+        if (!isNaN(Number(userId))) {
+            queryConditions.push({ dueño: Number(userId) });
+        }
+    }
+    if (usuario.restaurante) {
+        queryConditions.push({ _id: usuario.restaurante });
+    }
+    
+    if (queryConditions.length === 0) return [];
+    
+    const list = await Restaurante.find({ $or: queryConditions }).select('_id').lean();
+    return list.map(r => r._id.toString());
+};
+
 //CREAR RESEÑA
 
 export const createReseña = async (req, res) => {
@@ -69,14 +91,30 @@ export const createReseña = async (req, res) => {
 
 export const getReseñas = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, restaurante, calificacion } = req.query;
         const filter = { estado: true };
+
+        if (calificacion) {
+            filter.calificacion = Number(calificacion);
+        }
 
         // El restaurante solo puede listar las reseñas de su propio restaurante
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteId(req.usuario);
-            if (!restauranteId) return res.status(403).json({ message: 'No tienes un restaurante asignado' });
-            filter.restaurante = restauranteId;
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
+                return res.status(403).json({ success: false, message: 'No tienes un restaurante asignado' });
+            }
+            if (restaurante) {
+                const hasAccess = restauranteIds.includes(restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({ success: false, message: 'No tienes permiso para ver las reseñas de este restaurante' });
+                }
+                filter.restaurante = restaurante;
+            } else {
+                filter.restaurante = { $in: restauranteIds };
+            }
+        } else if (restaurante) {
+            filter.restaurante = restaurante;
         }
 
         const [reseñas, total] = await Promise.all([

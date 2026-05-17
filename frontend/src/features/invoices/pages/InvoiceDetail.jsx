@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getInvoiceById, downloadInvoicePDF } from "../../../shared/api/invoice";
+import { getInvoiceById, downloadInvoicePDF, getInvoices } from "../../../shared/api/invoice";
 import { getDetailOrdersByOrderId } from "../../../shared/api/detailOrder";
 import { getRestaurantById } from "../../../shared/api/restaurant";
 import { 
@@ -194,39 +194,81 @@ export const InvoiceDetail = () => {
         const fetchEverything = async () => {
             try {
                 setLoading(true);
-                // 1. Fetch Invoice
+                // 1. Fetch target invoice
                 const invRes = await getInvoiceById(id);
                 const invData = invRes.data?.data || invRes.data;
-                setInvoice(invData);
 
-                if (invData) {
-                    const orderId = invData.pedido?._id || invData.pedido?.id || invData.pedido;
-                    
-                    // 2. Fetch Order Details (Items)
+                if (!invData) {
+                    setInvoice(null);
+                    return;
+                }
+
+                // 2. Fetch all user invoices to group them if they were created within 5 seconds
+                let relatedInvoices = [invData];
+                try {
+                    const allInvsRes = await getInvoices();
+                    const allInvs = allInvsRes.data?.data || allInvsRes.data || [];
+                    const targetTime = new Date(invData.fechaEmision || invData.createdAt || 0).getTime();
+                    const group = allInvs.filter(i => {
+                        const iTime = new Date(i.fechaEmision || i.createdAt || 0).getTime();
+                        return Math.abs(iTime - targetTime) < 5000;
+                    });
+                    if (group.length > 0) {
+                        relatedInvoices = group;
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch all invoices for grouping", e);
+                }
+
+                // 3. Fetch all details for these invoices' orders
+                const allItems = [];
+                for (const inv of relatedInvoices) {
+                    const orderId = inv.pedido?._id || inv.pedido?.id || inv.pedido;
                     if (orderId) {
                         try {
                             const detailsRes = await getDetailOrdersByOrderId(orderId);
-                            // Looking at the RAW structure from backend controller:
-                            // res.status(200).json({ success: true, data: { items: [...], ... } })
                             const detailData = detailsRes.data?.data || detailsRes.data;
                             if (detailData?.items && Array.isArray(detailData.items)) {
-                                setItems(detailData.items);
+                                allItems.push(...detailData.items);
                             } else if (Array.isArray(detailData)) {
-                                setItems(detailData);
+                                allItems.push(...detailData);
                             }
-                        } catch (e) { console.error("Items fetch failed", e); }
+                        } catch (e) {
+                            console.error("Items fetch failed for order", orderId, e);
+                        }
                     }
+                }
+                setItems(allItems);
 
-                    // 3. Fetch Restaurant Name
-                    const restId = invData.restaurante?._id || invData.restaurante?.id || invData.restaurante || invData.pedido?.restaurante;
+                // 4. Fetch all restaurant names
+                const restaurantNames = [];
+                for (const inv of relatedInvoices) {
+                    const restId = inv.restaurante?._id || inv.restaurante?.id || inv.restaurante || inv.pedido?.restaurante;
                     if (restId && typeof restId === "string") {
                         try {
                             const restRes = await getRestaurantById(restId);
                             const restData = restRes.data?.data || restRes.data;
-                            setRestaurantName(restData?.nombre || "");
-                        } catch (e) { console.error("Restaurant fetch failed", e); }
+                            if (restData?.nombre) {
+                                restaurantNames.push(restData.nombre);
+                            }
+                        } catch (e) {
+                            console.error("Restaurant fetch failed for", restId, e);
+                        }
+                    } else if (inv.restaurante?.nombre) {
+                        restaurantNames.push(inv.restaurante.nombre);
                     }
                 }
+
+                const uniqueNames = restaurantNames.filter((v, i, self) => self.indexOf(v) === i);
+                setRestaurantName(uniqueNames.join(", "));
+
+                // 5. Consolidate and set invoice state
+                const consolidatedInvoice = {
+                    ...invData,
+                    subtotal: relatedInvoices.reduce((sum, i) => sum + Number(i.subtotal || i.total || 0), 0),
+                    total: relatedInvoices.reduce((sum, i) => sum + Number(i.total || i.subtotal || 0), 0),
+                };
+                setInvoice(consolidatedInvoice);
             } catch (err) {
                 console.error("General fetch failed", err);
             } finally {

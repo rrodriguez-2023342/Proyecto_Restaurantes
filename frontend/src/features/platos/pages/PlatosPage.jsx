@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminTheme } from "../../../constants/theme";
 import { BadgeEstado, Card, EmptyState } from "../../../shared/components";
 import { getMenus } from "../../../shared/api";
-import { showError, showSuccess } from "../../../shared/utils/toast";
+import { showError, showSuccess, showConfirm } from "../../../shared/utils/toast";
 import { useInventoryStore } from "../../inventory/store/useInventoryStore";
 import { useRestaurantStore } from "../../restaurants/store/useRestaurantStore";
 import { DishForm } from "../components/DishForm.jsx";
@@ -140,7 +140,14 @@ export const PlatosPage = () => {
     };
 
     const handleDelete = async (plato) => {
-        if (!confirm("Eliminar este plato?")) return;
+        const confirmed = await showConfirm({
+            title: "¿Eliminar plato?",
+            text: `¿Estás seguro de que deseas eliminar el plato "${plato.nombrePlato || plato.nombre}" permanentemente de este menú?`,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+        if (!confirmed) return;
+
         try {
             await storeDelete(plato._id || plato.id);
             showSuccess("Plato eliminado");

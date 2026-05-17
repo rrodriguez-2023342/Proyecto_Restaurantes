@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { adminTheme } from "../../../constants/theme";
 import { Avatar, BadgeEstado, Card, DataTable, EmptyState } from "../../../shared/components";
-import { showError, showSuccess } from "../../../shared/utils/toast";
+import { showError, showSuccess, showConfirm } from "../../../shared/utils/toast";
 import { useAuthStore } from "../../auth/store/authStore";
 import { CreateUserModal } from "../components/CreateUserModal.jsx";
 import { UserDetailModal } from "../components/UserDetailModal.jsx";
@@ -90,7 +90,15 @@ export const UsersPage = () => {
             showError("No puedes eliminar a otro administrador");
             return;
         }
-        if (!confirm(`Estas seguro de eliminar a ${getFullName(user)}?`)) return;
+        
+        const confirmed = await showConfirm({
+            title: "¿Eliminar usuario?",
+            text: `¿Estás seguro de que deseas eliminar permanentemente a "${getFullName(user)}" (username: @${user.username || "usuario"})?`,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+        if (!confirmed) return;
+
         try {
             await storeDelete(userId);
             showSuccess("Usuario eliminado");

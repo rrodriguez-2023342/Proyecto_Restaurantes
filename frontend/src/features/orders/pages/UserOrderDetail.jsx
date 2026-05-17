@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bike, Clock3, CookingPot, House, MapPin, Phone, StickyNote, Receipt, ShieldCheck } from "lucide-react";
-import { getOrderById } from "../../../shared/api";
+import { ArrowLeft, Bike, Clock3, CookingPot, House, MapPin, Phone, StickyNote, Receipt, ShieldCheck, XCircle } from "lucide-react";
+import { getOrderById, getDetailOrdersByOrderId } from "../../../shared/api";
 import { useOrderStore } from "../store/useOrderStore";
 import { useDetailOrderStore } from "../../detailOrders/store/useDetailOrderStore";
 import { showError, showSuccess } from "../../../shared/utils/toast";
@@ -59,6 +59,7 @@ export const UserOrderDetail = () => {
     const { orders, fetchOrders, updateOrder } = useOrderStore();
     const { detailOrders, fetchDetailOrdersByOrderId } = useDetailOrderStore();
     const [order, setOrder] = useState(null);
+    const [localDetails, setLocalDetails] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deliveryAddress, setDeliveryAddress] = useState("");
     const [deliveryPhone, setDeliveryPhone] = useState("");
@@ -82,21 +83,75 @@ export const UserOrderDetail = () => {
                     foundOrder = normalizeOrderPayload(data?.data || data?.pedido || data);
                 }
 
-                if (foundOrder) {
-                    setDeliveryAddress(foundOrder.direccionEntrega || "");
-                    setDeliveryPhone(foundOrder.telefono || "");
-                    setDeliveryNotes(foundOrder.notas || "");
-                }
-
                 if (!foundOrder) {
                     showError("Pedido no encontrado");
                     navigate("/home/orders");
                     return;
                 }
 
-                await fetchDetailOrdersByOrderId(id);
-                setOrder(foundOrder);
-            } catch {
+                setDeliveryAddress(foundOrder.direccionEntrega || "");
+                setDeliveryPhone(foundOrder.telefono || "");
+                setDeliveryNotes(foundOrder.notas || "");
+
+                // Find all related orders (placed at almost the same time by the same user)
+                const targetTime = new Date(foundOrder.fechaPedido || foundOrder.createdAt || 0).getTime();
+                const allOrders = useOrderStore.getState().orders;
+                let related = allOrders.filter(o => {
+                    const oTime = new Date(o.fechaPedido || o.createdAt || 0).getTime();
+                    return Math.abs(oTime - targetTime) < 5000;
+                });
+
+                if (related.length === 0) {
+                    related = [foundOrder];
+                }
+
+                // Fetch detail orders for all related orders in parallel
+                const detailsPromises = related.map(async (o) => {
+                    try {
+                        const { data } = await getDetailOrdersByOrderId(o._id || o.id);
+                        return data?.data || data?.detallePedidos || data || [];
+                    } catch (e) {
+                        console.error("Error fetching detail for order:", o._id || o.id, e);
+                        return [];
+                    }
+                });
+
+                const detailsResults = await Promise.all(detailsPromises);
+                // Normalize and flatten all detail items
+                const allNormalizedDetails = detailsResults.flatMap((payload) => {
+                    const details = Array.isArray(payload) ? payload : payload ? [payload] : [];
+                    return details.flatMap((detail) => {
+                        const detailId = detail.detallePedidoId || detail._id || detail.id;
+                        const items = Array.isArray(detail.items) ? detail.items : [];
+                        return items.map((item, index) => ({
+                            ...item,
+                            _id: `${detailId || "detail"}-${index}`,
+                            detailOrderId: detailId,
+                            pedido: detail.pedido,
+                            cantidad: item.cantidad || 0,
+                            precioUnitario: item.precio || item.precioUnitario || 0,
+                            subtotal: item.subtotal || (item.cantidad || 0) * (item.precio || item.precioUnitario || 0),
+                            plato: typeof item.plato === "string" ? { id: item.plato, nombre: item.plato } : item.plato,
+                            nombrePlato: item.nombrePlato || item.plato?.nombre || item.plato?.nombrePlato || "N/A",
+                        }));
+                    });
+                });
+
+                // Consolidate order details into order state
+                const consolidatedOrder = {
+                    ...foundOrder,
+                    subOrders: related,
+                    total: related.reduce((sum, o) => sum + (o.total ?? o.totalPedido ?? 0), 0),
+                    subtotal: related.reduce((sum, o) => sum + (o.subtotal ?? o.total ?? o.totalPedido ?? 0), 0),
+                    restaurantNames: related
+                        .map(o => o.restaurante?.nombre || "Restaurante")
+                        .filter((v, i, self) => self.indexOf(v) === i),
+                };
+
+                setOrder(consolidatedOrder);
+                setLocalDetails(allNormalizedDetails);
+            } catch (err) {
+                console.error("loadOrderDetail error:", err);
                 showError("Error al cargar el pedido");
                 navigate("/home/orders");
             } finally {
@@ -105,14 +160,15 @@ export const UserOrderDetail = () => {
         };
 
         loadOrderDetail();
-    }, [fetchDetailOrdersByOrderId, fetchOrders, id, navigate, orders]);
-
-    const relatedDetails = detailOrders.filter(
-        (detail) => detail.pedido === id || detail.pedido?._id === id || detail.pedido?.id === id
-    );
+    }, [fetchOrders, id, navigate, orders]);
 
     const trackingSteps = useMemo(() => {
-        const currentStep = getTrackingStep(order?.estado || order?.estadoPedido);
+        let currentStep = 0;
+        if (order?.subOrders) {
+            currentStep = Math.max(...order.subOrders.map(o => getTrackingStep(o.estado || o.estadoPedido)));
+        } else {
+            currentStep = getTrackingStep(order?.estado || order?.estadoPedido);
+        }
         const orderDate = order?.fechaPedido || order?.createdAt;
 
         return [
@@ -148,25 +204,45 @@ export const UserOrderDetail = () => {
         }));
     }, [order]);
 
-    const isCancelled = normalizeStatus(order?.estado || order?.estadoPedido) === "cancelado";
-    const isDelivered = normalizeStatus(order?.estado || order?.estadoPedido) === "entregado";
+    const isCancelled = order?.subOrders
+        ? order.subOrders.every(o => normalizeStatus(o.estado || o.estadoPedido) === "cancelado")
+        : normalizeStatus(order?.estado || order?.estadoPedido) === "cancelado";
+
+    const isDelivered = order?.subOrders
+        ? order.subOrders.every(o => normalizeStatus(o.estado || o.estadoPedido) === "entregado")
+        : normalizeStatus(order?.estado || order?.estadoPedido) === "entregado";
+
     const canUpdateDelivery = !isCancelled && !isDelivered;
-    const canConfirmDelivery = ["en camino", "listo para entrega", "listo", "en preparacion"].includes(normalizeStatus(order?.estado || order?.estadoPedido));
+
+    const canConfirmDelivery = order?.subOrders
+        ? order.subOrders.some(o => ["en camino", "listo para entrega", "listo", "en preparacion"].includes(normalizeStatus(o.estado || o.estadoPedido)))
+        : ["en camino", "listo para entrega", "listo", "en preparacion"].includes(normalizeStatus(order?.estado || order?.estadoPedido));
 
     const handleSaveDelivery = async () => {
         try {
             setSavingDelivery(true);
-            await updateOrder(order._id || order.id, {
-                direccionEntrega: deliveryAddress,
-                telefono: deliveryPhone,
-                notas: deliveryNotes,
-            });
+            const targets = order.subOrders && order.subOrders.length > 0 ? order.subOrders : [order];
+            await Promise.all(
+                targets.map(o =>
+                    updateOrder(o._id || o.id, {
+                        direccionEntrega: deliveryAddress,
+                        telefono: deliveryPhone,
+                        notes: deliveryNotes,
+                    })
+                )
+            );
             showSuccess("Datos de entrega actualizados");
             setOrder((prev) => ({
                 ...prev,
                 direccionEntrega: deliveryAddress,
                 telefono: deliveryPhone,
                 notas: deliveryNotes,
+                subOrders: prev.subOrders ? prev.subOrders.map(o => ({
+                    ...o,
+                    direccionEntrega: deliveryAddress,
+                    telefono: deliveryPhone,
+                    notas: deliveryNotes,
+                })) : []
             }));
         } catch (err) {
             showError(err.response?.data?.message || "Error al actualizar datos de entrega");
@@ -182,14 +258,24 @@ export const UserOrderDetail = () => {
 
         try {
             setConfirmingDelivery(true);
-            await updateOrder(order._id || order.id, {
-                estadoPedido: "Entregado",
-            });
+            const targets = order.subOrders && order.subOrders.length > 0 ? order.subOrders : [order];
+            await Promise.all(
+                targets.map(o =>
+                    updateOrder(o._id || o.id, {
+                        estadoPedido: "Entregado",
+                    })
+                )
+            );
             showSuccess("Pedido marcado como entregado");
             setOrder((prev) => ({
                 ...prev,
                 estado: "Entregado",
                 estadoPedido: "Entregado",
+                subOrders: prev.subOrders ? prev.subOrders.map(o => ({
+                    ...o,
+                    estado: "Entregado",
+                    estadoPedido: "Entregado",
+                })) : []
             }));
         } catch (err) {
             showError(err.response?.data?.message || "Error al confirmar entrega");
@@ -240,7 +326,9 @@ export const UserOrderDetail = () => {
                     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                         <div>
                             <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-500 mb-2">
-                                {order.restaurante?.nombre || "Restaurante"}
+                                {order.restaurantNames && order.restaurantNames.length > 0 
+                                    ? order.restaurantNames.join(", ") 
+                                    : (order.restaurante?.nombre || "Restaurante")}
                             </p>
                             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
                                 Pedido <span className="text-orange-500">#{order.numeroPedido || id?.slice(-6)}</span>
@@ -337,12 +425,12 @@ export const UserOrderDetail = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-slate-900">Artículos</h3>
-                                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mt-1">{relatedDetails.length} items en tu pedido</p>
+                                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mt-1">{localDetails.length} items en tu pedido</p>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
-                                {relatedDetails.map((detail, idx) => (
+                                {localDetails.map((detail, idx) => (
                                     <div key={detail._id || detail.id || idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-slate-200 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className="grid h-10 w-10 place-items-center rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-500">

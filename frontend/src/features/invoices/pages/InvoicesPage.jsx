@@ -11,6 +11,8 @@ import {
     SearchX,
     X,
 } from "lucide-react";
+import invoiceHero from "../../../assets/images/comida10.png";
+
 
 export const InvoicesPage = () => {
     const [invoices, setInvoices] = useState([]);
@@ -90,8 +92,218 @@ export const InvoicesPage = () => {
         isAdmin ? `/admin/invoices/${invoiceId}` : `/home/invoices/${invoiceId}`
     );
 
+    const groupedInvoices = useMemo(() => {
+        if (isAdmin) return filteredInvoices;
+        
+        const groups = [];
+        for (const inv of filteredInvoices) {
+            const invTime = new Date(inv.fechaEmision || inv.createdAt || 0).getTime();
+            const matchingGroup = groups.find(group => {
+                const groupTime = new Date(group.fechaEmision || group.createdAt || 0).getTime();
+                return Math.abs(groupTime - invTime) < 5000;
+            });
+            
+            if (matchingGroup) {
+                matchingGroup.subInvoices.push(inv);
+                matchingGroup.total = (matchingGroup.total || 0) + Number(inv.total ?? inv.subtotal ?? 0);
+            } else {
+                groups.push({
+                    ...inv,
+                    subInvoices: [inv]
+                });
+            }
+        }
+        return groups;
+    }, [filteredInvoices, isAdmin]);
+
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen bg-slate-50">
+                {/* Hero Banner */}
+                <div className="relative overflow-hidden bg-slate-950 mb-8">
+                    <div className="absolute inset-0">
+                        <img
+                            src={invoiceHero}
+                            alt="Invoices"
+                            className="h-full w-full object-cover object-center opacity-30 mix-blend-multiply"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
+                    </div>
+                    <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-orange-500 mb-4">Administración Fiscal</p>
+                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
+                            Mis <span className="text-orange-500">Facturas</span>
+                        </h1>
+                        <p className="text-slate-400 text-sm font-medium max-w-md leading-relaxed">
+                            Gestiona tus comprobantes de pago, historial de consumos y detalles de facturación de forma segura.
+                        </p>
+                    </div>
+                </div>
+
+                <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-20">
+                    {/* Search & Filter Bar */}
+                    <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-8 grid gap-4 md:grid-cols-[1fr_16rem] items-end">
+                        <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Búsqueda</label>
+                            <div className="relative mt-2">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por ID de factura..."
+                                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm text-slate-900 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha de Emisión</label>
+                            <div className="relative mt-2">
+                                <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <input
+                                    type="date"
+                                    className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm text-slate-900 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all appearance-none"
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                />
+                                {dateFilter && (
+                                    <button 
+                                        onClick={() => setDateFilter("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Invoices List Container */}
+                    <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center gap-4 py-20">
+                                <div className="h-10 w-10 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin" />
+                                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500">Cargando Facturas...</p>
+                            </div>
+                        ) : groupedInvoices.length === 0 ? (
+                            <div className="flex flex-col items-center py-20 px-6 text-center">
+                                <div className="h-16 w-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mb-6">
+                                    <SearchX size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900">No se encontraron facturas</h3>
+                                <p className="text-slate-400 text-sm font-medium mt-2 max-w-xs mx-auto">
+                                    {dateFilter ? "No hay registros para la fecha seleccionada." : "Prueba buscando con otro término."}
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-50/50">
+                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Comprobante</th>
+                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Fecha de Emisión</th>
+                                                {isAdmin && <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Cliente</th>}
+                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Monto Total</th>
+                                                <th className="px-8 py-5 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {groupedInvoices.map((invoice) => (
+                                                <tr 
+                                                    key={invoice._id} 
+                                                    className="group hover:bg-slate-50/80 transition-all duration-300"
+                                                >
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                                                                <Receipt size={18} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-black text-slate-900 font-mono tracking-tighter">#{invoice._id.substring(0, 10).toUpperCase()}</p>
+                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Factura Electrónica</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-2 text-slate-600">
+                                                            <CalendarIcon size={14} className="text-slate-400" />
+                                                            <p className="text-sm font-semibold">{formatDate(invoice.fechaEmision || invoice.createdAt)}</p>
+                                                        </div>
+                                                    </td>
+                                                    {isAdmin && (
+                                                        <td className="px-8 py-6">
+                                                            <p className="text-sm font-bold text-slate-900">
+                                                                {invoice.cliente?.nombre || invoice.pedido?.cliente || invoice.correoCliente || "Usuario KinalEats"}
+                                                            </p>
+                                                        </td>
+                                                    )}
+                                                    <td className="px-8 py-6">
+                                                        <p className="text-lg font-black text-slate-900 tracking-tight">
+                                                            Q{Number(invoice.total ?? invoice.subtotal ?? 0).toFixed(2)}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-right">
+                                                        <Link 
+                                                            to={getDetailPath(invoice._id)}
+                                                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 hover:shadow-lg hover:shadow-orange-500/20 transition-all active:scale-95 group-hover:-translate-x-2"
+                                                        >
+                                                            Detalles
+                                                            <ArrowUpRight size={14} strokeWidth={3} />
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden divide-y divide-slate-100">
+                                    {groupedInvoices.map((invoice) => (
+                                        <div key={invoice._id} className="p-6 space-y-4 hover:bg-slate-50 transition-colors">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                                                        <Receipt size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-black text-slate-900 font-mono tracking-tighter">#{invoice._id.substring(0, 10).toUpperCase()}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Electrónica</p>
+                                                    </div>
+                                                </div>
+                                                <p className="text-lg font-black text-slate-900 tracking-tight">
+                                                    Q{Number(invoice.total ?? invoice.subtotal ?? 0).toFixed(2)}
+                                                </p>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <CalendarIcon size={12} />
+                                                    <p className="text-[10px] font-bold">{formatDate(invoice.fechaEmision || invoice.createdAt)}</p>
+                                                </div>
+                                                <Link 
+                                                    to={getDetailPath(invoice._id)}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all"
+                                                >
+                                                    Ver Detalle
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
+
             <section className="admin-surface rounded-2xl p-6">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>

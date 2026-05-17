@@ -20,28 +20,44 @@ export const CheckoutPage = () => {
 
     const onSubmit = async (data) => {
         try {
-            // Formatear items para la API
-            const orderItems = items.map(item => ({
-                plato: item.id,
-                cantidad: item.quantity,
-                precio: item.price
-            }));
+            // Group items by restaurantId
+            const itemsByRestaurant = {};
+            items.forEach(item => {
+                const rId = item.restaurantId || restaurantId;
+                if (!itemsByRestaurant[rId]) {
+                    itemsByRestaurant[rId] = [];
+                }
+                itemsByRestaurant[rId].push(item);
+            });
 
-            const payload = {
-                restaurante: restaurantId,
-                items: orderItems,
-                direccionEntrega: data.address,
-                notas: data.notes,
-                metodoPago: data.paymentMethod,
-                tipoPedido: 'Domicilio', // Por defecto para esta vista
-                cliente: `${user?.name || ''} ${user?.surname || ''}`.trim() || 'Cliente Web',
-                email: user?.email,
-                telefono: data.phone || ''
-            };
+            const restaurantIds = Object.keys(itemsByRestaurant);
 
-            await createOrder(payload);
+            // Create an order for each restaurant
+            const orderPromises = restaurantIds.map(async (rId) => {
+                const orderItems = itemsByRestaurant[rId].map(item => ({
+                    plato: item.id,
+                    cantidad: item.quantity,
+                    precio: item.price
+                }));
+
+                const payload = {
+                    restaurante: rId,
+                    items: orderItems,
+                    direccionEntrega: data.address,
+                    notas: data.notes,
+                    metodoPago: data.paymentMethod,
+                    tipoPedido: 'Domicilio', // Por defecto para esta vista
+                    cliente: `${user?.name || ''} ${user?.surname || ''}`.trim() || 'Cliente Web',
+                    email: user?.email,
+                    telefono: data.phone || ''
+                };
+
+                return createOrder(payload);
+            });
+
+            await Promise.all(orderPromises);
             
-            toast.success("¡Pedido realizado con éxito!", {
+            toast.success("¡Pedido(s) realizado(s) con éxito!", {
                 icon: '🎉',
                 duration: 5000,
                 style: { borderRadius: '20px', background: '#333', color: '#fff' }

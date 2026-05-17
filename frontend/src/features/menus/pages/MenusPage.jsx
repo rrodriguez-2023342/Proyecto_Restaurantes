@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { adminTheme } from "../../../constants/theme";
 import { BadgeEstado, Card, EmptyState } from "../../../shared/components";
 import { getRestaurants } from "../../../shared/api";
-import { showError, showSuccess } from "../../../shared/utils/toast";
+import { showError, showSuccess, showConfirm } from "../../../shared/utils/toast";
 import { MenuForm } from "../components/MenuForm.jsx";
 import { useMenuStore } from "../store/useMenuStore";
 
@@ -70,7 +70,14 @@ export const MenusPage = () => {
     };
 
     const handleDelete = async (menu) => {
-        if (!confirm("Eliminar este menu?")) return;
+        const confirmed = await showConfirm({
+            title: "¿Eliminar menú?",
+            text: `¿Estás seguro de eliminar el menú "${menu.nombreMenu}" permanentemente? Se eliminarán todos sus platos relacionados en cascada.`,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+        if (!confirmed) return;
+
         try {
             await storeDelete(menu._id || menu.id);
             showSuccess("Menu eliminado");

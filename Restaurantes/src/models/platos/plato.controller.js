@@ -59,11 +59,33 @@ const getRestauranteFromUser = async (usuario) => {
     return restaurante?._id || null;
 };
 
+const getRestaurantesFromUser = async (usuario) => {
+    if (!usuario || (usuario.role !== 'ADMIN_RESTAURANT_ROLE' && usuario.role !== 'ADMIN_ROLE')) return [];
+    
+    const userId = usuario.id || usuario._id || usuario.uid || "";
+    const queryConditions = [];
+    
+    if (userId) {
+        queryConditions.push({ dueño: String(userId) });
+        if (!isNaN(Number(userId))) {
+            queryConditions.push({ dueño: Number(userId) });
+        }
+    }
+    if (usuario.restaurante) {
+        queryConditions.push({ _id: usuario.restaurante });
+    }
+    
+    if (queryConditions.length === 0) return [];
+    
+    const list = await Restaurante.find({ $or: queryConditions }).select('_id').lean();
+    return list.map(r => r._id.toString());
+};
+
 const validateMenuOwnership = async (menuId, usuario) => {
     if (usuario.role !== 'ADMIN_RESTAURANT_ROLE') return { valid: true };
 
-    const restauranteId = await getRestauranteFromUser(usuario);
-    if (!restauranteId) {
+    const restauranteIds = await getRestaurantesFromUser(usuario);
+    if (!restauranteIds || restauranteIds.length === 0) {
         return { valid: false, status: 403, message: 'No tienes un restaurante asignado' };
     }
 
@@ -72,11 +94,11 @@ const validateMenuOwnership = async (menuId, usuario) => {
         return { valid: false, status: 404, message: 'Menu no encontrado' };
     }
 
-    if (menu.restaurante.toString() !== restauranteId.toString()) {
+    if (!restauranteIds.includes(menu.restaurante.toString())) {
         return { valid: false, status: 403, message: 'Solo puedes operar platos de menus de tu restaurante' };
     }
 
-    return { valid: true, restauranteId };
+    return { valid: true, restauranteId: menu.restaurante.toString() };
 };
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
@@ -219,12 +241,12 @@ export const eliminarPlato = async (req, res) => {
 
         const menuId = platoExistente.menu._id;
 
-        await Plato.findByIdAndUpdate(id, { disponible: false }, { new: true });
+        await Plato.findByIdAndDelete(id);
 
         // Recalcular sin este plato
         await recalcularPrecioPromedio(menuId);
 
-        res.status(200).json({ success: true, message: 'Plato desactivado (eliminado) correctamente' });
+        res.status(200).json({ success: true, message: 'Plato eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al eliminar el plato', error: error.message });
     }

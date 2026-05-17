@@ -10,6 +10,25 @@ const getRestauranteFromUser = async (usuario) => {
     return restaurante?._id || null;
 };
 
+const getRestaurantesFromUser = async (usuario) => {
+    if (!usuario || usuario.role !== 'ADMIN_RESTAURANT_ROLE') return [];
+    
+    const userId = String(usuario.id || usuario._id || usuario.uid || "");
+    const queryConditions = [];
+    
+    if (userId) {
+        queryConditions.push({ dueño: userId });
+    }
+    if (usuario.restaurante) {
+        queryConditions.push({ _id: usuario.restaurante });
+    }
+    
+    if (queryConditions.length === 0) return [];
+    
+    const list = await Restaurante.find({ $or: queryConditions }).select('_id').lean();
+    return list.map(r => r._id.toString());
+};
+
 export const createMenu = async (req, res) => {
     try {
         const menuData = { ...req.body };
@@ -24,14 +43,24 @@ export const createMenu = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteFromUser(req.usuario);
-            if (!restauranteId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes un restaurante asignado'
                 });
             }
-            menuData.restaurante = restauranteId;
+            if (menuData.restaurante) {
+                const hasAccess = restauranteIds.includes(menuData.restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para agregar menús a este restaurante'
+                    });
+                }
+            } else {
+                menuData.restaurante = restauranteIds[0];
+            }
         }
 
         const menu = new Menu(menuData);
@@ -53,20 +82,37 @@ export const createMenu = async (req, res) => {
 
 export const getMenus = async (req, res) => {
     try {
-        const { page = 1, limit = 10, isActive = true } = req.query;
+        const { page = 1, limit = 10, isActive } = req.query;
         const numericPage = parseInt(page, 10);
         const numericLimit = parseInt(limit, 10);
-        const filter = { isActive };
+        
+        const filter = {};
+        if (req.usuario.role === 'USER_ROLE') {
+            filter.isActive = true;
+        } else if (isActive !== undefined) {
+            filter.isActive = isActive === true || isActive === 'true';
+        }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteFromUser(req.usuario);
-            if (!restauranteId) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes un restaurante asignado'
                 });
             }
-            filter.restaurante = restauranteId;
+            if (req.query.restaurante) {
+                const hasAccess = restauranteIds.includes(req.query.restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para ver los menús de este restaurante'
+                    });
+                }
+                filter.restaurante = req.query.restaurante;
+            } else {
+                filter.restaurante = { $in: restauranteIds };
+            }
         } else if (req.query.restaurante) {
             filter.restaurante = req.query.restaurante;
         }
@@ -135,8 +181,8 @@ export const getMenuById = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteFromUser(req.usuario);
-            if (!restauranteId || menu.restaurante?._id?.toString() !== restauranteId.toString()) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0 || !menu.restaurante || !restauranteIds.includes(menu.restaurante._id.toString())) {
                 return res.status(403).json({
                     success: false,
                     message: 'No tienes permisos para ver este menu'
@@ -191,14 +237,26 @@ export const editarMenu = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteFromUser(req.usuario);
-            if (!restauranteId || menuExistente.restaurante.toString() !== restauranteId.toString()) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0 || !restauranteIds.includes(menuExistente.restaurante.toString())) {
                 return res.status(403).json({
                     success: false,
                     message: 'Solo puedes editar menus de tu restaurante'
                 });
             }
-            menuData.restaurante = restauranteId;
+            
+            // Si intenta cambiar a otro restaurante, validamos que le pertenezca
+            if (menuData.restaurante) {
+                const hasAccess = restauranteIds.includes(menuData.restaurante.toString());
+                if (!hasAccess) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para reasignar este menú a este restaurante'
+                    });
+                }
+            } else {
+                menuData.restaurante = menuExistente.restaurante.toString();
+            }
         }
 
         const menuEditado = await Menu.findByIdAndUpdate(
@@ -234,8 +292,8 @@ export const eliminarMenu = async (req, res) => {
         }
 
         if (req.usuario.role === 'ADMIN_RESTAURANT_ROLE') {
-            const restauranteId = await getRestauranteFromUser(req.usuario);
-            if (!restauranteId || menuExistente.restaurante.toString() !== restauranteId.toString()) {
+            const restauranteIds = await getRestaurantesFromUser(req.usuario);
+            if (!restauranteIds || restauranteIds.length === 0 || !restauranteIds.includes(menuExistente.restaurante.toString())) {
                 return res.status(403).json({
                     success: false,
                     message: 'Solo puedes eliminar menus de tu restaurante'
@@ -243,11 +301,10 @@ export const eliminarMenu = async (req, res) => {
             }
         }
 
-        const menuEliminado = await Menu.findByIdAndUpdate(
-            id,
-            { isActive: false },
-            { new: true }
-        );
+        const menuEliminado = await Menu.findByIdAndDelete(id);
+        if (menuEliminado) {
+            await Plato.deleteMany({ menu: id });
+        }
 
         res.status(200).json({
             success: true,
@@ -262,3 +319,4 @@ export const eliminarMenu = async (req, res) => {
         });
     }
 };
+
