@@ -150,7 +150,7 @@ export const getPlatos = async (req, res) => {
         const [platos, total] = await Promise.all([
             Plato.find(filter)
                 .populate('menu', 'nombreMenu')
-                .populate('ingredientes.itemInventario', 'nombreItem')
+                .populate('ingredientes.itemInventario', 'nombreItem cantidad minStock')
                 .limit(numericLimit)
                 .skip((numericPage - 1) * numericLimit)
                 .sort({ createdAt: -1 }),
@@ -177,7 +177,7 @@ export const getPlatoById = async (req, res) => {
         const { id } = req.params;
         const plato = await Plato.findById(id)
             .populate('menu')
-            .populate('ingredientes.itemInventario', 'nombreItem');
+            .populate('ingredientes.itemInventario', 'nombreItem cantidad minStock');
 
         if (!plato || !plato.disponible) {
             return res.status(404).json({ success: false, message: 'Plato no encontrado o no disponible' });

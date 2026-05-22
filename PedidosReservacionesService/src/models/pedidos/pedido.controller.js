@@ -56,6 +56,80 @@ const isOrderOwner = (pedido, usuario) => {
     return sameUserId || sameEmail;
 };
 
+const normalizeIngredientes = (plato) => {
+    let ingredientesList = plato?.ingredientes || [];
+
+    if (typeof ingredientesList === 'string') {
+        try {
+            ingredientesList = JSON.parse(ingredientesList);
+        } catch (e) {
+            ingredientesList = [];
+        }
+    }
+
+    return Array.isArray(ingredientesList) ? ingredientesList : [];
+};
+
+const getInventarioIdFromIngrediente = (ingrediente) => {
+    const itemInventario = ingrediente?.itemInventario;
+    return itemInventario?._id || itemInventario?.id || itemInventario;
+};
+
+const buildStockRequirements = async (formattedItems) => {
+    const requirements = new Map();
+
+    for (const item of formattedItems) {
+        const rawPlato = await Plato.collection.findOne({ _id: new mongoose.Types.ObjectId(item.plato) });
+
+        if (!rawPlato) {
+            return { ok: false, status: 404, message: `Plato con id ${item.plato} no encontrado` };
+        }
+
+        if (rawPlato.disponible === false) {
+            return { ok: false, status: 400, message: `${rawPlato.nombrePlato || 'El plato'} no esta disponible` };
+        }
+
+        for (const ingrediente of normalizeIngredientes(rawPlato)) {
+            const itemId = getInventarioIdFromIngrediente(ingrediente);
+            const cantidadPorPlato = Number(ingrediente?.cantidad || 0);
+            const cantidadPlatos = Number(item.cantidad || 1);
+
+            if (!itemId || cantidadPorPlato <= 0) continue;
+
+            const key = String(itemId);
+            requirements.set(key, (requirements.get(key) || 0) + (cantidadPorPlato * cantidadPlatos));
+        }
+    }
+
+    return { ok: true, requirements };
+};
+
+const validateStockRequirements = async (requirements) => {
+    for (const [itemId, needed] of requirements.entries()) {
+        const inventarioItem = await Inventario.findById(itemId).lean();
+
+        if (!inventarioItem) {
+            return { ok: false, status: 404, message: `Item de inventario con ID ${itemId} no encontrado` };
+        }
+
+        if (Number(inventarioItem.cantidad || 0) < needed) {
+            return {
+                ok: false,
+                status: 400,
+                message: `Stock insuficiente para ${inventarioItem.nombreItem}. Requerido: ${needed}, disponible: ${inventarioItem.cantidad}`,
+            };
+        }
+    }
+
+    return { ok: true };
+};
+
+const descontarStock = async (requirements) => {
+    for (const [itemId, needed] of requirements.entries()) {
+        await Inventario.findByIdAndUpdate(itemId, { $inc: { cantidad: -needed } });
+    }
+};
+
 export const createPedido = async (req, res) => {
     try {
         let { restaurante } = req.body;
@@ -98,6 +172,16 @@ export const createPedido = async (req, res) => {
             };
         });
 
+        const stockBuild = await buildStockRequirements(formattedItems);
+        if (!stockBuild.ok) {
+            return res.status(stockBuild.status).json({ success: false, message: stockBuild.message });
+        }
+
+        const stockValidation = await validateStockRequirements(stockBuild.requirements);
+        if (!stockValidation.ok) {
+            return res.status(stockValidation.status).json({ success: false, message: stockValidation.message });
+        }
+
         // 2. Crear el Pedido
         const clienteEmail = email || req.usuario.email || '';
         const clienteNombre = cliente || req.usuario.name || 'Cliente';
@@ -137,39 +221,7 @@ export const createPedido = async (req, res) => {
 
         // 5. Restar inventario automáticamente
         try {
-            for (const item of formattedItems) {
-                // Leemos directamente desde la colección de MongoDB para evitar que Mongoose borre los datos en modo estricto
-                const rawPlato = await Plato.collection.findOne({ _id: new mongoose.Types.ObjectId(item.plato) });
-                
-                if (rawPlato && rawPlato.ingredientes) {
-                    let ingredientesList = rawPlato.ingredientes;
-                    
-                    // Si viene como un string (texto gigante) lo convertimos a array real
-                    if (typeof ingredientesList === 'string') {
-                        try {
-                            ingredientesList = JSON.parse(ingredientesList);
-                        } catch (e) {
-                            ingredientesList = [];
-                        }
-                    }
-
-                    if (Array.isArray(ingredientesList)) {
-                        for (const ing of ingredientesList) {
-                            // Extraemos el ID ya sea que venga como objeto populado o texto
-                            const itemId = ing.itemInventario?._id || ing.itemInventario;
-                            
-                            if (itemId) {
-                                const inventarioItem = await Inventario.findById(itemId);
-                                if (inventarioItem) {
-                                    inventarioItem.cantidad -= (Number(ing.cantidad) * Number(item.cantidad));
-                                    if (inventarioItem.cantidad < 0) inventarioItem.cantidad = 0; // Evitar negativos
-                                    await inventarioItem.save();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            await descontarStock(stockBuild.requirements);
         } catch (invError) {
             console.error('[createPedido] Error al restar inventario:', invError.message);
         }

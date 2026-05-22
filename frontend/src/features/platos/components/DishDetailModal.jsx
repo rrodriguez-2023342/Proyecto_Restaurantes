@@ -11,7 +11,7 @@ const getDishDescription = (dish) =>
 const getDishImage = (dish) => dish?.fotosPlato || dish?.fotos || dish?.imagen || "";
 const getDishPrice = (dish) => Number(dish?.precio || dish?.price || 0);
 
-export const DishDetailModal = ({ open, dish, onClose, onAdd }) => {
+export const DishDetailModal = ({ open, dish, onClose, onAdd, stockInfoForQuantity }) => {
     const [quantity, setQuantity] = useState(1);
     const [isAdding, setIsAdding] = useState(false);
     
@@ -99,9 +99,11 @@ export const DishDetailModal = ({ open, dish, onClose, onAdd }) => {
 
     const price = getDishPrice(dish);
     const total = price * quantity;
+    const stockInfo = stockInfoForQuantity?.(dish, quantity) || { available: true, message: "Disponible" };
+    const isOutOfStock = !stockInfo.available;
 
     const handleAddClick = () => {
-        if (isAdding) return;
+        if (isAdding || isOutOfStock) return;
         setIsAdding(true);
         setTimeout(() => {
             onAdd?.(dish, quantity);
@@ -183,12 +185,19 @@ export const DishDetailModal = ({ open, dish, onClose, onAdd }) => {
                                 <div className="h-10 w-px bg-slate-200" />
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-1">Disponibilidad</p>
-                                    <div className="text-xs font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2 justify-end">
-                                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        En Cocina
+                                    <div className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 justify-end ${
+                                        isOutOfStock ? "text-rose-600" : "text-emerald-600"
+                                    }`}>
+                                        <div className={`h-2 w-2 rounded-full ${isOutOfStock ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`} />
+                                        {isOutOfStock ? "Sin Stock" : "En Cocina"}
                                     </div>
                                 </div>
                             </div>
+                            {isOutOfStock && (
+                                <p className="mt-4 text-xs font-bold text-rose-600">
+                                    {stockInfo.message || "No hay stock suficiente para este plato."}
+                                </p>
+                            )}
                         </div>
 
                         {/* Ingredients */}
@@ -235,7 +244,7 @@ export const DishDetailModal = ({ open, dish, onClose, onAdd }) => {
                                 </span>
                                 <button
                                     type="button"
-                                    disabled={isAdding}
+                                    disabled={isAdding || isOutOfStock}
                                     onClick={() => setQuantity((current) => current + 1)}
                                     className="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-white transition hover:bg-amber-500 active:scale-90 disabled:opacity-50"
                                 >
@@ -247,10 +256,12 @@ export const DishDetailModal = ({ open, dish, onClose, onAdd }) => {
                         <button
                             type="button"
                             onClick={handleAddClick}
-                            disabled={isAdding}
+                            disabled={isAdding || isOutOfStock}
                             className={`group relative flex w-full items-center justify-between overflow-hidden rounded-2xl p-2 pr-6 transition-all duration-500 shadow-lg ${
                                 isAdding 
                                     ? "bg-emerald-600 shadow-emerald-600/30 scale-[0.98]" 
+                                    : isOutOfStock
+                                        ? "bg-slate-400 cursor-not-allowed shadow-none"
                                     : "bg-slate-950 hover:bg-amber-600 shadow-slate-900/20 active:scale-[0.98]"
                             }`}
                         >
@@ -266,10 +277,10 @@ export const DishDetailModal = ({ open, dish, onClose, onAdd }) => {
                                 </div>
                                 <div className="text-left">
                                     <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/70">
-                                        {isAdding ? "Operación Exitosa" : "Finalizar Selección"}
+                                        {isAdding ? "Operación Exitosa" : isOutOfStock ? "Stock insuficiente" : "Finalizar Selección"}
                                     </span>
                                     <span className="block text-sm font-black text-white uppercase tracking-widest">
-                                        {isAdding ? "Agregado" : "Agregar al Pedido"}
+                                        {isAdding ? "Agregado" : isOutOfStock ? "No disponible" : "Agregar al Pedido"}
                                     </span>
                                 </div>
                             </div>

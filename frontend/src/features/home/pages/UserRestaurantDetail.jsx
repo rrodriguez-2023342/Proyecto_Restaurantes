@@ -34,6 +34,71 @@ const FloatingDish = ({ src, delay, duration, size, top, left, rotate, opacity =
     </div>
 );
 
+const normalizeIngredients = (dish) => {
+    let rawIngredients = dish?.ingredientes || dish?.ingredients || [];
+
+    if (typeof rawIngredients === "string") {
+        try {
+            rawIngredients = JSON.parse(rawIngredients);
+        } catch {
+            rawIngredients = [];
+        }
+    }
+
+    return Array.isArray(rawIngredients) ? rawIngredients : [];
+};
+
+const getInventoryItem = (ingredient) => {
+    const item = ingredient?.itemInventario;
+    return item && typeof item === "object" ? item : null;
+};
+
+const getIngredientInventoryId = (ingredient) => {
+    const item = ingredient?.itemInventario;
+    return item?._id || item?.id || item || ingredient?.id || ingredient?._id;
+};
+
+const getDishStockInfo = (dish, quantity = 1, cartItems = []) => {
+    if (dish?.disponible === false) {
+        return { available: false, message: "Plato no disponible", missing: [] };
+    }
+
+    const missing = [];
+
+    for (const ingredient of normalizeIngredients(dish)) {
+        const inventoryItem = getInventoryItem(ingredient);
+        const availableRaw = inventoryItem?.cantidad;
+
+        if (availableRaw === undefined || availableRaw === null || availableRaw === "") continue;
+
+        const inventoryId = String(getIngredientInventoryId(ingredient) || "");
+        const requiredPerDish = Number(ingredient?.cantidad || 0);
+        const alreadyReserved = cartItems.reduce((total, cartItem) => {
+            return total + normalizeIngredients(cartItem).reduce((ingredientTotal, cartIngredient) => {
+                const cartInventoryId = String(getIngredientInventoryId(cartIngredient) || "");
+                if (!inventoryId || cartInventoryId !== inventoryId) return ingredientTotal;
+                return ingredientTotal + (Number(cartIngredient?.cantidad || 0) * Number(cartItem.quantity || 0));
+            }, 0);
+        }, 0);
+        const needed = requiredPerDish * Number(quantity || 1) + alreadyReserved;
+        const available = Number(availableRaw);
+
+        if (requiredPerDish > 0 && available < needed) {
+            missing.push({ name: inventoryItem?.nombreItem || "ingrediente", needed, available });
+        }
+    }
+
+    if (missing.length > 0) {
+        return {
+            available: false,
+            message: `Sin stock suficiente de ${missing[0].name}`,
+            missing,
+        };
+    }
+
+    return { available: true, message: "Disponible", missing: [] };
+};
+
 export const UserRestaurantDetail = () => {
     const { id } = useParams();
     const location = useLocation();
@@ -47,6 +112,7 @@ export const UserRestaurantDetail = () => {
     const [reviewToEdit, setReviewToEdit] = useState(null);
     
     const addItem = useCartStore((state) => state.addItem);
+    const cartItems = useCartStore((state) => state.items);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -102,11 +168,21 @@ export const UserRestaurantDetail = () => {
     };
 
     const handleAddToCart = (plato, quantity = 1) => {
+        const stockInfo = getDishStockInfo(plato, quantity, cartItems);
+
+        if (!stockInfo.available) {
+            toast.error(stockInfo.message || "No hay stock suficiente para este plato", {
+                style: { borderRadius: '0px', background: '#000', color: '#fff', fontSize: '12px', fontWeight: 'bold' }
+            });
+            return;
+        }
+
         addItem({
             id: plato._id || plato.id,
             name: plato.nombrePlato || plato.nombre,
             price: plato.precio,
-            image: plato.fotosPlato || plato.fotos
+            image: plato.fotosPlato || plato.fotos,
+            ingredientes: normalizeIngredients(plato)
         }, id, quantity);
         toast.success(`${plato.nombrePlato || plato.nombre} agregado`, {
             icon: '🛒',
@@ -251,11 +327,19 @@ export const UserRestaurantDetail = () => {
 
                         {platos.length > 0 ? (
                             <div className="grid gap-8 md:grid-cols-2">
-                                {platos.map((plato) => (
+                                {platos.map((plato) => {
+                                    const stockInfo = getDishStockInfo(plato, 1, cartItems);
+                                    const isBlocked = !stockInfo.available;
+
+                                    return (
                                     <div 
                                         key={plato._id || plato.id}
-                                        onClick={() => handleOpenDish(plato)}
-                                        className="group relative h-[420px] w-full overflow-hidden rounded-3xl cursor-pointer shadow-sm hover:shadow-2xl hover:shadow-amber-900/20 transition-all duration-500"
+                                        onClick={() => isBlocked ? toast.error(stockInfo.message) : handleOpenDish(plato)}
+                                        className={`group relative h-[420px] w-full overflow-hidden rounded-3xl shadow-sm transition-all duration-500 ${
+                                            isBlocked
+                                                ? "cursor-not-allowed opacity-75 grayscale"
+                                                : "cursor-pointer hover:shadow-2xl hover:shadow-amber-900/20"
+                                        }`}
                                     >
                                         {/* Background Image */}
                                         <div className="absolute inset-0 bg-slate-900">
@@ -272,7 +356,14 @@ export const UserRestaurantDetail = () => {
                                             )}
                                             {/* Magazine Style Gradient Overlay */}
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
+                                            {isBlocked && <div className="absolute inset-0 bg-black/45" />}
                                         </div>
+
+                                        {isBlocked && (
+                                            <div className="absolute left-6 top-6 z-20 rounded-full bg-rose-600 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg">
+                                                Sin stock
+                                            </div>
+                                        )}
                                         
                                         {/* Content Overlay */}
                                         <div className="absolute inset-0 p-8 flex flex-col justify-end">
@@ -287,12 +378,13 @@ export const UserRestaurantDetail = () => {
                                                 </div>
                                                 <div className="h-px w-12 bg-amber-500/50 mb-4 transition-all duration-500 group-hover:w-24" />
                                                 <p className="text-sm text-white/70 line-clamp-2 font-medium leading-relaxed">
-                                                    {plato.descripcionPlato || "Una obra maestra culinaria preparada con ingredientes frescos de la región. Sabores auténticos que deleitan el paladar."}
+                                                    {isBlocked ? stockInfo.message : (plato.descripcionPlato || "Una obra maestra culinaria preparada con ingredientes frescos de la región. Sabores auténticos que deleitan el paladar.")}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="py-40 text-center border border-slate-200 rounded-3xl bg-slate-50/50">
@@ -421,6 +513,7 @@ export const UserRestaurantDetail = () => {
                     dish={selectedDish}
                     onClose={() => setSelectedDish(null)}
                     onAdd={handleAddToCart}
+                    stockInfoForQuantity={(dish, quantity) => getDishStockInfo(dish, quantity, cartItems)}
                 />
             )}
         </div>
