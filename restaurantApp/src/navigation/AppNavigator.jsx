@@ -6,7 +6,6 @@ import { useAuthStore } from "../shared/store/authStore"
 
 const AppNavigator = () => {
 
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const isHydrated = useAuthStore((state) => state._hasHydrated)
 
     if(!isHydrated) {
@@ -19,7 +18,7 @@ const AppNavigator = () => {
 
     return (
         <NavigationContainer>
-            {isAuthenticated ? <MainTabs /> : <AuthStack />}
+            <AuthStack />
         </NavigationContainer>
     )
 }

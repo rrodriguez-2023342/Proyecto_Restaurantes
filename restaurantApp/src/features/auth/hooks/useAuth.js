@@ -22,6 +22,7 @@ export const useAuth = () => {
             const mappedUser = userDetails || user;
 
             await login(mappedAccessToken, mappedUser, refreshToken);
+            console.log("Login exitoso:", response.data);
             return response.data;
         } catch (err) {
             setError(err.response?.data?.message || "Error al iniciar sesión");
@@ -64,5 +65,28 @@ export const useAuth = () => {
         }
     };
 
-    return { handleLogin, handleRegister, loading, error, logout };
+    const handleForgotPassword = async (email) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await authClient.post("/forgot-password", { email });
+            console.log("Correo de recuperación enviado:", response.data);
+            return response.data;
+        } catch (err) {
+            setError(err.response?.data?.message || "Error al enviar el correo");
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        handleLogin,
+        handleRegister,
+        handleForgotPassword,
+        loading,
+        error,
+        logout,
+    };
 };
