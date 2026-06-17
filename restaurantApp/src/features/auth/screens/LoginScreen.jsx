@@ -8,6 +8,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -27,19 +28,24 @@ const LoginField = ({
     name,
     navigation,
     placeholder,
+    compact,
     rules,
     secureTextEntry,
     ...inputProps
 }) => (
-    <View style={styles.fieldGroup}>
+    <View style={[styles.fieldGroup, compact && styles.fieldGroupCompact]}>
         <View style={styles.labelRow}>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, compact && styles.labelCompact]}>
+                {label}
+            </Text>
             {name === "password" && (
                 <TouchableOpacity
                     activeOpacity={0.75}
                     onPress={() => navigation.navigate("ForgotPassword")}
                 >
-                    <Text style={styles.forgotText}>Olvide mi contrasena</Text>
+                    <Text style={[styles.forgotText, compact && styles.forgotTextCompact]}>
+                        Olvide mi contrasena
+                    </Text>
                 </TouchableOpacity>
             )}
         </View>
@@ -49,10 +55,16 @@ const LoginField = ({
             name={name}
             rules={rules}
             render={({ field: { onChange, value } }) => (
-                <View style={[styles.inputShell, error && styles.inputShellError]}>
-                    <Feather name={icon} size={21} color="#8aa0bd" />
+                <View
+                    style={[
+                        styles.inputShell,
+                        compact && styles.inputShellCompact,
+                        error && styles.inputShellError,
+                    ]}
+                >
+                    <Feather name={icon} size={compact ? 19 : 21} color="#8aa0bd" />
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, compact && styles.inputCompact]}
                         placeholder={placeholder}
                         placeholderTextColor="#94a3b8"
                         onChangeText={onChange}
@@ -72,6 +84,9 @@ const LoginField = ({
 const LoginScreen = ({ navigation }) => {
     const { handleLogin, loading } = useAuth();
     const { showToast } = useToast();
+    const { width, height } = useWindowDimensions();
+    const compact = width < 360 || height < 700;
+    const veryCompact = width < 340;
 
     const backgroundPlayer = useVideoPlayer(authBackgroundVideo, (player) => {
         player.loop = true;
@@ -101,13 +116,18 @@ const LoginScreen = ({ navigation }) => {
         } catch (error) {
             console.error(error);
             const message =
-                error.response?.data?.message ||
-                error.response?.data?.error ||
-                "Correo, usuario o contrasena incorrectos.";
+                error.code === "MOBILE_ADMIN_ACCESS_DENIED"
+                    ? error.message
+                    : error.response?.data?.message ||
+                      error.response?.data?.error ||
+                      "Correo, usuario o contrasena incorrectos.";
 
             showToast({
                 type: "error",
-                title: "No se pudo iniciar sesion",
+                title:
+                    error.code === "MOBILE_ADMIN_ACCESS_DENIED"
+                        ? "Acceso solo en web"
+                        : "No se pudo iniciar sesion",
                 message,
             });
         }
@@ -143,22 +163,25 @@ const LoginScreen = ({ navigation }) => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.card}>
-                        <View style={styles.logoWrap}>
+                    <View style={[styles.card, compact && styles.cardCompact]}>
+                        <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
                             <Image
                                 source={kinalEatsLogo}
-                                style={styles.logo}
+                                style={[styles.logo, compact && styles.logoCompact]}
                                 resizeMode="contain"
                             />
                         </View>
 
-                        <Text style={styles.title}>Bienvenido de nuevo</Text>
-                        <Text style={styles.subtitle}>
+                        <Text style={[styles.title, compact && styles.titleCompact]}>
+                            Bienvenido de nuevo
+                        </Text>
+                        <Text style={[styles.subtitle, compact && styles.subtitleCompact]}>
                             Ingresa tus credenciales para continuar.
                         </Text>
 
-                        <View style={styles.form}>
+                        <View style={[styles.form, compact && styles.formCompact]}>
                             <LoginField
+                                compact={compact}
                                 control={control}
                                 error={errors.emailOrUsername?.message}
                                 icon="mail"
@@ -171,6 +194,7 @@ const LoginScreen = ({ navigation }) => {
                             />
 
                             <LoginField
+                                compact={compact}
                                 control={control}
                                 error={errors.password?.message}
                                 icon="lock"
@@ -192,31 +216,44 @@ const LoginScreen = ({ navigation }) => {
                                 {loading ? (
                                     <ActivityIndicator color="#ffffff" />
                                 ) : (
-                                    <Text style={styles.primaryButtonText}>
+                                    <Text
+                                        style={[
+                                            styles.primaryButtonText,
+                                            veryCompact && styles.primaryButtonTextCompact,
+                                        ]}
+                                    >
                                         INICIAR SESION
                                     </Text>
                                 )}
                             </TouchableOpacity>
                         </View>
 
-                        <View style={styles.separator}>
+                        <View style={[styles.separator, compact && styles.separatorCompact]}>
                             <View style={styles.separatorLine} />
                             <Text style={styles.separatorDot}>o</Text>
                             <View style={styles.separatorLine} />
                         </View>
 
                         <TouchableOpacity
-                            style={styles.secondaryButton}
+                            style={[
+                                styles.secondaryButton,
+                                compact && styles.secondaryButtonCompact,
+                            ]}
                             activeOpacity={0.82}
                             onPress={() => navigation.navigate("Register")}
                         >
                             <Feather name="user-plus" size={16} color="#c94606" />
-                            <Text style={styles.secondaryButtonText}>
+                            <Text
+                                style={[
+                                    styles.secondaryButtonText,
+                                    veryCompact && styles.secondaryButtonTextCompact,
+                                ]}
+                            >
                                 CREAR UNA CUENTA
                             </Text>
                         </TouchableOpacity>
 
-                        <View style={styles.cardDivider} />
+                        <View style={[styles.cardDivider, compact && styles.cardDividerCompact]} />
 
                         <View style={styles.metrics}>
                             <View style={styles.metricItem}>
@@ -272,6 +309,12 @@ const styles = StyleSheet.create({
         shadowRadius: 28,
         elevation: 12,
     },
+    cardCompact: {
+        borderRadius: 22,
+        paddingHorizontal: 22,
+        paddingTop: 26,
+        paddingBottom: 24,
+    },
     logoWrap: {
         width: 76,
         height: 76,
@@ -287,9 +330,19 @@ const styles = StyleSheet.create({
         shadowRadius: 18,
         elevation: 6,
     },
+    logoWrapCompact: {
+        width: 62,
+        height: 62,
+        borderRadius: 31,
+        marginBottom: 18,
+    },
     logo: {
         width: 64,
         height: 64,
+    },
+    logoCompact: {
+        width: 52,
+        height: 52,
     },
     title: {
         color: "#111b35",
@@ -298,6 +351,10 @@ const styles = StyleSheet.create({
         lineHeight: 36,
         letterSpacing: 0,
     },
+    titleCompact: {
+        fontSize: 25,
+        lineHeight: 31,
+    },
     subtitle: {
         color: "#6b7b96",
         fontSize: 18,
@@ -305,11 +362,22 @@ const styles = StyleSheet.create({
         lineHeight: 25,
         marginTop: 6,
     },
+    subtitleCompact: {
+        fontSize: 15,
+        lineHeight: 21,
+        marginTop: 4,
+    },
     form: {
         marginTop: 34,
     },
+    formCompact: {
+        marginTop: 24,
+    },
     fieldGroup: {
         marginBottom: 18,
+    },
+    fieldGroupCompact: {
+        marginBottom: 14,
     },
     labelRow: {
         minHeight: 19,
@@ -324,10 +392,17 @@ const styles = StyleSheet.create({
         fontWeight: "800",
         letterSpacing: 5,
     },
+    labelCompact: {
+        fontSize: 11,
+        letterSpacing: 3.2,
+    },
     forgotText: {
         color: "#c94606",
         fontSize: 14,
         fontWeight: "800",
+    },
+    forgotTextCompact: {
+        fontSize: 12,
     },
     inputShell: {
         height: 56,
@@ -340,6 +415,11 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         paddingHorizontal: 17,
     },
+    inputShellCompact: {
+        height: 50,
+        gap: 11,
+        paddingHorizontal: 14,
+    },
     inputShellError: {
         borderColor: "#ef4444",
     },
@@ -349,6 +429,9 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: "700",
         paddingVertical: 0,
+    },
+    inputCompact: {
+        fontSize: 15,
     },
     errorText: {
         color: "#ef4444",
@@ -378,11 +461,18 @@ const styles = StyleSheet.create({
         fontWeight: "900",
         letterSpacing: 5,
     },
+    primaryButtonTextCompact: {
+        fontSize: 13,
+        letterSpacing: 3.2,
+    },
     separator: {
         flexDirection: "row",
         alignItems: "center",
         gap: 14,
         marginVertical: 31,
+    },
+    separatorCompact: {
+        marginVertical: 22,
     },
     separatorLine: {
         flex: 1,
@@ -406,17 +496,29 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         backgroundColor: "#ffffff",
     },
+    secondaryButtonCompact: {
+        height: 50,
+        gap: 9,
+    },
     secondaryButtonText: {
         color: "#c94606",
         fontSize: 14,
         fontWeight: "900",
         letterSpacing: 4,
     },
+    secondaryButtonTextCompact: {
+        fontSize: 12,
+        letterSpacing: 2.8,
+    },
     cardDivider: {
         height: 1,
         backgroundColor: "#eef3f8",
         marginTop: 48,
         marginBottom: 26,
+    },
+    cardDividerCompact: {
+        marginTop: 30,
+        marginBottom: 18,
     },
     metrics: {
         flexDirection: "row",

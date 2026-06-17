@@ -8,6 +8,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -22,6 +23,7 @@ import authBackgroundVideo from "../../../../assets/fondoAuthPage.mp4";
 const RegisterField = ({
     autoCapitalize,
     control,
+    compact,
     error,
     keyboardType,
     label,
@@ -30,15 +32,19 @@ const RegisterField = ({
     secureTextEntry,
     textContentType,
 }) => (
-    <View style={styles.fieldGroup}>
-        <Text style={styles.label}>{label}</Text>
+    <View style={[styles.fieldGroup, compact && styles.fieldGroupCompact]}>
+        <Text style={[styles.label, compact && styles.labelCompact]}>{label}</Text>
         <Controller
             control={control}
             name={name}
             rules={rules}
             render={({ field: { onChange, value } }) => (
                 <TextInput
-                    style={[styles.input, error && styles.inputError]}
+                    style={[
+                        styles.input,
+                        compact && styles.inputCompact,
+                        error && styles.inputError,
+                    ]}
                     value={value}
                     onChangeText={onChange}
                     autoCapitalize={autoCapitalize || "none"}
@@ -56,6 +62,9 @@ const RegisterField = ({
 const RegisterScreen = ({ navigation }) => {
     const { handleRegister, loading } = useAuth();
     const { showToast } = useToast();
+    const { width, height } = useWindowDimensions();
+    const compact = width < 360 || height < 760;
+    const veryCompact = width < 340;
 
     const backgroundPlayer = useVideoPlayer(authBackgroundVideo, (player) => {
         player.loop = true;
@@ -140,23 +149,26 @@ const RegisterScreen = ({ navigation }) => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.card}>
-                        <View style={styles.logoWrap}>
+                    <View style={[styles.card, compact && styles.cardCompact]}>
+                        <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
                             <Image
                                 source={kinalEatsLogo}
-                                style={styles.logo}
+                                style={[styles.logo, compact && styles.logoCompact]}
                                 resizeMode="contain"
                             />
                         </View>
 
-                        <Text style={styles.title}>Crear una cuenta</Text>
-                        <Text style={styles.subtitle}>
+                        <Text style={[styles.title, compact && styles.titleCompact]}>
+                            Crear una cuenta
+                        </Text>
+                        <Text style={[styles.subtitle, compact && styles.subtitleCompact]}>
                             Completa el formulario para crear tu cuenta.
                         </Text>
 
-                        <View style={styles.form}>
+                        <View style={[styles.form, compact && styles.formCompact]}>
                             <View style={styles.fieldRow}>
                                 <RegisterField
+                                    compact={compact}
                                     control={control}
                                     error={errors.name?.message}
                                     label="NOMBRE"
@@ -167,6 +179,7 @@ const RegisterScreen = ({ navigation }) => {
                                 />
 
                                 <RegisterField
+                                    compact={compact}
                                     control={control}
                                     error={errors.surname?.message}
                                     label="APELLIDO"
@@ -179,6 +192,7 @@ const RegisterScreen = ({ navigation }) => {
 
                             <View style={styles.fieldRow}>
                                 <RegisterField
+                                    compact={compact}
                                     control={control}
                                     error={errors.username?.message}
                                     label="USUARIO"
@@ -194,6 +208,7 @@ const RegisterScreen = ({ navigation }) => {
                                 />
 
                                 <RegisterField
+                                    compact={compact}
                                     control={control}
                                     error={errors.phone?.message}
                                     label="TELEFONO"
@@ -211,6 +226,7 @@ const RegisterScreen = ({ navigation }) => {
                             </View>
 
                             <RegisterField
+                                compact={compact}
                                 control={control}
                                 error={errors.email?.message}
                                 label="EMAIL"
@@ -228,6 +244,7 @@ const RegisterScreen = ({ navigation }) => {
 
                             <View style={styles.fieldRow}>
                                 <RegisterField
+                                    compact={compact}
                                     control={control}
                                     error={errors.password?.message}
                                     label="CONTRASENA"
@@ -244,6 +261,7 @@ const RegisterScreen = ({ navigation }) => {
                                 />
 
                                 <RegisterField
+                                    compact={compact}
                                     control={control}
                                     error={errors.confirmPassword?.message}
                                     label="CONFIRMAR CONTRASENA"
@@ -260,7 +278,7 @@ const RegisterScreen = ({ navigation }) => {
                             </View>
                         </View>
 
-                        <View style={styles.actions}>
+                        <View style={[styles.actions, compact && styles.actionsCompact]}>
                             <TouchableOpacity
                                 style={styles.backButton}
                                 activeOpacity={0.82}
@@ -268,7 +286,14 @@ const RegisterScreen = ({ navigation }) => {
                                 onPress={() => navigation.navigate("Login")}
                             >
                                 <Feather name="arrow-left" size={15} color="#5f6f86" />
-                                <Text style={styles.backButtonText}>VOLVER</Text>
+                                <Text
+                                    style={[
+                                        styles.backButtonText,
+                                        veryCompact && styles.buttonTextCompact,
+                                    ]}
+                                >
+                                    VOLVER
+                                </Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -282,7 +307,12 @@ const RegisterScreen = ({ navigation }) => {
                                 ) : (
                                     <>
                                         <Feather name="user-plus" size={15} color="#ffffff" />
-                                        <Text style={styles.primaryButtonText}>
+                                        <Text
+                                            style={[
+                                                styles.primaryButtonText,
+                                                veryCompact && styles.buttonTextCompact,
+                                            ]}
+                                        >
                                             CREAR CUENTA
                                         </Text>
                                     </>
@@ -329,6 +359,12 @@ const styles = StyleSheet.create({
         shadowRadius: 28,
         elevation: 12,
     },
+    cardCompact: {
+        borderRadius: 22,
+        paddingHorizontal: 20,
+        paddingTop: 22,
+        paddingBottom: 20,
+    },
     logoWrap: {
         width: 68,
         height: 68,
@@ -344,9 +380,19 @@ const styles = StyleSheet.create({
         shadowRadius: 18,
         elevation: 6,
     },
+    logoWrapCompact: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        marginBottom: 16,
+    },
     logo: {
         width: 58,
         height: 58,
+    },
+    logoCompact: {
+        width: 48,
+        height: 48,
     },
     title: {
         color: "#111b35",
@@ -355,6 +401,10 @@ const styles = StyleSheet.create({
         lineHeight: 34,
         letterSpacing: 0,
     },
+    titleCompact: {
+        fontSize: 24,
+        lineHeight: 30,
+    },
     subtitle: {
         color: "#64748b",
         fontSize: 16,
@@ -362,8 +412,15 @@ const styles = StyleSheet.create({
         lineHeight: 23,
         marginTop: 5,
     },
+    subtitleCompact: {
+        fontSize: 14,
+        lineHeight: 20,
+    },
     form: {
         marginTop: 26,
+    },
+    formCompact: {
+        marginTop: 20,
     },
     fieldRow: {
         flexDirection: "column",
@@ -372,12 +429,20 @@ const styles = StyleSheet.create({
         flex: 1,
         marginBottom: 16,
     },
+    fieldGroupCompact: {
+        marginBottom: 12,
+    },
     label: {
         color: "#64748b",
         fontSize: 10,
         fontWeight: "900",
         letterSpacing: 2.4,
         marginBottom: 8,
+    },
+    labelCompact: {
+        fontSize: 9,
+        letterSpacing: 1.8,
+        marginBottom: 6,
     },
     input: {
         height: 48,
@@ -390,6 +455,11 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         paddingHorizontal: 15,
         paddingVertical: 0,
+    },
+    inputCompact: {
+        height: 44,
+        fontSize: 13,
+        paddingHorizontal: 13,
     },
     inputError: {
         borderColor: "#ef4444",
@@ -407,6 +477,11 @@ const styles = StyleSheet.create({
         borderTopColor: "#f1f5f9",
         paddingTop: 20,
         marginTop: 4,
+    },
+    actionsCompact: {
+        gap: 10,
+        paddingTop: 16,
+        marginTop: 2,
     },
     backButton: {
         height: 49,
@@ -447,6 +522,10 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "900",
         letterSpacing: 2.6,
+    },
+    buttonTextCompact: {
+        fontSize: 10,
+        letterSpacing: 1.8,
     },
 });
 

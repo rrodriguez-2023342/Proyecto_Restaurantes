@@ -20,6 +20,16 @@ export const useAuth = () => {
 
             const mappedAccessToken = accessToken || token;
             const mappedUser = userDetails || user;
+            const role = String(mappedUser?.role || mappedUser?.Role || "").toUpperCase();
+            const adminRoles = ["ADMIN_ROLE", "ADMIN_RESTAURANT_ROLE"];
+
+            if (adminRoles.includes(role)) {
+                const mobileAccessError = new Error(
+                    "Esta app movil es solo para usuarios. El panel de administracion esta disponible en la web."
+                );
+                mobileAccessError.code = "MOBILE_ADMIN_ACCESS_DENIED";
+                throw mobileAccessError;
+            }
 
             await login(mappedAccessToken, mappedUser, refreshToken);
             console.log("Login exitoso:", response.data);

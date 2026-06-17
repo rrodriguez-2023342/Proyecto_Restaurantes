@@ -3,6 +3,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
@@ -36,6 +37,8 @@ const TOAST_CONFIG = {
 
 export const ToastProvider = ({ children }) => {
     const [toast, setToast] = useState(null);
+    const { width } = useWindowDimensions();
+    const compact = width < 360;
     const translateY = useRef(new Animated.Value(-120)).current;
     const opacity = useRef(new Animated.Value(0)).current;
     const timerRef = useRef(null);
@@ -106,6 +109,7 @@ export const ToastProvider = ({ children }) => {
                     pointerEvents="box-none"
                     style={[
                         styles.wrapper,
+                        compact && styles.wrapperCompact,
                         {
                             opacity,
                             transform: [{ translateY }],
@@ -121,6 +125,7 @@ export const ToastProvider = ({ children }) => {
                                 backgroundColor: config.background,
                                 borderColor: config.border,
                             },
+                            compact && styles.toastCompact,
                         ]}
                     >
                         <View
@@ -132,11 +137,24 @@ export const ToastProvider = ({ children }) => {
                             <Feather name={config.icon} size={18} color="#ffffff" />
                         </View>
                         <View style={styles.copy}>
-                            <Text style={[styles.title, { color: config.accent }]}>
+                            <Text
+                                style={[
+                                    styles.title,
+                                    compact && styles.titleCompact,
+                                    { color: config.accent },
+                                ]}
+                            >
                                 {toast.title}
                             </Text>
                             {!!toast.message && (
-                                <Text style={styles.message}>{toast.message}</Text>
+                                <Text
+                                    style={[
+                                        styles.message,
+                                        compact && styles.messageCompact,
+                                    ]}
+                                >
+                                    {toast.message}
+                                </Text>
                             )}
                         </View>
                     </TouchableOpacity>
@@ -165,6 +183,11 @@ const styles = StyleSheet.create({
         zIndex: 999,
         elevation: 999,
     },
+    wrapperCompact: {
+        top: 36,
+        left: 10,
+        right: 10,
+    },
     toast: {
         minHeight: 66,
         flexDirection: "row",
@@ -179,6 +202,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.18,
         shadowRadius: 18,
         elevation: 10,
+    },
+    toastCompact: {
+        minHeight: 58,
+        gap: 10,
+        borderRadius: 14,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
     },
     iconWrap: {
         width: 36,
@@ -195,11 +225,18 @@ const styles = StyleSheet.create({
         fontWeight: "900",
         letterSpacing: 0,
     },
+    titleCompact: {
+        fontSize: 12,
+    },
     message: {
         color: "#334155",
         fontSize: 13,
         fontWeight: "700",
         lineHeight: 18,
         marginTop: 2,
+    },
+    messageCompact: {
+        fontSize: 12,
+        lineHeight: 17,
     },
 });

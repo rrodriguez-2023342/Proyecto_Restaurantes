@@ -8,6 +8,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -22,6 +23,9 @@ import authBackgroundVideo from "../../../../assets/fondoAuthPage.mp4";
 const ForgotPasswordScreen = ({ navigation }) => {
     const { handleForgotPassword, loading } = useAuth();
     const { showToast } = useToast();
+    const { width, height } = useWindowDimensions();
+    const compact = width < 360 || height < 700;
+    const veryCompact = width < 340;
 
     const backgroundPlayer = useVideoPlayer(authBackgroundVideo, (player) => {
         player.loop = true;
@@ -92,29 +96,33 @@ const ForgotPasswordScreen = ({ navigation }) => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.card}>
-                        <View style={styles.logoWrap}>
+                    <View style={[styles.card, compact && styles.cardCompact]}>
+                        <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
                             <Image
                                 source={kinalEatsLogo}
-                                style={styles.logo}
+                                style={[styles.logo, compact && styles.logoCompact]}
                                 resizeMode="contain"
                             />
                         </View>
 
-                        <Text style={styles.title}>Recuperar contrasena</Text>
-                        <Text style={styles.subtitle}>
+                        <Text style={[styles.title, compact && styles.titleCompact]}>
+                            Recuperar contrasena
+                        </Text>
+                        <Text style={[styles.subtitle, compact && styles.subtitleCompact]}>
                             Te enviamos un enlace a tu correo.
                         </Text>
 
-                        <View style={styles.notice}>
-                            <Text style={styles.noticeText}>
+                        <View style={[styles.notice, compact && styles.noticeCompact]}>
+                            <Text style={[styles.noticeText, compact && styles.noticeTextCompact]}>
                                 Te enviaremos instrucciones para restablecer tu
                                 contrasena al correo asociado a tu cuenta.
                             </Text>
                         </View>
 
-                        <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>EMAIL</Text>
+                        <View style={[styles.fieldGroup, compact && styles.fieldGroupCompact]}>
+                            <Text style={[styles.label, compact && styles.labelCompact]}>
+                                EMAIL
+                            </Text>
                             <Controller
                                 control={control}
                                 name="email"
@@ -129,13 +137,18 @@ const ForgotPasswordScreen = ({ navigation }) => {
                                     <View
                                         style={[
                                             styles.inputShell,
+                                            compact && styles.inputShellCompact,
                                             errors.email && styles.inputShellError,
                                             loading && styles.inputShellDisabled,
                                         ]}
                                     >
-                                        <Feather name="mail" size={20} color="#8aa0bd" />
+                                        <Feather
+                                            name="mail"
+                                            size={compact ? 18 : 20}
+                                            color="#8aa0bd"
+                                        />
                                         <TextInput
-                                            style={styles.input}
+                                            style={[styles.input, compact && styles.inputCompact]}
                                             placeholder="correo@restaurante.com"
                                             placeholderTextColor="#94a3b8"
                                             value={value}
@@ -164,7 +177,12 @@ const ForgotPasswordScreen = ({ navigation }) => {
                             {loading ? (
                                 <ActivityIndicator color="#ffffff" />
                             ) : (
-                                <Text style={styles.primaryButtonText}>
+                                <Text
+                                    style={[
+                                        styles.primaryButtonText,
+                                        veryCompact && styles.primaryButtonTextCompact,
+                                    ]}
+                                >
                                     ENVIAR CORREO
                                 </Text>
                             )}
@@ -177,7 +195,14 @@ const ForgotPasswordScreen = ({ navigation }) => {
                             onPress={() => navigation.navigate("Login")}
                         >
                             <Feather name="arrow-left" size={15} color="#5f6f86" />
-                            <Text style={styles.backButtonText}>VOLVER AL LOGIN</Text>
+                            <Text
+                                style={[
+                                    styles.backButtonText,
+                                    veryCompact && styles.backButtonTextCompact,
+                                ]}
+                            >
+                                VOLVER AL LOGIN
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -219,6 +244,12 @@ const styles = StyleSheet.create({
         shadowRadius: 28,
         elevation: 12,
     },
+    cardCompact: {
+        borderRadius: 22,
+        paddingHorizontal: 22,
+        paddingTop: 26,
+        paddingBottom: 24,
+    },
     logoWrap: {
         width: 76,
         height: 76,
@@ -234,9 +265,19 @@ const styles = StyleSheet.create({
         shadowRadius: 18,
         elevation: 6,
     },
+    logoWrapCompact: {
+        width: 62,
+        height: 62,
+        borderRadius: 31,
+        marginBottom: 18,
+    },
     logo: {
         width: 64,
         height: 64,
+    },
+    logoCompact: {
+        width: 52,
+        height: 52,
     },
     title: {
         color: "#111b35",
@@ -245,12 +286,20 @@ const styles = StyleSheet.create({
         lineHeight: 36,
         letterSpacing: 0,
     },
+    titleCompact: {
+        fontSize: 25,
+        lineHeight: 31,
+    },
     subtitle: {
         color: "#64748b",
         fontSize: 16,
         fontWeight: "600",
         lineHeight: 23,
         marginTop: 5,
+    },
+    subtitleCompact: {
+        fontSize: 14,
+        lineHeight: 20,
     },
     notice: {
         borderWidth: 1,
@@ -262,14 +311,28 @@ const styles = StyleSheet.create({
         marginTop: 28,
         marginBottom: 22,
     },
+    noticeCompact: {
+        borderRadius: 14,
+        paddingHorizontal: 13,
+        paddingVertical: 11,
+        marginTop: 22,
+        marginBottom: 18,
+    },
     noticeText: {
         color: "#78350f",
         fontSize: 14,
         fontWeight: "700",
         lineHeight: 21,
     },
+    noticeTextCompact: {
+        fontSize: 13,
+        lineHeight: 19,
+    },
     fieldGroup: {
         marginBottom: 18,
+    },
+    fieldGroupCompact: {
+        marginBottom: 14,
     },
     label: {
         color: "#64748b",
@@ -277,6 +340,11 @@ const styles = StyleSheet.create({
         fontWeight: "900",
         letterSpacing: 2.4,
         marginBottom: 8,
+    },
+    labelCompact: {
+        fontSize: 9,
+        letterSpacing: 1.8,
+        marginBottom: 6,
     },
     inputShell: {
         height: 50,
@@ -288,6 +356,11 @@ const styles = StyleSheet.create({
         borderColor: "#e2e8f0",
         borderRadius: 12,
         paddingHorizontal: 15,
+    },
+    inputShellCompact: {
+        height: 46,
+        gap: 11,
+        paddingHorizontal: 13,
     },
     inputShellError: {
         borderColor: "#ef4444",
@@ -302,6 +375,9 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
         paddingVertical: 0,
+    },
+    inputCompact: {
+        fontSize: 14,
     },
     errorText: {
         color: "#ef4444",
@@ -330,6 +406,10 @@ const styles = StyleSheet.create({
         fontWeight: "900",
         letterSpacing: 2.6,
     },
+    primaryButtonTextCompact: {
+        fontSize: 10,
+        letterSpacing: 1.8,
+    },
     backButton: {
         height: 50,
         flexDirection: "row",
@@ -347,6 +427,10 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "900",
         letterSpacing: 2.2,
+    },
+    backButtonTextCompact: {
+        fontSize: 10,
+        letterSpacing: 1.5,
     },
 });
 
