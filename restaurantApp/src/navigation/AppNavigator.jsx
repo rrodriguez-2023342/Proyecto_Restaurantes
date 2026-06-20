@@ -1,12 +1,14 @@
 import { NavigationContainer } from "@react-navigation/native"
 import { View, ActivityIndicator, StyleSheet } from "react-native"
 import { COLORS } from "../shared/constants/theme"
-import AuthStack from "../shared/../navigation/AuthStack"
+import AuthStack from "./AuthStack"
 import { useAuthStore } from "../shared/store/authStore"
+import MainStack from "./MainStack"
 
 const AppNavigator = () => {
 
     const isHydrated = useAuthStore((state) => state._hasHydrated)
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
     if(!isHydrated) {
         return (
@@ -18,7 +20,7 @@ const AppNavigator = () => {
 
     return (
         <NavigationContainer>
-            <AuthStack />
+            {isAuthenticated ? <MainStack /> : <AuthStack />}
         </NavigationContainer>
     )
 }
