@@ -9,14 +9,14 @@ export const useRestaurantStore = create((set, get) => ({
     refreshing: false,
     error: null,
     page: 1,
-    limit: 8,
+    limit: 6,
     total: 0,
     totalPages: 1,
 
     fetchRestaurants: async (params = {}) => {
         try {
             const page = Number(params.page || get().page || 1);
-            const limit = Number(params.limit || get().limit || 8);
+            const limit = Number(params.limit || get().limit || 6);
             set({ loading: true, error: null });
             const { data } = await getRestaurants({ ...params, page, limit });
             const restaurants = normalizeRestaurants(data);
@@ -34,7 +34,7 @@ export const useRestaurantStore = create((set, get) => ({
     refreshRestaurants: async (params = {}) => {
         try {
             const page = Number(params.page || get().page || 1);
-            const limit = Number(params.limit || get().limit || 8);
+            const limit = Number(params.limit || get().limit || 6);
             set({ refreshing: true, error: null });
             const { data } = await getRestaurants({ ...params, page, limit });
             const restaurants = normalizeRestaurants(data);
@@ -51,7 +51,7 @@ export const useRestaurantStore = create((set, get) => ({
 
     setPage: (page) => set({ page }),
 
-    clearRestaurants: () => set({ restaurants: [], error: null, loading: false, refreshing: false, page: 1, limit: 8, total: 0, totalPages: 1 }),
+    clearRestaurants: () => set({ restaurants: [], error: null, loading: false, refreshing: false, page: 1, limit: 6, total: 0, totalPages: 1 }),
 
     getRestaurantById: async (id) => {
         const current = get().restaurants.find((restaurant) => {
