@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "../../../shared/constants/theme";
 
 const items = [
     { label: "Restaurantes", icon: "storefront-outline" },
@@ -50,22 +51,22 @@ const TopMenu = ({ open, onToggle, onItemPress }) => {
 const styles = StyleSheet.create({
     wrapper: {
         position: "absolute",
-        top: 18,
-        left: 16,
+        top: 12,
+        left: 12,
         zIndex: 50,
     },
     toggle: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: "#be123c",
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: COLORS.ink,
         alignItems: "center",
         justifyContent: "center",
         shadowColor: "#000",
-        shadowOpacity: 0.22,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 8 },
-        elevation: 6,
+        shadowOpacity: 0.2,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 5,
     },
     backdrop: {
         ...StyleSheet.absoluteFillObject,
@@ -73,13 +74,14 @@ const styles = StyleSheet.create({
         zIndex: -1,
     },
     drawer: {
-        marginTop: 14,
-        width: 272,
-        minHeight: 520,
-        borderRadius: 28,
-        backgroundColor: "#b40b2f",
-        padding: 18,
-        gap: 20,
+        marginTop: 12,
+        width: 256,
+        maxWidth: "86%",
+        minHeight: 480,
+        borderRadius: 26,
+        backgroundColor: COLORS.primaryDark,
+        padding: 16,
+        gap: 16,
         transform: [{ translateX: -320 }],
         opacity: 0,
     },
@@ -90,8 +92,8 @@ const styles = StyleSheet.create({
     brandRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
-        marginTop: 32,
+        gap: 10,
+        marginTop: 28,
     },
     brandMark: {
         width: 42,
@@ -103,25 +105,25 @@ const styles = StyleSheet.create({
     },
     brandTitle: {
         color: "#fff",
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: "800",
     },
     brandSubtitle: {
         color: "rgba(255,255,255,0.72)",
-        fontSize: 12,
+        fontSize: 11,
         marginTop: 2,
     },
     menuList: {
         gap: 10,
-        marginTop: 14,
+        marginTop: 8,
     },
     menuItem: {
-        minHeight: 52,
-        borderRadius: 18,
-        paddingHorizontal: 14,
+        minHeight: 50,
+        borderRadius: 16,
+        paddingHorizontal: 12,
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: 10,
         backgroundColor: "rgba(255,255,255,0.08)",
     },
     menuItemActive: {
@@ -131,8 +133,9 @@ const styles = StyleSheet.create({
     },
     menuText: {
         color: "#fff",
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "700",
+        flexShrink: 1,
     },
 });
 

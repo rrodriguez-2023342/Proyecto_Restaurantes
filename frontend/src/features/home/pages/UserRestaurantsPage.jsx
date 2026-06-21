@@ -53,6 +53,9 @@ export const UserRestaurantsPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("Todos");
+    const [page, setPage] = useState(1);
+
+    const PAGE_SIZE = 6;
 
     const fetchRestaurants = async () => {
         try {
@@ -93,9 +96,26 @@ export const UserRestaurantsPage = () => {
         });
     }, [restaurants, query, selectedCategory]);
 
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const currentPage = Math.min(page, totalPages);
+    const paginatedRestaurants = useMemo(
+        () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+        [filtered, currentPage]
+    );
+
     const getCount = (cat) => {
         if (cat === "Todos") return restaurants.length;
         return restaurants.filter(r => r.categoria?.toLowerCase() === cat.toLowerCase()).length;
+    };
+
+    const handleQueryChange = (value) => {
+        setQuery(value);
+        setPage(1);
+    };
+
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+        setPage(1);
     };
 
     return (
@@ -133,7 +153,7 @@ export const UserRestaurantsPage = () => {
                                     </div>
                                     <input
                                         value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
+                                        onChange={(e) => handleQueryChange(e.target.value)}
                                         placeholder="¿Qué restaurante buscas hoy?"
                                         className="flex-1 bg-transparent py-4 md:py-5 text-white placeholder:text-slate-500 focus:outline-none font-medium text-base md:text-lg w-full"
                                     />
@@ -170,7 +190,7 @@ export const UserRestaurantsPage = () => {
                                 {categories.map((cat) => (
                                     <button
                                         key={cat}
-                                        onClick={() => setSelectedCategory(cat)}
+                                        onClick={() => handleCategoryChange(cat)}
                                         className={`group relative flex items-center gap-3 px-6 py-4 rounded-xl transition-all duration-500 ${
                                             selectedCategory === cat 
                                                 ? "bg-slate-950 text-white shadow-xl translate-y-[-2px]" 
@@ -209,8 +229,9 @@ export const UserRestaurantsPage = () => {
                             ))}
                         </div>
                     ) : filtered.length ? (
+                        <>
                         <div className="grid gap-x-8 md:gap-x-12 gap-y-16 md:gap-y-24 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                            {filtered.map((restaurant) => (
+                            {paginatedRestaurants.map((restaurant) => (
                                 <Link
                                     key={restaurant?._id || restaurant?.id}
                                     to={`/home/restaurants/${restaurant?._id || restaurant?.id}`}
@@ -271,6 +292,30 @@ export const UserRestaurantsPage = () => {
                                 </Link>
                             ))}
                         </div>
+                        <div className="mt-8 flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                Mostrando {(currentPage - 1) * PAGE_SIZE + 1} - {(currentPage - 1) * PAGE_SIZE + paginatedRestaurants.length} de {filtered.length}
+                            </span>
+                            <div className="flex w-full gap-2 sm:w-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
+                                >
+                                    Anterior
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
+                                >
+                                    Siguiente
+                                </button>
+                            </div>
+                        </div>
+                        </>
                     ) : (
                         <div className="py-40 text-center">
                             <EmptyState title="Sin resultados" description="Nuestra red elite aún no llega a esta categoría." />

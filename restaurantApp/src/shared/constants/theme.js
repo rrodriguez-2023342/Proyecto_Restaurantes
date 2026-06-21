@@ -1,13 +1,17 @@
 export const COLORS = {
-    primary: "#08316D", // Azul principal igual que la web
-    primaryDark: "#08316D", // Azul principal igual que la web
+    primary: "#f59e0b", // Amber 500
+    primaryDark: "#020617", // Slate 950
     secondary: "#64748b", // Slate 500
     background: "#f8fafc", // Slate 50
     surface: "#ffffff",
+    surfaceMuted: "#f8fafc",
     text: "#0f172a", // Slate 900
     textLight: "#64748b", // Slate 500
+    accent: "#d97706", // Amber 600
+    accentSoft: "#fff7ed",
+    ink: "#020617",
     error: "#ef4444", // Red 500
-    success: "#22c55e", // Green 500
+    success: "#16a34a", // Green 600
     warning: "#f59e0b", // Amber 500
     border: "#e2e8f0", // Slate 200
 };

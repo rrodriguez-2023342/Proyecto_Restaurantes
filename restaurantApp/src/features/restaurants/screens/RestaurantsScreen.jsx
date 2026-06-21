@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { FlatList, ImageBackground, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "../../../shared/constants/theme";
 import { useRestaurantStore } from "../store/useRestaurantStore";
 import RestaurantCard from "../components/RestaurantCard";
 import TopMenu from "../components/TopMenu";
 
 const RestaurantsScreen = () => {
-    const { restaurants, loading, refreshing: storeRefreshing, error, fetchRestaurants, refreshRestaurants } = useRestaurantStore();
+    const { restaurants, loading, refreshing: storeRefreshing, error, page, limit, total, totalPages, fetchRestaurants, refreshRestaurants, setPage } = useRestaurantStore();
     const [menuOpen, setMenuOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState("all");
 
     useEffect(() => {
-        fetchRestaurants().catch(() => null);
-    }, [fetchRestaurants]);
+        fetchRestaurants({ page, limit }).catch(() => null);
+    }, [fetchRestaurants, page, limit]);
 
     const filteredRestaurants = useMemo(() => {
         const query = search.trim().toLowerCase();
@@ -45,7 +46,7 @@ const RestaurantsScreen = () => {
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
-            await refreshRestaurants();
+            await refreshRestaurants({ page, limit });
         } finally {
             setRefreshing(false);
         }
@@ -53,6 +54,11 @@ const RestaurantsScreen = () => {
 
     const visibleLoading = loading && restaurants.length === 0;
     const isRefreshing = refreshing || storeRefreshing;
+
+    const goToPage = (nextPage) => {
+        if (nextPage < 1 || nextPage > totalPages || nextPage === page) return;
+        setPage(nextPage);
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -78,8 +84,8 @@ const RestaurantsScreen = () => {
                         <View style={styles.heroOverlay} />
                         <View style={styles.heroContent}>
                             <Text style={styles.kicker}>Explora tu ciudad</Text>
-                            <Text style={styles.heroTitle}>Todos los restaurantes en un solo lugar</Text>
-                            <Text style={styles.heroSubtitle}>
+                            <Text style={styles.heroTitle} numberOfLines={2}>Todos los restaurantes en un solo lugar</Text>
+                            <Text style={styles.heroSubtitle} numberOfLines={3}>
                                 Busca restaurantes, revisa su información y prepárate para elegir tu siguiente pedido.
                             </Text>
 
@@ -112,7 +118,7 @@ const RestaurantsScreen = () => {
                     <View style={styles.sectionHeader}>
                         <View>
                             <Text style={styles.sectionKicker}>Listado general</Text>
-                            <Text style={styles.sectionTitle}>Restaurantes disponibles</Text>
+                            <Text style={styles.sectionTitle} numberOfLines={2}>Restaurantes disponibles</Text>
                         </View>
                         <View style={styles.sectionChip}>
                             <Text style={styles.sectionChipText}>{filteredRestaurants.length} resultados</Text>
@@ -137,6 +143,33 @@ const RestaurantsScreen = () => {
                             )
                         }
                     />
+
+                    <View style={styles.paginationBar}>
+                        <TouchableOpacity
+                            activeOpacity={0.85}
+                            onPress={() => goToPage(page - 1)}
+                            disabled={page <= 1}
+                            style={[styles.paginationButton, page <= 1 && styles.paginationButtonDisabled]}
+                        >
+                            <Ionicons name="chevron-back" size={16} color={page <= 1 ? COLORS.textLight : COLORS.primaryDark} />
+                            <Text style={[styles.paginationText, page <= 1 && styles.paginationTextDisabled]}>Anterior</Text>
+                        </TouchableOpacity>
+
+                        <View style={styles.paginationInfo}>
+                            <Text style={styles.paginationInfoText}>Página {page} de {totalPages}</Text>
+                            <Text style={styles.paginationInfoSubtext}>{total} restaurantes en total</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            activeOpacity={0.85}
+                            onPress={() => goToPage(page + 1)}
+                            disabled={page >= totalPages}
+                            style={[styles.paginationButton, page >= totalPages && styles.paginationButtonDisabled]}
+                        >
+                            <Text style={[styles.paginationText, page >= totalPages && styles.paginationTextDisabled]}>Siguiente</Text>
+                            <Ionicons name="chevron-forward" size={16} color={page >= totalPages ? COLORS.textLight : COLORS.primaryDark} />
+                        </TouchableOpacity>
+                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>
@@ -159,37 +192,37 @@ const FilterChip = ({ label, active, onPress }) => (
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: "#f8fafc",
+        backgroundColor: COLORS.background,
     },
     screen: {
         flex: 1,
-        backgroundColor: "#f8fafc",
+        backgroundColor: COLORS.background,
     },
     content: {
-        paddingHorizontal: 18,
+        paddingHorizontal: 14,
         paddingBottom: 36,
-        paddingTop: 92,
-        gap: 18,
+        paddingTop: 86,
+        gap: 14,
     },
     hero: {
-        minHeight: 320,
-        borderRadius: 30,
+        minHeight: 300,
+        borderRadius: 28,
         overflow: "hidden",
         justifyContent: "flex-end",
     },
     heroImage: {
-        borderRadius: 30,
+        borderRadius: 28,
     },
     heroOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(15, 23, 42, 0.62)",
+        backgroundColor: "rgba(2, 6, 23, 0.64)",
     },
     heroContent: {
-        padding: 20,
-        gap: 12,
+        padding: 18,
+        gap: 10,
     },
     kicker: {
-        color: "#fda4af",
+        color: COLORS.primary,
         fontSize: 12,
         fontWeight: "800",
         letterSpacing: 1.4,
@@ -197,44 +230,44 @@ const styles = StyleSheet.create({
     },
     heroTitle: {
         color: "#fff",
-        fontSize: 30,
-        lineHeight: 34,
+        fontSize: 28,
+        lineHeight: 31,
         fontWeight: "900",
-        maxWidth: 290,
+        maxWidth: "100%",
     },
     heroSubtitle: {
         color: "rgba(255,255,255,0.84)",
-        fontSize: 14,
+        fontSize: 13,
         lineHeight: 20,
-        maxWidth: 320,
+        maxWidth: "100%",
     },
     searchBox: {
         marginTop: 8,
         flexDirection: "row",
         alignItems: "center",
         gap: 10,
-        backgroundColor: "rgba(255,255,255,0.96)",
-        borderRadius: 18,
-        paddingHorizontal: 14,
-        height: 54,
+        backgroundColor: "rgba(255,255,255,0.97)",
+        borderRadius: 16,
+        paddingHorizontal: 12,
+        height: 50,
     },
     searchInput: {
         flex: 1,
-        color: "#0f172a",
+        color: COLORS.text,
         fontSize: 14,
         fontWeight: "600",
     },
     filterRow: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 10,
+        gap: 8,
         marginTop: 2,
     },
     filterChip: {
-        backgroundColor: "rgba(255,255,255,0.15)",
+        backgroundColor: "rgba(2, 6, 23, 0.18)",
         borderRadius: 999,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 9,
     },
     filterChipActive: {
         backgroundColor: "#fff",
@@ -245,94 +278,145 @@ const styles = StyleSheet.create({
         fontWeight: "800",
     },
     filterChipTextActive: {
-        color: "#9f1239",
+        color: COLORS.accent,
     },
     statsRow: {
         flexDirection: "row",
-        gap: 12,
+        gap: 10,
         marginTop: 2,
     },
     statCard: {
         flex: 1,
-        backgroundColor: "rgba(255,255,255,0.14)",
-        borderRadius: 18,
-        paddingVertical: 14,
-        paddingHorizontal: 14,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        borderRadius: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 12,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.12)",
+        borderColor: "rgba(255,255,255,0.15)",
     },
     statValue: {
         color: "#fff",
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: "900",
     },
     statLabel: {
         color: "rgba(255,255,255,0.76)",
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: "700",
         marginTop: 4,
     },
     errorText: {
-        color: "#b91c1c",
-        backgroundColor: "#fef2f2",
-        borderRadius: 16,
-        padding: 14,
+        color: "#991b1b",
+        backgroundColor: "#fff1f2",
+        borderRadius: 14,
+        padding: 12,
         fontWeight: "600",
     },
     sectionHeader: {
         flexDirection: "row",
-        alignItems: "flex-end",
+        alignItems: "flex-start",
         justifyContent: "space-between",
-        gap: 12,
+        gap: 10,
         marginTop: 2,
     },
     sectionKicker: {
-        color: "#9f1239",
+        color: COLORS.accent,
         fontSize: 12,
         fontWeight: "800",
         letterSpacing: 1.2,
         textTransform: "uppercase",
     },
     sectionTitle: {
-        color: "#0f172a",
-        fontSize: 22,
+        color: COLORS.text,
+        fontSize: 21,
         fontWeight: "900",
         marginTop: 4,
+        flexShrink: 1,
     },
     sectionChip: {
-        backgroundColor: "#fff1f2",
+        backgroundColor: COLORS.accentSoft,
         borderRadius: 999,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 7,
+        flexShrink: 0,
     },
     sectionChipText: {
-        color: "#9f1239",
+        color: COLORS.accent,
         fontSize: 12,
         fontWeight: "800",
     },
     emptyState: {
-        backgroundColor: "#fff",
-        borderRadius: 24,
-        paddingVertical: 30,
-        paddingHorizontal: 18,
+        backgroundColor: COLORS.surface,
+        borderRadius: 22,
+        paddingVertical: 28,
+        paddingHorizontal: 16,
         alignItems: "center",
         justifyContent: "center",
         gap: 8,
         borderWidth: 1,
         borderStyle: "dashed",
-        borderColor: "#fecdd3",
+        borderColor: "#fed7aa",
     },
     emptyTitle: {
-        color: "#0f172a",
+        color: COLORS.text,
         fontSize: 16,
         fontWeight: "800",
         textAlign: "center",
     },
     emptySubtitle: {
-        color: "#64748b",
+        color: COLORS.textLight,
         fontSize: 13,
         textAlign: "center",
         lineHeight: 18,
+        maxWidth: "100%",
+    },
+    paginationBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        marginTop: 4,
+    },
+    paginationButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: COLORS.surface,
+        borderRadius: 14,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        flexShrink: 0,
+    },
+    paginationButtonDisabled: {
+        opacity: 0.5,
+    },
+    paginationText: {
+        color: COLORS.primaryDark,
+        fontSize: 12,
+        fontWeight: "800",
+    },
+    paginationTextDisabled: {
+        color: COLORS.textLight,
+    },
+    paginationInfo: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 6,
+    },
+    paginationInfoText: {
+        color: COLORS.text,
+        fontSize: 12,
+        fontWeight: "800",
+        textAlign: "center",
+    },
+    paginationInfoSubtext: {
+        color: COLORS.textLight,
+        fontSize: 11,
+        fontWeight: "600",
+        textAlign: "center",
     },
 });
 

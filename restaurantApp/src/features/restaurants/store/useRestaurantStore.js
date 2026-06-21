@@ -8,13 +8,21 @@ export const useRestaurantStore = create((set, get) => ({
     loading: false,
     refreshing: false,
     error: null,
+    page: 1,
+    limit: 8,
+    total: 0,
+    totalPages: 1,
 
     fetchRestaurants: async (params = {}) => {
         try {
+            const page = Number(params.page || get().page || 1);
+            const limit = Number(params.limit || get().limit || 8);
             set({ loading: true, error: null });
-            const { data } = await getRestaurants(params);
+            const { data } = await getRestaurants({ ...params, page, limit });
             const restaurants = normalizeRestaurants(data);
-            set({ restaurants, loading: false });
+            const total = Number(data?.total || data?.meta?.total || restaurants.length);
+            const totalPages = Math.max(1, Math.ceil(total / limit));
+            set({ restaurants, loading: false, page, limit, total, totalPages });
             return restaurants;
         } catch (err) {
             const message = err.response?.data?.message || "Error al cargar restaurantes";
@@ -25,10 +33,14 @@ export const useRestaurantStore = create((set, get) => ({
 
     refreshRestaurants: async (params = {}) => {
         try {
+            const page = Number(params.page || get().page || 1);
+            const limit = Number(params.limit || get().limit || 8);
             set({ refreshing: true, error: null });
-            const { data } = await getRestaurants(params);
+            const { data } = await getRestaurants({ ...params, page, limit });
             const restaurants = normalizeRestaurants(data);
-            set({ restaurants, refreshing: false });
+            const total = Number(data?.total || data?.meta?.total || restaurants.length);
+            const totalPages = Math.max(1, Math.ceil(total / limit));
+            set({ restaurants, refreshing: false, page, limit, total, totalPages });
             return restaurants;
         } catch (err) {
             const message = err.response?.data?.message || "Error al refrescar restaurantes";
@@ -37,7 +49,9 @@ export const useRestaurantStore = create((set, get) => ({
         }
     },
 
-    clearRestaurants: () => set({ restaurants: [], error: null, loading: false, refreshing: false }),
+    setPage: (page) => set({ page }),
+
+    clearRestaurants: () => set({ restaurants: [], error: null, loading: false, refreshing: false, page: 1, limit: 8, total: 0, totalPages: 1 }),
 
     getRestaurantById: async (id) => {
         const current = get().restaurants.find((restaurant) => {

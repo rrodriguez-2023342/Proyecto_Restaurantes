@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BadgeEstado, Card, EmptyState } from "../../../shared/components";
 import { showError, showSuccess, showConfirm } from "../../../shared/utils/toast";
 import { RestaurantForm } from "../components/RestaurantForm.jsx";
@@ -21,6 +21,8 @@ import {
     ChevronRight,
     Search
 } from "lucide-react";
+
+const PAGE_SIZE = 6;
 
 const mapPayload = (values) => {
     const payload = new FormData();
@@ -56,6 +58,7 @@ export const RestaurantsPage = () => {
     const [owners, setOwners] = useState([]);
     const [showSpecs, setShowSpecs] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
         fetchRestaurants();
@@ -87,6 +90,13 @@ export const RestaurantsPage = () => {
     const filteredRestaurants = restaurants.filter(r => 
         r.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.categoria.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const totalPages = Math.max(1, Math.ceil(filteredRestaurants.length / PAGE_SIZE));
+    const currentPage = Math.min(page, totalPages);
+    const paginatedRestaurants = useMemo(
+        () => filteredRestaurants.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+        [filteredRestaurants, currentPage]
     );
 
     const handleSubmit = async (values) => {
@@ -204,7 +214,10 @@ export const RestaurantsPage = () => {
                         type="text"
                         placeholder="Filtrar por nombre o categoría..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setPage(1);
+                        }}
                         className="w-full rounded-2xl bg-white border border-slate-200 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all shadow-sm"
                     />
                 </div>
@@ -245,95 +258,110 @@ export const RestaurantsPage = () => {
                     <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
                 </div>
             ) : filteredRestaurants.length ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredRestaurants.map((restaurant) => (
-                        <div
-                            key={restaurant?._id || restaurant?.id}
-                            className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-white border border-slate-100 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2"
-                        >
-                            {/* Image Header */}
-                            <div className="relative h-48 w-full bg-slate-50 overflow-hidden">
-                                {restaurant?.fotos ? (
-                                    <img
-                                        src={restaurant.fotos}
-                                        alt={restaurant?.nombre}
-                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-5xl bg-gradient-to-br from-slate-100 to-white">🍲</div>
-                                )}
-                                <div className="absolute top-4 left-4">
-                                    <span className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-xl border ${
-                                        restaurant?.isActive 
-                                        ? "bg-green-500/10 text-green-600 border-green-500/20" 
-                                        : "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                                    }`}>
-                                        <Activity size={10} />
-                                        {restaurant?.isActive ? "Operativo" : "En Pausa"}
-                                    </span>
+                <>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {paginatedRestaurants.map((restaurant) => (
+                            <div
+                                key={restaurant?._id || restaurant?.id}
+                                className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-white border border-slate-100 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2"
+                            >
+                                <div className="relative h-48 w-full bg-slate-50 overflow-hidden">
+                                    {restaurant?.fotos ? (
+                                        <img
+                                            src={restaurant.fotos}
+                                            alt={restaurant?.nombre}
+                                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-5xl bg-gradient-to-br from-slate-100 to-white">🍲</div>
+                                    )}
+                                    <div className="absolute top-4 left-4">
+                                        <span className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-xl border ${restaurant?.isActive ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-rose-500/10 text-rose-600 border-rose-500/20"}`}>
+                                            <Activity size={10} />
+                                            {restaurant?.isActive ? "Operativo" : "En Pausa"}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Content */}
-                            <div className="flex flex-1 flex-col p-6">
-                                <div className="mb-4">
-                                    <h4 className="text-xl font-black text-slate-950 tracking-tight mb-1 group-hover:text-orange-500 transition-colors">
-                                        {restaurant?.nombre}
-                                    </h4>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                        <Utensils size={10} />
-                                        {restaurant?.categoria || "General"}
+                                <div className="flex flex-1 flex-col p-6">
+                                    <div className="mb-4">
+                                        <h4 className="text-xl font-black text-slate-950 tracking-tight mb-1 group-hover:text-orange-500 transition-colors">
+                                            {restaurant?.nombre}
+                                        </h4>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Utensils size={10} />
+                                            {restaurant?.categoria || "General"}
+                                        </p>
+                                    </div>
+
+                                    <p className="line-clamp-2 text-sm text-slate-500 font-medium leading-relaxed mb-8">
+                                        {restaurant?.descripcion || "Sin descripción disponible."}
                                     </p>
-                                </div>
-                                
-                                <p className="line-clamp-2 text-sm text-slate-500 font-medium leading-relaxed mb-8">
-                                    {restaurant?.descripcion || "Sin descripción disponible."}
-                                </p>
 
-                                {/* Action Buttons Panel */}
-                                <div className="mt-auto space-y-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() => { setEditing(restaurant); setOpenModal(true); }}
-                                            className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 py-3 text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-950 hover:text-white transition-all active:scale-95 border border-slate-100"
-                                        >
-                                            <Settings size={14} />
-                                            Editar
-                                        </button>
-                                        <button
-                                            onClick={() => handleToggleStatus(restaurant)}
-                                            className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 border ${
-                                                restaurant?.isActive 
-                                                ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white" 
-                                                : "bg-green-50 text-green-600 border-green-100 hover:bg-green-600 hover:text-white"
-                                            }`}
-                                        >
-                                            <Power size={14} />
-                                            {restaurant?.isActive ? "Pausar" : "Activar"}
-                                        </button>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => setShowSpecs(restaurant)}
-                                            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/10 hover:bg-orange-600 transition-all active:scale-95"
-                                        >
-                                            <Eye size={14} />
-                                            Ficha Técnica
-                                        </button>
-                                        {isSuperAdmin && (
+                                    <div className="mt-auto space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
                                             <button
-                                                onClick={() => handleDelete(restaurant)}
-                                                className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-300 hover:text-rose-500 hover:bg-rose-50 border border-slate-100 transition-all active:scale-75"
+                                                onClick={() => { setEditing(restaurant); setOpenModal(true); }}
+                                                className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 py-3 text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-950 hover:text-white transition-all active:scale-95 border border-slate-100"
                                             >
-                                                <Trash2 size={18} />
+                                                <Settings size={14} />
+                                                Editar
                                             </button>
-                                        )}
+                                            <button
+                                                onClick={() => handleToggleStatus(restaurant)}
+                                                className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 border ${restaurant?.isActive ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white" : "bg-green-50 text-green-600 border-green-100 hover:bg-green-600 hover:text-white"}`}
+                                            >
+                                                <Power size={14} />
+                                                {restaurant?.isActive ? "Pausar" : "Activar"}
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => setShowSpecs(restaurant)}
+                                                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/10 hover:bg-orange-600 transition-all active:scale-95"
+                                            >
+                                                <Eye size={14} />
+                                                Ficha Técnica
+                                            </button>
+                                            {isSuperAdmin && (
+                                                <button
+                                                    onClick={() => handleDelete(restaurant)}
+                                                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-300 hover:text-rose-500 hover:bg-rose-50 border border-slate-100 transition-all active:scale-75"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                            Mostrando {(currentPage - 1) * PAGE_SIZE + 1} - {(currentPage - 1) * PAGE_SIZE + paginatedRestaurants.length} de {filteredRestaurants.length}
+                        </span>
+                        <div className="flex w-full gap-2 sm:w-auto">
+                            <button
+                                type="button"
+                                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
+                            >
+                                Anterior
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
+                            >
+                                Siguiente
+                            </button>
                         </div>
-                    ))}
-                </div>
+                    </div>
+                </>
             ) : (
                 <EmptyState 
                     title="No hay registros activos" 

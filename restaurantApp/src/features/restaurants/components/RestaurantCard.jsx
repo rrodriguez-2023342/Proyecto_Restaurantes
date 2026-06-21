@@ -1,5 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "../../../shared/constants/theme";
 
 const RestaurantCard = ({ restaurant, onPress }) => {
     const name = restaurant?.nombre || restaurant?.name || "Restaurante";
@@ -58,19 +59,19 @@ const RestaurantCard = ({ restaurant, onPress }) => {
 const styles = StyleSheet.create({
     card: {
         backgroundColor: "#fff",
-        borderRadius: 24,
+        borderRadius: 22,
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: "#f1f5f9",
-        shadowColor: "#0f172a",
-        shadowOpacity: 0.08,
-        shadowRadius: 24,
-        shadowOffset: { width: 0, height: 10 },
+        borderColor: COLORS.border,
+        shadowColor: COLORS.primaryDark,
+        shadowOpacity: 0.06,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 8 },
         elevation: 4,
     },
     imageWrapper: {
-        height: 160,
-        backgroundColor: "#9f1239",
+        height: 152,
+        backgroundColor: COLORS.primaryDark,
     },
     image: {
         width: "100%",
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#be123c",
+        backgroundColor: COLORS.primary,
     },
     badge: {
         position: "absolute",
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 4,
-        backgroundColor: "rgba(15, 23, 42, 0.88)",
+        backgroundColor: "rgba(2, 6, 23, 0.88)",
         borderRadius: 999,
         paddingHorizontal: 10,
         paddingVertical: 6,
@@ -100,8 +101,8 @@ const styles = StyleSheet.create({
         fontWeight: "700",
     },
     body: {
-        padding: 16,
-        gap: 10,
+        padding: 14,
+        gap: 8,
     },
     topRow: {
         flexDirection: "row",
@@ -111,8 +112,8 @@ const styles = StyleSheet.create({
     },
     statusPill: {
         borderRadius: 999,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
+        paddingHorizontal: 9,
+        paddingVertical: 5,
     },
     statusOpen: {
         backgroundColor: "#ecfdf5",
@@ -131,30 +132,31 @@ const styles = StyleSheet.create({
         color: "#991b1b",
     },
     typePill: {
-        backgroundColor: "#fff7ed",
+        backgroundColor: COLORS.accentSoft,
         borderRadius: 999,
         paddingHorizontal: 10,
-        paddingVertical: 6,
-        maxWidth: 160,
+        paddingVertical: 5,
+        maxWidth: 150,
     },
     typeText: {
-        color: "#9a3412",
+        color: COLORS.accent,
         fontSize: 11,
         fontWeight: "800",
     },
     name: {
-        color: "#0f172a",
-        fontSize: 18,
+        color: COLORS.text,
+        fontSize: 17,
         fontWeight: "800",
+        lineHeight: 22,
     },
     description: {
-        color: "#64748b",
-        fontSize: 13,
-        lineHeight: 18,
+        color: COLORS.textLight,
+        fontSize: 12,
+        lineHeight: 17,
     },
     metaRow: {
         flexDirection: "row",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "space-between",
         gap: 10,
     },
@@ -166,18 +168,18 @@ const styles = StyleSheet.create({
     },
     metaText: {
         flex: 1,
-        color: "#7c2d12",
-        fontSize: 12,
-        fontWeight: "600",
+        color: COLORS.accent,
+        fontSize: 11,
+        fontWeight: "700",
     },
     metaPill: {
-        backgroundColor: "#fff1f2",
-        paddingHorizontal: 12,
-        paddingVertical: 7,
+        backgroundColor: COLORS.accentSoft,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 999,
     },
     metaPillText: {
-        color: "#9f1239",
+        color: COLORS.accent,
         fontSize: 11,
         fontWeight: "800",
     },
