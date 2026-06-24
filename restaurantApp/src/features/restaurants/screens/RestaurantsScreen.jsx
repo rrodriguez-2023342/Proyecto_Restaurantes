@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, ImageBackground, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, ImageBackground, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../shared/constants/theme";
 import { useRestaurantStore } from "../store/useRestaurantStore";
 import RestaurantCard from "../components/RestaurantCard";
 import TopMenu from "../components/TopMenu";
 
-const RestaurantsScreen = () => {
+const RestaurantsScreen = ({ navigation }) => {
     const { restaurants, loading, refreshing: storeRefreshing, error, page, limit, total, totalPages, fetchRestaurants, refreshRestaurants, setPage } = useRestaurantStore();
     const [menuOpen, setMenuOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState("all");
+    const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
     useEffect(() => {
         fetchRestaurants({ page, limit }).catch(() => null);
@@ -66,13 +68,18 @@ const RestaurantsScreen = () => {
                 <TopMenu
                     open={menuOpen}
                     onToggle={() => setMenuOpen((value) => !value)}
-                    onItemPress={() => setMenuOpen(false)}
+                    onItemPress={(label) => {
+                        setMenuOpen(false);
+                        if (label === "Perfil") {
+                            navigation.navigate("Profile");
+                        }
+                    }}
                 />
 
                 <ScrollView
                     contentContainerStyle={styles.content}
                     refreshControl={
-                        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#be123c" />
+                        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />
                     }
                     showsVerticalScrollIndicator={false}
                 >
@@ -125,24 +132,27 @@ const RestaurantsScreen = () => {
                         </View>
                     </View>
 
-                    <FlatList
-                        data={filteredRestaurants}
-                        keyExtractor={(item, index) => String(item?._id || item?.id || index)}
-                        renderItem={({ item }) => <RestaurantCard restaurant={item} />}
-                        scrollEnabled={false}
-                        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-                        ListEmptyComponent={
-                            visibleLoading ? null : (
+                    <View style={{ gap: 16 }}>
+                        {filteredRestaurants.length > 0 ? (
+                            filteredRestaurants.map((item, index) => (
+                                <RestaurantCard
+                                    key={String(item?._id || item?.id || index)}
+                                    restaurant={item}
+                                    onPress={() => setSelectedRestaurant(item)}
+                                />
+                            ))
+                        ) : (
+                            !visibleLoading && (
                                 <View style={styles.emptyState}>
-                                    <Ionicons name="restaurant-outline" size={28} color="#be123c" />
+                                    <Ionicons name="restaurant-outline" size={28} color={COLORS.primary} />
                                     <Text style={styles.emptyTitle}>No hay restaurantes para mostrar</Text>
                                     <Text style={styles.emptySubtitle}>
                                         Revisa la conexión con el servicio o limpia el filtro de búsqueda.
                                     </Text>
                                 </View>
                             )
-                        }
-                    />
+                        )}
+                    </View>
 
                     <View style={styles.paginationBar}>
                         <TouchableOpacity
@@ -151,7 +161,7 @@ const RestaurantsScreen = () => {
                             disabled={page <= 1}
                             style={[styles.paginationButton, page <= 1 && styles.paginationButtonDisabled]}
                         >
-                            <Ionicons name="chevron-back" size={16} color={page <= 1 ? COLORS.textLight : COLORS.primaryDark} />
+                            <Ionicons name="chevron-back" size={16} color={page <= 1 ? COLORS.textLight : COLORS.primary} />
                             <Text style={[styles.paginationText, page <= 1 && styles.paginationTextDisabled]}>Anterior</Text>
                         </TouchableOpacity>
 
@@ -167,11 +177,117 @@ const RestaurantsScreen = () => {
                             style={[styles.paginationButton, page >= totalPages && styles.paginationButtonDisabled]}
                         >
                             <Text style={[styles.paginationText, page >= totalPages && styles.paginationTextDisabled]}>Siguiente</Text>
-                            <Ionicons name="chevron-forward" size={16} color={page >= totalPages ? COLORS.textLight : COLORS.primaryDark} />
+                            <Ionicons name="chevron-forward" size={16} color={page >= totalPages ? COLORS.textLight : COLORS.primary} />
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
             </View>
+
+            {/* Ficha Técnica Modal */}
+            <Modal
+                transparent
+                visible={selectedRestaurant !== null}
+                animationType="slide"
+                onRequestClose={() => setSelectedRestaurant(null)}
+            >
+                <TouchableOpacity
+                    style={styles.modalBackdrop}
+                    activeOpacity={1}
+                    onPress={() => setSelectedRestaurant(null)}
+                >
+                    <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalHeaderTitle}>Ficha de Restaurante</Text>
+                            <TouchableOpacity
+                                style={styles.modalCloseButton}
+                                onPress={() => setSelectedRestaurant(null)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="close" size={20} color={COLORS.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {selectedRestaurant && (
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalBody}>
+                                <Text style={styles.modalRestName}>
+                                    {selectedRestaurant.nombre || selectedRestaurant.name}
+                                </Text>
+                                <Text style={styles.modalRestCuisine}>
+                                    {selectedRestaurant.categoria || selectedRestaurant.category || "General"}
+                                </Text>
+
+                                <View style={styles.modalSection}>
+                                    <View style={styles.modalSectionHeader}>
+                                        <View style={[styles.modalIconBox, { backgroundColor: "#fff7ed" }]}>
+                                            <Ionicons name="time" size={16} color={COLORS.accent} />
+                                        </View>
+                                        <Text style={styles.modalSectionLabel}>VENTANA OPERATIVA</Text>
+                                    </View>
+                                    <View style={styles.modalSectionCardOrange}>
+                                        <Text style={styles.modalHours}>
+                                            {selectedRestaurant.horario?.apertura || "08:00"} — {selectedRestaurant.horario?.cierre || "22:00"}
+                                        </Text>
+                                        {selectedRestaurant.horario?.diasAbierto && selectedRestaurant.horario.diasAbierto.length > 0 ? (
+                                            <View style={styles.modalDaysRow}>
+                                                {selectedRestaurant.horario.diasAbierto.map((day, idx) => (
+                                                    <View key={idx} style={styles.modalDayBadge}>
+                                                        <Text style={styles.modalDayBadgeText}>{day.toUpperCase()}</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        ) : (
+                                            <Text style={styles.modalNoDays}>Todos los días</Text>
+                                        )}
+                                    </View>
+                                </View>
+
+                                <View style={styles.modalSection}>
+                                    <View style={styles.modalSectionHeader}>
+                                        <View style={[styles.modalIconBox, { backgroundColor: "#eff6ff" }]}>
+                                            <Ionicons name="location" size={16} color="#2563eb" />
+                                        </View>
+                                        <Text style={styles.modalSectionLabel}>COORDENADAS DE SABOR</Text>
+                                    </View>
+                                    <View style={styles.modalSectionCardBlue}>
+                                        <Text style={styles.modalAddressLabel}>CALLE / AVENIDA</Text>
+                                        <Text style={styles.modalAddressText}>
+                                            {selectedRestaurant.direccion?.calle || "Dirección no especificada"}
+                                        </Text>
+                                        <View style={styles.modalCardDivider} />
+                                        <Text style={styles.modalAddressLabel}>CIUDAD / REGIÓN</Text>
+                                        <Text style={styles.modalAddressText}>
+                                            {selectedRestaurant.direccion?.ciudad || "Ciudad no especificada"}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {selectedRestaurant.telefono && (
+                                    <View style={styles.modalSection}>
+                                        <View style={styles.modalSectionHeader}>
+                                            <View style={[styles.modalIconBox, { backgroundColor: "#f0fdf4" }]}>
+                                                <Ionicons name="call" size={16} color="#16a34a" />
+                                            </View>
+                                            <Text style={styles.modalSectionLabel}>CONTACTO</Text>
+                                        </View>
+                                        <View style={styles.modalSectionCardGreen}>
+                                            <Text style={styles.modalAddressLabel}>TELÉFONO DE CONTACTO</Text>
+                                            <Text style={styles.modalAddressText}>{selectedRestaurant.telefono}</Text>
+                                        </View>
+                                    </View>
+                                )}
+
+                                <TouchableOpacity
+                                    style={styles.modalFooterButton}
+                                    onPress={() => setSelectedRestaurant(null)}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={styles.modalFooterButtonText}>CERRAR EXPEDIENTE</Text>
+                                </TouchableOpacity>
+                            </ScrollView>
+                        )}
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -417,6 +533,173 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "600",
         textAlign: "center",
+    },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: "rgba(15, 23, 42, 0.75)",
+        justifyContent: "flex-end",
+    },
+    modalContent: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingTop: 24,
+        paddingHorizontal: 24,
+        paddingBottom: Platform.OS === "ios" ? 44 : 32,
+        maxHeight: "85%",
+        shadowColor: "#000",
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+        shadowOffset: { width: 0, height: -8 },
+        elevation: 10,
+    },
+    modalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 16,
+    },
+    modalHeaderTitle: {
+        fontSize: 22,
+        fontWeight: "900",
+        fontStyle: "italic",
+        color: COLORS.text,
+    },
+    modalCloseButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "#f1f5f9",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    modalBody: {
+        paddingBottom: 24,
+    },
+    modalRestName: {
+        fontSize: 20,
+        fontWeight: "900",
+        color: COLORS.text,
+    },
+    modalRestCuisine: {
+        fontSize: 12,
+        fontWeight: "800",
+        color: COLORS.accent,
+        textTransform: "uppercase",
+        letterSpacing: 1.5,
+        marginTop: 2,
+        marginBottom: 16,
+    },
+    modalSection: {
+        marginBottom: 18,
+        width: "100%",
+    },
+    modalSectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 8,
+    },
+    modalIconBox: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    modalSectionLabel: {
+        fontSize: 10,
+        fontWeight: "900",
+        color: COLORS.textLight,
+        letterSpacing: 2,
+    },
+    modalSectionCardOrange: {
+        backgroundColor: "#fff7ed",
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#ffedd5",
+    },
+    modalSectionCardBlue: {
+        backgroundColor: "#eff6ff",
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#dbeafe",
+    },
+    modalSectionCardGreen: {
+        backgroundColor: "#f0fdf4",
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#dcfce7",
+    },
+    modalHours: {
+        fontSize: 20,
+        fontWeight: "900",
+        color: COLORS.text,
+    },
+    modalDaysRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 6,
+        marginTop: 10,
+    },
+    modalDayBadge: {
+        backgroundColor: "#fff",
+        borderWidth: 1,
+        borderColor: "#ffedd5",
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    modalDayBadgeText: {
+        color: COLORS.accent,
+        fontSize: 10,
+        fontWeight: "800",
+    },
+    modalNoDays: {
+        color: COLORS.textLight,
+        fontSize: 12,
+        fontWeight: "600",
+        marginTop: 4,
+    },
+    modalAddressLabel: {
+        fontSize: 9,
+        fontWeight: "900",
+        color: "#2563eb",
+        letterSpacing: 1.5,
+        marginBottom: 4,
+    },
+    modalAddressText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: COLORS.text,
+    },
+    modalCardDivider: {
+        height: 1,
+        backgroundColor: "rgba(37, 99, 235, 0.1)",
+        marginVertical: 10,
+    },
+    modalFooterButton: {
+        backgroundColor: COLORS.primaryDark,
+        borderRadius: 16,
+        height: 52,
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: 12,
+        shadowColor: COLORS.primaryDark,
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 3,
+        width: "100%",
+    },
+    modalFooterButtonText: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "900",
+        letterSpacing: 1.5,
     },
 });
 

@@ -29,6 +29,11 @@ export const useAuthStore = create(
             // Solo actualiza el accessToken en memoria
             setAccessToken: (token) => set({ token }),
 
+            // Actualiza los datos del usuario en el store
+            updateUser: (updatedUser) => set((state) => ({
+                user: state.user ? { ...state.user, ...updatedUser } : updatedUser
+            })),
+
             // Limpia todo y borra refreshToken seguro
             logout: async () => {
                 set({

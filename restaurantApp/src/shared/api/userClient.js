@@ -5,9 +5,6 @@ import * as SecureStore from "expo-secure-store";
 
 const userClient = axios.create({
     baseURL: ENDPOINTS.USER,
-    headers: {
-        "Content-Type": "application/json",
-    },
 });
 
 userClient.interceptors.request.use(
