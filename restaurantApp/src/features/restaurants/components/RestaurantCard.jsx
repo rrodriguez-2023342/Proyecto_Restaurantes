@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../shared/constants/theme.js";
 
-const RestaurantCard = ({ restaurant, onPress }) => {
+const RestaurantCard = ({ restaurant, onPress, onViewMenu, onReserve }) => {
     const name = restaurant?.nombre || restaurant?.name || "Restaurante";
     const description = restaurant?.descripcion || restaurant?.description || "Disponible para pedidos y reservas.";
     const location = restaurant?.direccion?.ciudad || restaurant?.city || "Ubicación no disponible";
@@ -16,7 +16,7 @@ const RestaurantCard = ({ restaurant, onPress }) => {
     const closingTime = restaurant?.horario?.cierre || "22:00";
 
     return (
-        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+        <View style={styles.card}>
             {/* Image Wrapper */}
             <View style={styles.imageWrapper}>
                 {image ? (
@@ -76,8 +76,18 @@ const RestaurantCard = ({ restaurant, onPress }) => {
                     <Ionicons name="eye-outline" size={15} color="#fff" />
                     <Text style={styles.actionButtonText}>FICHA TÉCNICA</Text>
                 </TouchableOpacity>
+                <View style={styles.secondaryActions}>
+                    <TouchableOpacity style={styles.secondaryButton} onPress={onReserve} activeOpacity={0.8}>
+                        <Ionicons name="calendar-outline" size={15} color={COLORS.primaryDark} />
+                        <Text style={styles.secondaryButtonText}>RESERVAR MESA</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.secondaryButtonDark} onPress={onViewMenu} activeOpacity={0.8}>
+                        <Ionicons name="book-outline" size={15} color="#fff" />
+                        <Text style={styles.secondaryButtonDarkText}>VER MENÚ</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-        </TouchableOpacity>
+        </View>
     );
 };
 
@@ -245,6 +255,49 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "900",
         letterSpacing: 1.5,
+    },
+    secondaryActions: {
+        flexDirection: "row",
+        gap: 8,
+        marginTop: 2,
+    },
+    secondaryButton: {
+        flex: 1,
+        minHeight: 42,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.surface,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        paddingHorizontal: 8,
+    },
+    secondaryButtonDark: {
+        flex: 1,
+        minHeight: 42,
+        borderRadius: 12,
+        backgroundColor: COLORS.primaryDark,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        paddingHorizontal: 8,
+    },
+    secondaryButtonText: {
+        color: COLORS.primaryDark,
+        fontSize: 10,
+        fontWeight: "900",
+        letterSpacing: 0.9,
+        textAlign: "center",
+    },
+    secondaryButtonDarkText: {
+        color: "#fff",
+        fontSize: 10,
+        fontWeight: "900",
+        letterSpacing: 0.9,
+        textAlign: "center",
     },
 });
 

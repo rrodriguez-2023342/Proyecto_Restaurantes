@@ -4,11 +4,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../shared/constants/theme";
 import { useRestaurantStore } from "../store/useRestaurantStore";
+import { useAuth } from "../../auth/hooks/useAuth";
 import RestaurantCard from "../components/RestaurantCard";
 import TopMenu from "../components/TopMenu";
 
 const RestaurantsScreen = ({ navigation }) => {
     const { restaurants, loading, refreshing: storeRefreshing, error, page, limit, total, totalPages, fetchRestaurants, refreshRestaurants, setPage } = useRestaurantStore();
+    const { logout } = useAuth();
     const [menuOpen, setMenuOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [refreshing, setRefreshing] = useState(false);
@@ -70,8 +72,14 @@ const RestaurantsScreen = ({ navigation }) => {
                     onToggle={() => setMenuOpen((value) => !value)}
                     onItemPress={(label) => {
                         setMenuOpen(false);
-                        if (label === "Perfil") {
+                        if (label === "Salir") {
+                            logout();
+                        } else if (label === "Perfil") {
                             navigation.navigate("Profile");
+                        } else if (label === "Mis reservaciones") {
+                            navigation.navigate("UserReservations");
+                        } else if (label === "Restaurantes") {
+                            navigation.navigate("RestaurantsHome");
                         }
                     }}
                 />
@@ -139,6 +147,14 @@ const RestaurantsScreen = ({ navigation }) => {
                                     key={String(item?._id || item?.id || index)}
                                     restaurant={item}
                                     onPress={() => setSelectedRestaurant(item)}
+                                    onReserve={() => navigation.navigate("RestaurantReservation", {
+                                        restaurant: item,
+                                        restaurantId: item?._id || item?.id,
+                                    })}
+                                    onViewMenu={() => navigation.navigate("RestaurantMenu", {
+                                        restaurant: item,
+                                        restaurantId: item?._id || item?.id,
+                                    })}
                                 />
                             ))
                         ) : (
@@ -260,6 +276,22 @@ const RestaurantsScreen = ({ navigation }) => {
                                         </Text>
                                     </View>
                                 </View>
+
+                                <TouchableOpacity
+                                    style={styles.modalReviewsButton}
+                                    onPress={() => {
+                                        const targetRestaurant = selectedRestaurant;
+                                        setSelectedRestaurant(null);
+                                        navigation.navigate("RestaurantReviews", {
+                                            restaurant: targetRestaurant,
+                                            restaurantId: targetRestaurant?._id || targetRestaurant?.id,
+                                        });
+                                    }}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="chatbubbles-outline" size={18} color="#fff" />
+                                    <Text style={styles.modalReviewsButtonText}>COMENTARIOS Y RESEÑAS</Text>
+                                </TouchableOpacity>
 
                                 {selectedRestaurant.telefono && (
                                     <View style={styles.modalSection}>
@@ -700,6 +732,28 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "900",
         letterSpacing: 1.5,
+    },
+    modalReviewsButton: {
+        backgroundColor: COLORS.primary,
+        borderRadius: 16,
+        minHeight: 50,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        marginBottom: 18,
+        shadowColor: COLORS.primary,
+        shadowOpacity: 0.16,
+        shadowRadius: 9,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 2,
+        width: "100%",
+    },
+    modalReviewsButtonText: {
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "900",
+        letterSpacing: 1.2,
     },
 });
 
