@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../shared/constants/theme";
-import { getReservations } from "../../../shared/api/reservations";
+import { cancelReservation, getReservations } from "../../../shared/api/reservations";
 
 const getList = (data, key) => data?.data || data?.[key] || data || [];
 
@@ -36,6 +36,9 @@ const UserReservationsScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState("");
+    const [savingId, setSavingId] = useState(null);
+    const [cancelModalVisible, setCancelModalVisible] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState(null);
 
     const sortedReservations = useMemo(
         () => [...reservations].sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0)),
@@ -57,6 +60,35 @@ const UserReservationsScreen = ({ navigation }) => {
             setRefreshing(false);
         }
     }, []);
+
+    const handleCancel = (reservation) => {
+        setSelectedReservation(reservation);
+        setCancelModalVisible(true);
+    };
+
+    const handleConfirmCancel = async () => {
+        if (!selectedReservation) return;
+        const id = selectedReservation._id || selectedReservation.id;
+        setSavingId(id);
+        setCancelModalVisible(false);
+
+        try {
+            await cancelReservation(id);
+            setReservations((prev) =>
+                prev.map((r) => (r._id || r.id) === id ? { ...r, estado: "CANCELADA" } : r)
+            );
+        } catch (err) {
+            setError(err.response?.data?.message || "No se pudo cancelar la reservación.");
+        } finally {
+            setSavingId(null);
+            setSelectedReservation(null);
+        }
+    };
+
+    const handleCloseCancelModal = () => {
+        setCancelModalVisible(false);
+        setSelectedReservation(null);
+    };
 
     useEffect(() => {
         loadReservations().catch(() => null);
@@ -97,17 +129,22 @@ const UserReservationsScreen = ({ navigation }) => {
                     {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
                     {sortedReservations.length > 0 ? (
-                        sortedReservations.map((reservation) => (
-                            <ReservationCard
-                                key={String(reservation._id || reservation.id)}
-                                reservation={reservation}
-                                onEdit={() => navigation.navigate("RestaurantReservation", {
-                                    reservation,
-                                    restaurant: reservation.restaurante,
-                                    restaurantId: reservation.restaurante?._id || reservation.restaurante?.id || reservation.restaurante,
-                                })}
-                            />
-                        ))
+                        sortedReservations.map((reservation) => {
+                            const reservationId = String(reservation._id || reservation.id);
+                            return (
+                                <ReservationCard
+                                    key={reservationId}
+                                    reservation={reservation}
+                                    isSaving={savingId === reservationId}
+                                    onEdit={() => navigation.navigate("RestaurantReservation", {
+                                        reservation,
+                                        restaurant: reservation.restaurante,
+                                        restaurantId: reservation.restaurante?._id || reservation.restaurante?.id || reservation.restaurante,
+                                    })}
+                                    onCancel={() => handleCancel(reservation)}
+                                />
+                            );
+                        })
                     ) : (
                         <View style={styles.emptyState}>
                             <Ionicons name="calendar-outline" size={34} color={COLORS.primary} />
@@ -124,11 +161,28 @@ const UserReservationsScreen = ({ navigation }) => {
                     )}
                 </ScrollView>
             )}
+
+            <Modal visible={cancelModalVisible} transparent animationType="fade" onRequestClose={handleCloseCancelModal}>
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Cancelar reservación</Text>
+                        <Text style={styles.modalMessage}>¿Estás seguro de que deseas cancelar esta reservación?</Text>
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity style={styles.modalCancelButton} onPress={handleCloseCancelModal} activeOpacity={0.85}>
+                                <Text style={styles.modalCancelText}>No</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.modalConfirmButton} onPress={handleConfirmCancel} activeOpacity={0.85}>
+                                <Text style={styles.modalConfirmText}>Sí, cancelar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
 
-const ReservationCard = ({ reservation, onEdit }) => {
+const ReservationCard = ({ reservation, onEdit, onCancel, isSaving }) => {
     const status = statusConfig[reservation.estado] || statusConfig.PENDIENTE;
     const restaurantName = reservation.restaurante?.nombre || "Restaurante";
     const tableNumber = reservation.mesa?.numeroMesa || "S/N";
@@ -154,10 +208,16 @@ const ReservationCard = ({ reservation, onEdit }) => {
             </View>
 
             {reservation.estado !== "CANCELADA" && reservation.estado !== "COMPLETADA" ? (
-                <TouchableOpacity style={styles.editButton} onPress={onEdit} activeOpacity={0.88}>
-                    <Ionicons name="create-outline" size={17} color="#fff" />
-                    <Text style={styles.editButtonText}>MODIFICAR RESERVA</Text>
-                </TouchableOpacity>
+                <View style={styles.actionsRow}>
+                    <TouchableOpacity style={styles.cancelButton} onPress={onCancel} activeOpacity={0.88} disabled={isSaving}>
+                        <Ionicons name="close-outline" size={17} color="#e11d48" />
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.cancelButtonText}>{isSaving ? "Cancelando..." : "Cancelar"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.editButton} onPress={onEdit} activeOpacity={0.88} disabled={isSaving}>
+                        <Ionicons name="create-outline" size={17} color={COLORS.text} />
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.editButtonText}>Modificar</Text>
+                    </TouchableOpacity>
+                </View>
             ) : null}
         </View>
     );
@@ -371,20 +431,125 @@ const styles = StyleSheet.create({
         fontWeight: "900",
         letterSpacing: 1.1,
     },
-    editButton: {
-        minHeight: 46,
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+    },
+    modalContent: {
+        width: "100%",
+        maxWidth: 380,
+        borderRadius: 22,
+        backgroundColor: COLORS.background,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        padding: 22,
+        shadowColor: "#000",
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 10 },
+        elevation: 10,
+    },
+    modalTitle: {
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: "900",
+        marginBottom: 8,
+    },
+    modalMessage: {
+        color: COLORS.textLight,
+        fontSize: 14,
+        fontWeight: "600",
+        lineHeight: 20,
+        marginBottom: 20,
+    },
+    modalActions: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    modalCancelButton: {
+        flex: 1,
+        minHeight: 44,
         borderRadius: 14,
-        backgroundColor: COLORS.primaryDark,
+        backgroundColor: COLORS.surfaceMuted,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 12,
+    },
+    modalCancelText: {
+        color: COLORS.text,
+        fontSize: 13,
+        fontWeight: "800",
+        letterSpacing: 0.3,
+    },
+    modalConfirmButton: {
+        flex: 1,
+        minHeight: 44,
+        borderRadius: 14,
+        backgroundColor: COLORS.primary,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 12,
+    },
+    modalConfirmText: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "900",
+        letterSpacing: 0.3,
+    },
+    editButton: {
+        flex: 1,
+        minHeight: 44,
+        minWidth: 0,
+        borderRadius: 999,
+        backgroundColor: "#fff",
+        borderWidth: 1.5,
+        borderColor: COLORS.border,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 8,
+        gap: 6,
+        paddingHorizontal: 12,
+        overflow: "hidden",
     },
     editButtonText: {
-        color: "#fff",
-        fontSize: 12,
-        fontWeight: "900",
-        letterSpacing: 1.1,
+        color: COLORS.text,
+        fontSize: 10,
+        fontWeight: "800",
+        letterSpacing: 0.2,
+        textAlign: "center",
+    },
+    actionsRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 10,
+        marginTop: 4,
+    },
+    cancelButton: {
+        flex: 1,
+        minHeight: 44,
+        minWidth: 0,
+        borderRadius: 999,
+        backgroundColor: "#fff1f2",
+        borderWidth: 1.5,
+        borderColor: "#fda4af",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        paddingHorizontal: 12,
+        overflow: "hidden",
+    },
+    cancelButtonText: {
+        color: "#e11d48",
+        fontSize: 10,
+        fontWeight: "800",
+        letterSpacing: 0.4,
+        textAlign: "center",
     },
 });
 

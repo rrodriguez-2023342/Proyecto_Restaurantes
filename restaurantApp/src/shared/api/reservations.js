@@ -26,6 +26,18 @@ export const getReservations = async (params = {}) => {
     });
 };
 
+export const cancelReservation = async (id) => {
+    const response = await authClient.put(
+        `/reservaciones/${id}`,
+        { estado: "CANCELADA" },
+        {
+            baseURL: ENDPOINTS.RESERVATIONS,
+        }
+    );
+
+    return rejectBusinessError(response);
+};
+
 export const updateReservation = async (id, payload) => {
     const response = await authClient.put(`/reservaciones/${id}`, payload, {
         baseURL: ENDPOINTS.RESERVATIONS,
