@@ -377,6 +377,11 @@ export const editarPedido = async (req, res) => {
 
             if (requestedStatus === 'entregado' && currentStatus !== 'entregado') {
                 updatePayload.estadoPedido = 'Entregado';
+            } else if (requestedStatus === 'cancelado') {
+                if (currentStatus !== 'pendiente') {
+                    return res.status(400).json({ success: false, message: 'Solo puedes cancelar un pedido que aun esta pendiente' });
+                }
+                updatePayload.estadoPedido = 'Cancelado';
             } else if (requestedStatus && requestedStatus !== 'entregado') {
                 return res.status(400).json({ success: false, message: 'No puedes cambiar el estado del pedido a ese valor' });
             }

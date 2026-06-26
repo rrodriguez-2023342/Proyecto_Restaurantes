@@ -78,6 +78,8 @@ const RestaurantsScreen = ({ navigation }) => {
                             navigation.navigate("Profile");
                         } else if (label === "Mis reservaciones") {
                             navigation.navigate("UserReservations");
+                        } else if (label === "Pedidos") {
+                            navigation.navigate("MyOrders");
                         } else if (label === "Restaurantes") {
                             navigation.navigate("RestaurantsHome");
                         }

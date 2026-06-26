@@ -6,6 +6,8 @@ import RestaurantReviewsScreen from "../features/restaurants/screens/RestaurantR
 import UserReservationsScreen from "../features/restaurants/screens/UserReservationsScreen";
 import CartScreen from "../features/restaurants/screens/CartScreen";
 import CheckoutScreen from "../features/restaurants/screens/CheckoutScreen";
+import MyOrdersScreen from "../features/restaurants/screens/MyOrdersScreen";
+import OrderDetailScreen from "../features/restaurants/screens/OrderDetailScreen";
 import ProfileScreen from "../features/profile/screens/ProfileScreen";
 
 const Stack = createNativeStackNavigator();
@@ -20,6 +22,8 @@ const MainStack = () => {
             <Stack.Screen name="UserReservations" component={UserReservationsScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
+            <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
+            <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
     );
