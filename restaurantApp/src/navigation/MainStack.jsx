@@ -4,6 +4,7 @@ import RestaurantMenuScreen from "../features/restaurants/screens/RestaurantMenu
 import RestaurantReservationScreen from "../features/restaurants/screens/RestaurantReservationScreen";
 import RestaurantReviewsScreen from "../features/restaurants/screens/RestaurantReviewsScreen";
 import UserReservationsScreen from "../features/restaurants/screens/UserReservationsScreen";
+import CartScreen from "../features/restaurants/screens/CartScreen";
 import ProfileScreen from "../features/profile/screens/ProfileScreen";
 
 const Stack = createNativeStackNavigator();
@@ -16,6 +17,7 @@ const MainStack = () => {
             <Stack.Screen name="RestaurantReservation" component={RestaurantReservationScreen} />
             <Stack.Screen name="RestaurantReviews" component={RestaurantReviewsScreen} />
             <Stack.Screen name="UserReservations" component={UserReservationsScreen} />
+            <Stack.Screen name="Cart" component={CartScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
     );

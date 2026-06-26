@@ -1,12 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../shared/constants/theme";
 import { getMenus } from "../../../shared/api/menu";
 import { getPlatos } from "../../../shared/api/plato";
+import { useCartStore } from "../store/useCartStore";
+import { useToast } from "../../../shared/components/Toast";
+import DishDetailModal from "../components/DishDetailModal";
+import CartFab from "../components/CartFab";
 
 const getList = (data, key) => data?.data || data?.[key] || data || [];
+
+const buildCartItem = (dish, restaurantId, restaurantName) => ({
+    id: dish._id || dish.id,
+    name: dish.nombrePlato || dish.nombre || "Plato",
+    price: Number(dish.precio || 0),
+    image: dish.fotosPlato || dish.fotos || dish.image || null,
+    restaurantId,
+    restaurantName,
+});
 
 const RestaurantMenuScreen = ({ navigation, route }) => {
     const restaurant = route.params?.restaurant;
@@ -18,6 +31,36 @@ const RestaurantMenuScreen = ({ navigation, route }) => {
     const [loading, setLoading] = useState(true);
     const [loadingPlatos, setLoadingPlatos] = useState(false);
     const [error, setError] = useState("");
+    const [selectedDish, setSelectedDish] = useState(null);
+    const [pendingItem, setPendingItem] = useState(null);
+
+    const { showToast } = useToast();
+    const cartItems = useCartStore((state) => state.items);
+    const addItem = useCartStore((state) => state.addItem);
+    const startNewCart = useCartStore((state) => state.startNewCart);
+    const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+    const handleAddToCart = (quantity, notas) => {
+        if (!selectedDish) return false;
+        const cartItem = { ...buildCartItem(selectedDish, restaurantId, restaurantName), quantity, notas };
+        const result = addItem(cartItem);
+
+        if (!result.ok && result.reason === "different-restaurant") {
+            setPendingItem(cartItem);
+            return false;
+        }
+
+        showToast({ type: "success", title: "Agregado al carrito", message: `${cartItem.name} x${quantity}` });
+        return true;
+    };
+
+    const handleConfirmNewCart = () => {
+        if (!pendingItem) return;
+        startNewCart(pendingItem);
+        const item = pendingItem;
+        setPendingItem(null);
+        showToast({ type: "success", title: "Carrito actualizado", message: `${item.name} x${item.quantity}` });
+    };
 
     useEffect(() => {
         const loadMenus = async () => {
@@ -143,7 +186,11 @@ const RestaurantMenuScreen = ({ navigation, route }) => {
                     ) : platos.length > 0 ? (
                         <View style={styles.dishList}>
                             {platos.map((plato) => (
-                                <DishCard key={String(plato._id || plato.id || plato.nombrePlato)} plato={plato} />
+                                <DishCard
+                                    key={String(plato._id || plato.id || plato.nombrePlato)}
+                                    plato={plato}
+                                    onPress={() => setSelectedDish(plato)}
+                                />
                             ))}
                         </View>
                     ) : (
@@ -157,18 +204,63 @@ const RestaurantMenuScreen = ({ navigation, route }) => {
                     )}
                 </ScrollView>
             )}
+
+            <CartFab count={cartCount} onPress={() => navigation.navigate("Cart")} />
+
+            <DishDetailModal
+                visible={selectedDish !== null}
+                dish={selectedDish}
+                onClose={() => setSelectedDish(null)}
+                onAdd={handleAddToCart}
+            />
+
+            <Modal
+                visible={pendingItem !== null}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setPendingItem(null)}
+            >
+                <View style={styles.confirmOverlay}>
+                    <View style={styles.confirmCard}>
+                        <View style={styles.confirmIcon}>
+                            <Ionicons name="swap-horizontal" size={26} color={COLORS.accent} />
+                        </View>
+                        <Text style={styles.confirmTitle}>Cambiar de restaurante</Text>
+                        <Text style={styles.confirmMessage}>
+                            Tu carrito tiene platos de otro restaurante. Para agregar este plato, vaciaremos el
+                            carrito actual y empezaremos uno nuevo.
+                        </Text>
+                        <View style={styles.confirmActions}>
+                            <TouchableOpacity
+                                style={styles.confirmCancel}
+                                onPress={() => setPendingItem(null)}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.confirmCancelText}>Conservar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.confirmAccept}
+                                onPress={handleConfirmNewCart}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.confirmAcceptText}>Vaciar y agregar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
 
-const DishCard = ({ plato }) => {
+const DishCard = ({ plato, onPress }) => {
     const image = plato.fotosPlato || plato.fotos || plato.image;
     const name = plato.nombrePlato || plato.nombre || "Plato";
     const description = plato.descripcionPlato || plato.descripcion || "Preparacion especial de la casa.";
     const price = Number(plato.precio || 0);
 
     return (
-        <View style={styles.dishCard}>
+        <TouchableOpacity style={styles.dishCard} onPress={onPress} activeOpacity={0.85}>
             {image ? (
                 <Image source={{ uri: image }} style={styles.dishImage} />
             ) : (
@@ -182,9 +274,13 @@ const DishCard = ({ plato }) => {
                     <Text style={styles.dishPrice}>Q{price.toFixed(2)}</Text>
                 </View>
                 <Text style={styles.dishDescription} numberOfLines={3}>{description}</Text>
-        {plato.tipoPlato ? <Text style={styles.dishType}>{String(plato.tipoPlato).split("_").join(" ")}</Text> : null}
+                {plato.tipoPlato ? <Text style={styles.dishType}>{String(plato.tipoPlato).split("_").join(" ")}</Text> : null}
+                <View style={styles.dishAddRow}>
+                    <Ionicons name="add-circle" size={18} color={COLORS.primary} />
+                    <Text style={styles.dishAddText}>Agregar al pedido</Text>
+                </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
@@ -367,6 +463,88 @@ const styles = StyleSheet.create({
         fontSize: 9,
         fontWeight: "900",
         textTransform: "uppercase",
+    },
+    dishAddRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        marginTop: 2,
+    },
+    dishAddText: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: "900",
+    },
+    confirmOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(2, 6, 23, 0.6)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 28,
+    },
+    confirmCard: {
+        width: "100%",
+        maxWidth: 380,
+        backgroundColor: "#fff",
+        borderRadius: 26,
+        padding: 24,
+        alignItems: "center",
+        gap: 12,
+    },
+    confirmIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: COLORS.accentSoft,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    confirmTitle: {
+        color: COLORS.text,
+        fontSize: 19,
+        fontWeight: "900",
+        textAlign: "center",
+    },
+    confirmMessage: {
+        color: COLORS.textLight,
+        fontSize: 14,
+        fontWeight: "600",
+        lineHeight: 20,
+        textAlign: "center",
+    },
+    confirmActions: {
+        flexDirection: "row",
+        gap: 12,
+        marginTop: 8,
+        width: "100%",
+    },
+    confirmCancel: {
+        flex: 1,
+        minHeight: 48,
+        borderRadius: 14,
+        backgroundColor: COLORS.surfaceMuted,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    confirmCancelText: {
+        color: COLORS.text,
+        fontSize: 13,
+        fontWeight: "800",
+    },
+    confirmAccept: {
+        flex: 1,
+        minHeight: 48,
+        borderRadius: 14,
+        backgroundColor: COLORS.primary,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    confirmAcceptText: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "900",
     },
     emptyState: {
         alignItems: "center",
