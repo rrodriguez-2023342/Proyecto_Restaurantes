@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "restaurantes-service",
     "version":  "1.0.0",
     "description":  "Microservicio de restaurantes, mesas, menus, platos, inventarios y resenas",

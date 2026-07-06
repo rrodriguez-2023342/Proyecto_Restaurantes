@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "pedidos-reservaciones-service",
     "version":  "1.0.0",
     "description":  "Microservicio de pedidos, detalle de pedidos, reservaciones y facturas",

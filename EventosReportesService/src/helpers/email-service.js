@@ -1,22 +1,43 @@
-﻿import nodemailer from 'nodemailer';
+﻿const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-// Transporter 
-const createTransporter = () => {
-    const { SMTP_USERNAME, SMTP_PASSWORD } = process.env;
-    if (!SMTP_USERNAME || !SMTP_PASSWORD) {
-        console.warn('[email-service] Credenciales SMTP no configuradas. El envÃ­o de correos no funcionarÃ¡.');
-        return null;
+const getBrevoApiKey = () => process.env.BREVO_API_KEY;
+
+const sendBrevoMail = async ({ to, subject, html, attachments }) => {
+    const apiKey = getBrevoApiKey();
+    if (!apiKey) {
+        console.warn('[email-service] BREVO_API_KEY no configurada. El envÃ­o de correos no funcionarÃ¡.');
+        return;
     }
-    return nodemailer.createTransport({
-        host:    process.env.SMTP_HOST ?? 'smtp.gmail.com',
-        port:    parseInt(process.env.SMTP_PORT ?? '587'),
-        secure:  false,
-        auth: { user: SMTP_USERNAME, pass: SMTP_PASSWORD },
-        connectionTimeout: 10_000,
-        greetingTimeout:   10_000,
-        socketTimeout:     10_000,
-        tls: { rejectUnauthorized: false },
+
+    const payload = {
+        sender: { name: process.env.EMAIL_FROM_NAME || 'Restaurante App', email: process.env.EMAIL_FROM || 'restaurantein6bm@gmail.com' },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+    };
+
+    if (attachments?.length) {
+        payload.attachment = attachments.map(({ filename, content, contentType }) => ({
+            name: filename,
+            content: content instanceof Buffer ? content.toString('base64') : Buffer.from(content).toString('base64'),
+            contentType: contentType || 'application/octet-stream',
+        }));
+    }
+
+    const response = await fetch(BREVO_API_URL, {
+        method: 'POST',
+        headers: {
+            'api-key': apiKey,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`[brevo] Error ${response.status}: ${errorBody}`);
+    }
 };
 
 const TIPO_LABEL = {
@@ -32,8 +53,8 @@ const fmtMoney = (n) => `Q ${Number(n ?? 0).toFixed(2)}`;
 
 const supportBlock = `
 <div style="margin-top: 20px; padding: 16px; background-color: #E6F4E9; border-left: 4px solid #104523; border-radius: 4px;">
-    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">¿Tuviste algún problema?</p>
-    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">Comunícate con nuestro equipo de soporte:</p>
+    <p style="margin: 0 0 6px; font-weight: bold; color: #104523; font-size: 13px;">Â¿Tuviste algÃºn problema?</p>
+    <p style="margin: 0 0 8px; color: #555; font-size: 13px;">ComunÃ­cate con nuestro equipo de soporte:</p>
     <p style="margin: 0 0 4px; color: #333; font-size: 13px;">
         @ <a href="mailto:restaurantein6bm@gmail.com" style="color: #104523; text-decoration: none;">restaurantein6bm@gmail.com</a>
     </p>
@@ -82,9 +103,6 @@ const baseLayout = (headerTitle, headerSub, bodyContent) => `
 </body>
 </html>`;
 
-// HTML Builders 
-
-// Reporte
 const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) =>
     baseLayout(tipoLabel, restaurante, `
         <p>Estimado <strong>${name}</strong>,</p>
@@ -97,7 +115,6 @@ const buildReporteHtml = ({ name, tipoLabel, restaurante, reporte }) =>
         )}
     `);
 
-// Factura
 const buildFacturaHtml = ({ name, factura, pedido, restaurante }) =>
     baseLayout('Factura', `${restaurante} Â· No. ${factura._id.toString().slice(-8).toUpperCase()}`, `
         <p>Estimado <strong>${name}</strong>,</p>
@@ -116,7 +133,6 @@ const buildFacturaHtml = ({ name, factura, pedido, restaurante }) =>
         )}
     `);
 
-// ReservaciÃ³n
 const RESERVACION_TITULO = {
     creada:     'âœ“ ReservaciÃ³n Creada',
     actualizada:'â—´ ReservaciÃ³n Actualizada',
@@ -142,7 +158,6 @@ const buildReservacionHtml = ({ name, accion, reservacion, restaurante }) =>
         )}
     `);
 
-// Pedido
 const PEDIDO_TITULO = {
     creado:     'âœ“ Pedido Recibido',
     actualizado:'â—´ Estado de tu Pedido',
@@ -170,7 +185,6 @@ const buildPedidoHtml = ({ name, accion, pedido, restaurante }) =>
         )}
     `);
 
-// Evento
 const EVENTO_TITULO = {
     creado:     'âœ“ Nuevo Evento Agendado',
     actualizado:'â—´ Evento Actualizado',
@@ -196,22 +210,9 @@ const buildEventoHtml = ({ name, accion, evento, restaurante }) =>
         )}
     `);
 
-// EnvÃ­o base
-
 const sendMail = async ({ to, subject, html, attachments }) => {
-    const transporter = createTransporter();
-    if (!transporter) throw new Error('[email-service] Transportador SMTP no configurado');
-    await transporter.sendMail({
-        from:     `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
-        to,
-        subject,
-        html,
-        encoding: 'utf-8',
-        ...(attachments ? { attachments } : {}),
-    });
+    await sendBrevoMail({ to, subject, html, attachments });
 };
-
-// Exports 
 
 export const sendReportePdfEmail = async (email, name, pdfBuffer, reporte) => {
     const tipoLabel   = TIPO_LABEL[reporte.tipoReporte] ?? reporte.tipoReporte;

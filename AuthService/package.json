@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "Proyecto_Restaurantes",
     "version":  "1.0.0",
     "description":  "",
@@ -19,6 +19,9 @@
                  ],
     "author":  "Grupo 6 - IN6BM",
     "license":  "MIT",
+    "pnpm": {
+        "onlyBuiltDependencies": ["argon2"]
+    },
     "dependencies":  {
                          "argon2":  "^0.44.0",
                          "cloudinary":  "^2.7.0",

@@ -1,43 +1,49 @@
-import nodemailer from 'nodemailer';
 import { config } from '../configs/config.js';
 
-// Transporter 
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-const createTransporter = () => {
-    if (!config.smtp.username || !config.smtp.password) {
-        console.warn(
-            'Credenciales SMTP no configuradas. La funcionalidad de correo no funcionará.'
-        );
-        return null;
+const getHeaders = () => ({
+    'api-key': config.brevo.apiKey,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+});
+
+const sendBrevoMail = async ({ to, subject, html, attachments }) => {
+    if (!config.brevo.apiKey) {
+        console.warn('[email-service] BREVO_API_KEY no configurada. El envío de correos no funcionará.');
+        return;
     }
 
-    console.log('Intentando crear transportador SMTP con:', config.smtp.username);
-    
-    return nodemailer.createTransport({
-        service: 'gmail', // Usar el servicio directo de Gmail es más fiable
-        auth: {
-            user: config.smtp.username,
-            pass: config.smtp.password,
-        },
-        tls: { 
-            rejectUnauthorized: false 
-        },
+    const payload = {
+        sender: { name: config.brevo.fromName, email: config.brevo.fromEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+    };
+
+    if (attachments?.length) {
+        payload.attachment = await Promise.all(
+            attachments.map(async ({ filename, content, contentType }) => ({
+                name: filename,
+                content: content instanceof Buffer
+                    ? content.toString('base64')
+                    : Buffer.from(content).toString('base64'),
+                contentType: contentType || 'application/octet-stream',
+            }))
+        );
+    }
+
+    const response = await fetch(BREVO_API_URL, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`[brevo] Error ${response.status}: ${errorBody}`);
+    }
 };
-
-const transporter = createTransporter();
-
-if (transporter) {
-    transporter.verify((error, success) => {
-        if (error) {
-            console.error('Error en la verificación del transportador SMTP:', error);
-        } else {
-            console.log('Servidor de correo listo para enviar mensajes');
-        }
-    });
-}
-
-// Bloque de soporte reutilizable
 
 const supportBlock = `
 <div style="margin-top: 20px; padding: 16px; background-color: #f0f7f4; border-left: 4px solid #1e616d; border-radius: 4px;">
@@ -53,18 +59,13 @@ const supportBlock = `
 
 const autoReply = `<p style="margin-top: 16px; color: #666; font-size: 13px;">Este es un correo automático, por favor no respondas a este mensaje.</p>`;
 
-// Exports
-
 export const sendVerificationEmail = async (email, name, verificationToken) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        const frontendUrl     = config.app.frontendUrl || 'http://localhost:3000';
+        const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
         const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Verifica tu dirección de correo electrónico',
             html: `
                 <h2>¡Bienvenido/a ${name}!</h2>
@@ -85,15 +86,12 @@ export const sendVerificationEmail = async (email, name, verificationToken) => {
 };
 
 export const sendPasswordResetEmail = async (email, name, resetToken) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
         const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
-        const resetUrl    = `${frontendUrl}/reset-password?token=${resetToken}`;
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Restablece tu contraseña',
             html: `
                 <h2>Solicitud de restablecimiento de contraseña</h2>
@@ -115,12 +113,9 @@ export const sendPasswordResetEmail = async (email, name, resetToken) => {
 };
 
 export const sendWelcomeEmail = async (email, name) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: '¡Bienvenido/a a Kinal Eats!',
             html: `
                 <h2>¡Bienvenido/a a Kinal Eats, ${name}!</h2>
@@ -137,12 +132,9 @@ export const sendWelcomeEmail = async (email, name) => {
 };
 
 export const sendPasswordChangedEmail = async (email, name) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Contraseña cambiada exitosamente',
             html: `
                 <h2>Contraseña actualizada</h2>
@@ -160,15 +152,12 @@ export const sendPasswordChangedEmail = async (email, name) => {
 };
 
 export const sendUsernameChangeEmail = async (email, name, token, newUsername) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
         const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
-        const confirmUrl  = `${frontendUrl}/confirm-username-change?token=${token}`;
+        const confirmUrl = `${frontendUrl}/confirm-username-change?token=${token}`;
 
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Confirma el cambio de nombre de usuario',
             html: `
                 <h2>Solicitud de cambio de nombre de usuario</h2>
@@ -192,15 +181,12 @@ export const sendUsernameChangeEmail = async (email, name, token, newUsername) =
 };
 
 export const sendPhoneChangeEmail = async (email, name, token, newPhone) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
         const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
-        const confirmUrl  = `${frontendUrl}/confirm-phone-change?token=${token}`;
+        const confirmUrl = `${frontendUrl}/confirm-phone-change?token=${token}`;
 
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Confirma el cambio de número de teléfono',
             html: `
                 <h2>Solicitud de cambio de número de teléfono</h2>
@@ -224,15 +210,12 @@ export const sendPhoneChangeEmail = async (email, name, token, newPhone) => {
 };
 
 export const sendDeactivateAccountEmail = async (email, name, token) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
         const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
-        const confirmUrl  = `${frontendUrl}/confirm-deactivate-account?token=${token}`;
+        const confirmUrl = `${frontendUrl}/confirm-deactivate-account?token=${token}`;
 
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Confirma la desactivación de tu cuenta',
             html: `
                 <h2>Solicitud de desactivación de cuenta</h2>
@@ -256,12 +239,9 @@ export const sendDeactivateAccountEmail = async (email, name, token) => {
 };
 
 export const sendUsernameChangedEmail = async (email, name, newUsername) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Nombre de usuario actualizado exitosamente',
             html: `
                 <h2>Nombre de usuario actualizado</h2>
@@ -279,12 +259,9 @@ export const sendUsernameChangedEmail = async (email, name, newUsername) => {
 };
 
 export const sendPhoneChangedEmail = async (email, name, newPhone) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Número de teléfono actualizado exitosamente',
             html: `
                 <h2>Número de teléfono actualizado</h2>
@@ -302,12 +279,9 @@ export const sendPhoneChangedEmail = async (email, name, newPhone) => {
 };
 
 export const sendAccountDeactivatedEmail = async (email, name) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Cuenta desactivada exitosamente',
             html: `
                 <h2>Cuenta desactivada</h2>
@@ -325,15 +299,12 @@ export const sendAccountDeactivatedEmail = async (email, name) => {
 };
 
 export const sendActivateAccountEmail = async (email, name, token) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
         const frontendUrl = config.app.frontendUrl || 'http://localhost:3000';
-        const confirmUrl  = `${frontendUrl}/confirm-activate-account?token=${token}`;
+        const confirmUrl = `${frontendUrl}/confirm-activate-account?token=${token}`;
 
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Confirma la activación de tu cuenta',
             html: `
                 <h2>Solicitud de activación de cuenta</h2>
@@ -357,12 +328,9 @@ export const sendActivateAccountEmail = async (email, name, token) => {
 };
 
 export const sendAccountActivatedEmail = async (email, name) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Cuenta activada exitosamente',
             html: `
                 <h2>Cuenta activada</h2>
@@ -379,12 +347,9 @@ export const sendAccountActivatedEmail = async (email, name) => {
 };
 
 export const sendAccountCreatedByAdminEmail = async (email, name, password) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Tu cuenta ha sido creada',
             html: `
                 <h2>Bienvenido/a ${name}</h2>
@@ -404,12 +369,9 @@ export const sendAccountCreatedByAdminEmail = async (email, name, password) => {
 };
 
 export const sendAccountDeletedEmail = async (email, name) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Tu cuenta ha sido eliminada',
             html: `
                 <h2>Cuenta eliminada</h2>
@@ -427,12 +389,9 @@ export const sendAccountDeletedEmail = async (email, name) => {
 };
 
 export const sendAccountDeactivatedByAdminEmail = async (email, name) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Tu cuenta ha sido desactivada',
             html: `
                 <h2>Cuenta desactivada</h2>
@@ -450,21 +409,18 @@ export const sendAccountDeactivatedByAdminEmail = async (email, name) => {
 };
 
 export const sendAccountUpdatedByAdminEmail = async (email, name, updatedData) => {
-    if (!transporter) throw new Error('Transportador SMTP no configurado');
-
     try {
-        await transporter.sendMail({
-            from:    `${config.smtp.fromName} <${config.smtp.fromEmail}>`,
-            to:      email,
+        await sendBrevoMail({
+            to: email,
             subject: 'Tu cuenta ha sido modificada',
             html: `
                 <h2>Cuenta modificada</h2>
                 <p>Hola ${name},</p>
                 <p>Un administrador ha modificado tu cuenta. Estos son tus nuevos datos:</p>
                 <ul>
-                    ${updatedData.name    ? `<li><strong>Nombre:</strong> ${updatedData.name}</li>`      : ''}
+                    ${updatedData.name ? `<li><strong>Nombre:</strong> ${updatedData.name}</li>` : ''}
                     ${updatedData.surname ? `<li><strong>Apellido:</strong> ${updatedData.surname}</li>` : ''}
-                    ${updatedData.phone   ? `<li><strong>Teléfono:</strong> ${updatedData.phone}</li>`   : ''}
+                    ${updatedData.phone ? `<li><strong>Teléfono:</strong> ${updatedData.phone}</li>` : ''}
                 </ul>
                 <p>Si no reconoces estos cambios, contáctanos de inmediato.</p>
                 ${supportBlock}

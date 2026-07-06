@@ -1,0 +1,139 @@
+services:
+
+  # ─── Base de datos ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: kinaleats-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: restaurantesdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kinaleats-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d restaurantesdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Microservicios ──────────────────────────────────────────
+
+  auth-service:
+    build:
+      context: ./AuthService
+      dockerfile: Dockerfile
+    container_name: kinaleats-auth
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      PORT: 3006
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: restaurantesdb
+      DB_USERNAME: admin
+      DB_PASSWORD: admin
+      DB_SQL_LOGGING: "false"
+    ports:
+      - "3006:3006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kinaleats-net
+
+  restaurantes-service:
+    build:
+      context: ./RestaurantesService
+      dockerfile: Dockerfile
+    container_name: kinaleats-restaurantes
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      PORT: 3007
+      URI_MONGO: mongodb+srv://robertoandre0307_db_user:kZhxVvzNlgZawwQa@cluster0.ekpzrcm.mongodb.net/restaurantesdb
+      AUTH_SERVICE_URL: http://auth-service:3006
+    ports:
+      - "3007:3007"
+    depends_on:
+      auth-service:
+        condition: service_started
+    networks:
+      - kinaleats-net
+
+  pedidos-service:
+    build:
+      context: ./PedidosReservacionesService
+      dockerfile: Dockerfile
+    container_name: kinaleats-pedidos
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      PORT: 3008
+      URI_MONGO: mongodb+srv://robertoandre0307_db_user:kZhxVvzNlgZawwQa@cluster0.ekpzrcm.mongodb.net/restaurantesdb
+      AUTH_SERVICE_URL: http://auth-service:3006
+    ports:
+      - "3008:3008"
+    depends_on:
+      auth-service:
+        condition: service_started
+    networks:
+      - kinaleats-net
+
+  eventos-service:
+    build:
+      context: ./EventosReportesService
+      dockerfile: Dockerfile
+    container_name: kinaleats-eventos
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      PORT: 3009
+      URI_MONGO: mongodb+srv://robertoandre0307_db_user:kZhxVvzNlgZawwQa@cluster0.ekpzrcm.mongodb.net/restaurantesdb
+      AUTH_SERVICE_URL: http://auth-service:3006
+    ports:
+      - "3009:3009"
+    depends_on:
+      auth-service:
+        condition: service_started
+    networks:
+      - kinaleats-net
+
+  # ─── Frontend ────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_AUTH_URL: http://localhost:3006/api/v1/
+        VITE_RESTAURANTES_URL: http://localhost:3007/restaurantes/v1
+        VITE_MESAS_URL: http://localhost:3007/restaurantes/v1
+        VITE_PEDIDOS_URL: http://localhost:3008/restaurantes/v1
+        VITE_RESERVACIONES_URL: http://localhost:3008/restaurantes/v1
+        VITE_REPORTES_URL: http://localhost:3009/restaurantes/v1
+        VITE_CLOUDINARY_BASE_URL: https://res.cloudinary.com/dsgoqqgtd/image/upload/
+    container_name: kinaleats-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth-service
+      - restaurantes-service
+      - pedidos-service
+      - eventos-service
+    networks:
+      - kinaleats-net
+
+# ─── Volúmenes ──────────────────────────────────────────────
+volumes:
+  postgres_data:
+
+# ─── Red ────────────────────────────────────────────────────
+networks:
+  kinaleats-net:
+    driver: bridge

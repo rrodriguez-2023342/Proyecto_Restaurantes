@@ -12,15 +12,11 @@ export const config = {
         audience: process.env.JWT_AUDIENCE,
     },
 
-    // SMTP Configuration (aligned with .NET SmtpSettings)
-    smtp: {
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT, 10) || 587,
-        enableSsl: process.env.SMTP_ENABLE_SSL === 'true',
-        username: process.env.SMTP_USERNAME,
-        password: process.env.SMTP_PASSWORD,
-        fromEmail: process.env.EMAIL_FROM,
-        fromName: process.env.EMAIL_FROM_NAME,  
+    // Brevo (Sendinblue) Email Configuration
+    brevo: {
+        apiKey: process.env.BREVO_API_KEY,
+        fromEmail: process.env.EMAIL_FROM || 'restaurantein6bm@gmail.com',
+        fromName: process.env.EMAIL_FROM_NAME || 'Restaurante App',
     },
 
     // File Upload Configuration (aligned with .NET FileValidator)
