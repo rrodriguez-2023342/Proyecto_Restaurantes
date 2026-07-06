@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { Search, MapPin, Clock, Star, ChevronLeft, ShoppingCart, Award, ShieldCheck, Heart, Info, ArrowRight, Quote, Sparkles, Utensils, Timer, Zap, Users, Flame, ChefHat, Leaf } from "lucide-react";
-import { getRestaurantById, getMenus, getPlatos, getReviews } from "../../../shared/api";
+import { Link, useParams } from "react-router-dom";
+import { MapPin, Clock, Star, ChevronLeft, ShieldCheck, Utensils, Timer, Users } from "lucide-react";
+import { getRestaurantById, getMenus, getPlatos } from "../../../shared/api";
 import { EmptyState } from "../../../shared/components";
 import { showError } from "../../../shared/utils/toast";
 import { useCartStore } from "../../orders/store/useCartStore";
@@ -11,8 +11,6 @@ import { ReviewForm } from "../../reviews/components/ReviewForm.jsx";
 import { ReviewList } from "../../reviews/components/ReviewList.jsx";
 
 // Imágenes de comida para fondo dinámico
-import comida1 from "../../../assets/images/comida1.png";
-import comida3 from "../../../assets/images/comida3.png";
 import comida7 from "../../../assets/images/comida7.png";
 import comida9 from "../../../assets/images/comida9.png";
 
@@ -22,8 +20,8 @@ const FloatingDish = ({ src, delay, duration, size, top, left, rotate, opacity =
         style={{
             top: `${top}px`,
             left: `${left}%`,
-            width: `${size}px`,
-            height: `${size}px`,
+            width: `clamp(120px, ${size / 4}vw, ${size}px)`,
+            height: `clamp(120px, ${size / 4}vw, ${size}px)`,
             animationDelay: `${delay}s`,
             animationDuration: `${duration}s`,
             transform: `rotate(${rotate}deg)`,
@@ -101,11 +99,9 @@ const getDishStockInfo = (dish, quantity = 1, cartItems = []) => {
 
 export const UserRestaurantDetail = () => {
     const { id } = useParams();
-    const location = useLocation();
     const [restaurant, setRestaurant] = useState(null);
     const [menus, setMenus] = useState([]);
     const [platos, setPlatos] = useState([]);
-    const [reviews, setReviews] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [selectedDish, setSelectedDish] = useState(null);
@@ -137,9 +133,6 @@ export const UserRestaurantDetail = () => {
                     const { data: platosData } = await getPlatos(firstMenuId);
                     setPlatos(platosData?.data || platosData?.platos || platosData || []);
                 }
-
-                const { data: reviewsData } = await getReviews({ restaurante: id });
-                setReviews(reviewsData?.data || reviewsData?.resenas || []);
 
             } catch (err) {
                 console.error("Error detallado en RestaurantDetail:", err);
@@ -231,16 +224,16 @@ export const UserRestaurantDetail = () => {
                 </div>
 
                 {/* Corner Back Button */}
-                <div className="absolute top-10 left-10 z-50">
+                <div className="absolute top-5 left-5 z-50 sm:top-10 sm:left-10">
                     <Link 
                         to="/home/restaurants" 
-                        className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/10 text-white/50 hover:text-white hover:border-white transition-all active:scale-90"
+                        className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 border-white/10 text-white/70 hover:text-white hover:border-white transition-all active:scale-90"
                     >
                         <ChevronLeft size={24} />
                     </Link>
                 </div>
                 
-                <div className="relative z-10 h-full flex flex-col justify-end px-6 md:px-20 lg:px-32 pb-16 md:pb-20 max-w-[1500px] mx-auto w-full">
+                <div className="relative z-10 h-full flex flex-col justify-end px-5 sm:px-6 md:px-20 lg:px-32 pb-12 md:pb-20 max-w-[1500px] mx-auto w-full">
                     <div className="space-y-6 md:space-y-8">
                         <div className="flex items-center gap-4">
                             <div className="h-1 w-8 md:w-10 bg-amber-500" />
@@ -249,7 +242,7 @@ export const UserRestaurantDetail = () => {
                             </span>
                         </div>
                         
-                        <h1 className="text-4xl md:text-9xl font-black tracking-tightest text-white leading-[1.1] md:leading-none uppercase">
+                        <h1 className="text-4xl sm:text-5xl md:text-9xl font-black tracking-tightest text-white leading-[1.05] md:leading-none uppercase break-words">
                             {restaurant?.nombre}
                         </h1>
  
@@ -259,16 +252,16 @@ export const UserRestaurantDetail = () => {
                             </p>
                         </div>
 
-                        <div className="flex items-center gap-14 pt-4">
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-5 pt-4 sm:flex-row sm:items-center sm:gap-10 lg:gap-14">
+                            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                                 <Star size={16} className="text-amber-500" fill="currentColor" />
                                 <span className="text-2xl font-black text-white tracking-tighter">4.9</span>
-                                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/30">Rating General</span>
+                                <span className="text-[9px] font-bold uppercase tracking-[0.24em] sm:tracking-[0.4em] text-white/30">Rating General</span>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                                 <Clock size={16} className="text-white/20" />
                                 <span className="text-2xl font-black text-white tracking-tighter">25</span>
-                                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/20">Minutos</span>
+                                <span className="text-[9px] font-bold uppercase tracking-[0.24em] sm:tracking-[0.4em] text-white/20">Minutos</span>
                             </div>
                         </div>
                     </div>
@@ -302,7 +295,7 @@ export const UserRestaurantDetail = () => {
                     </div>
                     <Link
                         to={`/home/restaurants/${id}/reservar`}
-                        className="flex items-center justify-center gap-4 bg-amber-600 text-white px-8 md:px-10 py-4 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all active:scale-95 shadow-xl"
+                        className="flex items-center justify-center gap-3 md:gap-4 bg-amber-600 text-white px-6 md:px-10 py-4 text-[9px] md:text-[10px] font-black uppercase tracking-[0.18em] md:tracking-[0.3em] hover:bg-white hover:text-black transition-all active:scale-95 shadow-xl"
                     >
                         Reservar Mesa
                     </Link>
@@ -311,7 +304,7 @@ export const UserRestaurantDetail = () => {
 
             {/* ── GOURMET REBEL CONTENT ── */}
             <main className="max-w-[1500px] mx-auto px-6 md:px-12 lg:px-20 py-16 md:py-32">
-                <div className="grid lg:grid-cols-[1fr_400px] gap-12 md:gap-24">
+                <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-12 md:gap-24">
                     
                     {/* DISHES: THE RESTAURANT EXPERIENCE */}
                     <div className="space-y-12 md:space-y-24">
@@ -368,8 +361,8 @@ export const UserRestaurantDetail = () => {
                                         {/* Content Overlay */}
                                         <div className="absolute inset-0 p-8 flex flex-col justify-end">
                                             <div className="relative z-10 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                                <div className="flex justify-between items-start gap-4 mb-3">
-                                                    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight leading-none group-hover:text-amber-500 transition-colors">
+                                                <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:justify-between sm:items-start sm:gap-4">
+                                                    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight leading-none group-hover:text-amber-500 transition-colors break-words">
                                                         {plato.nombrePlato || plato.nombre}
                                                     </h3>
                                                     <span className="bg-amber-500 text-black px-3 py-1 text-sm font-black rounded-lg shrink-0 shadow-lg">
@@ -395,7 +388,7 @@ export const UserRestaurantDetail = () => {
                     </div>
 
                     {/* SIDEBAR: RESTAURANT CONCIERGE ── */}
-                    <aside className="space-y-16">
+                    <aside className="space-y-16 min-w-0">
                         <div className="sticky top-40 space-y-16">
                             
                             {/* Contact Card - Dynamic Map Style */}
@@ -468,7 +461,7 @@ export const UserRestaurantDetail = () => {
                 </div>
 
                 {/* REVIEWS: CONNOISSEUR STYLE ── */}
-                <section id="reviews" className="mt-40 pt-20 border-t border-slate-100 grid lg:grid-cols-[400px_1fr] gap-20">
+                <section id="reviews" className="mt-28 md:mt-40 pt-16 md:pt-20 border-t border-slate-100 grid lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] gap-12 md:gap-20">
                     <div className="space-y-10">
                         <div className="sticky top-40 space-y-8">
                             <div className="space-y-3">
@@ -476,7 +469,7 @@ export const UserRestaurantDetail = () => {
                                     <Users size={18} />
                                     <span className="text-[10px] font-bold uppercase tracking-[0.3em]">La Crítica</span>
                                 </div>
-                                <h2 className="text-5xl font-black text-slate-900 tracking-tighter">
+                                <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">
                                     Voz de la <br /> Audiencia
                                 </h2>
                             </div>

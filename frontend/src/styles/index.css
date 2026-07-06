@@ -13,6 +13,11 @@
 
 body {
   background-color: #fafafa;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 .admin-shell {
@@ -198,6 +203,21 @@ a,
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .admin-shell main::before {
+    inset: 0;
+  }
 }
 
 @keyframes float {

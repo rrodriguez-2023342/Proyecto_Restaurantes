@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { Search, MapPin, Clock, Star, ChevronLeft, ShoppingCart, Award, ShieldCheck, Heart, Info, ArrowRight } from "lucide-react";
-import { getRestaurantById, getMenus, getPlatos, getReviews } from "../../../shared/api";
+import { MapPin, Clock, Star, ChevronLeft, Info, ArrowRight } from "lucide-react";
+import { getRestaurantById, getMenus, getPlatos } from "../../../shared/api";
 import { EmptyState } from "../../../shared/components";
 import { showError } from "../../../shared/utils/toast";
 import { useCartStore } from "../../orders/store/useCartStore";
@@ -16,7 +16,6 @@ export const RestaurantDetail = () => {
     const [restaurant, setRestaurant] = useState(null);
     const [menus, setMenus] = useState([]);
     const [platos, setPlatos] = useState([]);
-    const [reviews, setReviews] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [selectedDish, setSelectedDish] = useState(null);
@@ -48,9 +47,6 @@ export const RestaurantDetail = () => {
                     const { data: platosData } = await getPlatos(firstMenuId);
                     setPlatos(platosData?.data || platosData?.platos || platosData || []);
                 }
-
-                const { data: reviewsData } = await getReviews({ restaurante: id });
-                setReviews(reviewsData?.data || reviewsData?.resenas || []);
 
             } catch (err) {
                 console.error("Error detallado en RestaurantDetail:", err);
@@ -120,7 +116,7 @@ export const RestaurantDetail = () => {
     return (
         <div className="relative pb-32">
             {/* ── CINEMATIC HERO: FULL BLEED ── */}
-            <header className="relative -mx-4 md:-mx-6 lg:-mx-8 -mt-6 md:-mt-8 h-[550px] md:h-[750px] overflow-hidden group">
+            <header className="relative -mx-4 md:-mx-6 lg:-mx-8 -mt-6 md:-mt-8 min-h-[560px] md:h-[750px] overflow-hidden group">
                 {restaurant?.fotos ? (
                     <img
                         src={restaurant.fotos}
@@ -134,9 +130,9 @@ export const RestaurantDetail = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                 <div className="absolute inset-0 bg-slate-950/20" />
                 
-                <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-20 lg:p-32">
+                <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-8 md:p-20 lg:p-32">
                     <div className="mx-auto max-w-[1600px] w-full">
-                        <Link to="/home/restaurants" className="mb-12 inline-flex items-center gap-4 rounded-full bg-white/10 backdrop-blur-xl px-8 py-4 text-[11px] font-black uppercase tracking-[0.4em] text-white hover:bg-white/20 transition-all active:scale-95 border border-white/10">
+                        <Link to="/home/restaurants" className="mb-8 md:mb-12 inline-flex max-w-full items-center gap-3 md:gap-4 rounded-full bg-white/10 backdrop-blur-xl px-5 md:px-8 py-3 md:py-4 text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] md:tracking-[0.4em] text-white hover:bg-white/20 transition-all active:scale-95 border border-white/10">
                             <ChevronLeft size={18} strokeWidth={3} />
                             Explorar Restaurantes
                         </Link>
@@ -144,15 +140,15 @@ export const RestaurantDetail = () => {
                         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-12">
                             <div className="max-w-5xl animate-in slide-in-from-bottom duration-700">
                                 <div className="mb-8 flex flex-wrap gap-4">
-                                    <span className="rounded-xl bg-orange-500 px-6 py-3 text-[11px] font-black uppercase tracking-[0.4em] text-white shadow-2xl shadow-orange-500/40">
+                                    <span className="rounded-xl bg-orange-500 px-4 md:px-6 py-3 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-white shadow-2xl shadow-orange-500/40">
                                         {restaurant?.categoria || "Premium Experience"}
                                     </span>
                                     <div className="flex items-center gap-3 rounded-full bg-white/10 backdrop-blur-xl px-6 py-3 border border-white/10">
                                         <div className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]" />
-                                        <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Servicio Activo</span>
+                                        <span className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-white">Servicio Activo</span>
                                     </div>
                                 </div>
-                                <h1 className="text-7xl md:text-[11rem] font-black tracking-tighter text-white leading-[0.8] mb-10 italic">
+                                <h1 className="text-5xl sm:text-7xl md:text-[11rem] font-black tracking-tighter text-white leading-[0.88] md:leading-[0.8] mb-8 md:mb-10 italic break-words">
                                     {restaurant?.nombre}
                                 </h1>
                                 <p className="text-xl md:text-3xl text-slate-300 font-medium leading-relaxed max-w-4xl italic opacity-90">
@@ -160,7 +156,7 @@ export const RestaurantDetail = () => {
                                 </p>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-14 animate-in fade-in duration-1000 delay-300">
+                            <div className="flex flex-wrap items-center gap-8 lg:gap-14 animate-in fade-in duration-1000 delay-300">
                                 <div className="text-center lg:text-right">
                                     <div className="flex items-center gap-3 justify-center lg:justify-end mb-2">
                                         <span className="text-5xl md:text-7xl font-black text-orange-400 tracking-tighter">4.9</span>
@@ -181,7 +177,7 @@ export const RestaurantDetail = () => {
 
             {/* ── STICKY MENU NAV ── */}
             <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-3xl border-b border-slate-100 shadow-2xl shadow-slate-900/5">
-                <div className="mx-auto max-w-[1600px] px-8 py-8 flex items-center justify-between">
+                <div className="mx-auto max-w-[1600px] px-5 sm:px-8 py-5 md:py-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex gap-10 md:gap-14 overflow-x-auto no-scrollbar scroll-smooth">
                         {menus.map((menu) => (
                             <button
@@ -213,15 +209,15 @@ export const RestaurantDetail = () => {
             </nav>
 
             {/* ── MAIN CONTENT ── */}
-            <main className="mx-auto mt-24 max-w-[1600px] px-8 lg:px-20">
-                <div className="grid lg:grid-cols-[1fr_400px] gap-24">
+            <main className="mx-auto mt-14 md:mt-24 max-w-[1600px] px-5 sm:px-8 lg:px-20">
+                <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-14 lg:gap-24">
                     
                     {/* DISHES SECTION: ROUNDED CARDS RESTORED */}
                     <div className="space-y-20">
-                        <div className="flex items-end justify-between border-b border-slate-100 pb-10">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-slate-100 pb-10">
                             <div>
                                 <span className="text-orange-500 font-black uppercase tracking-[0.5em] text-[11px] mb-4 block">Nuestra Carta</span>
-                                <h2 className="text-5xl md:text-7xl font-black text-slate-950 tracking-tighter italic">
+                                <h2 className="text-4xl md:text-7xl font-black text-slate-950 tracking-tighter italic break-words">
                                     {menus.find(m => (m._id || m.id) === activeMenuId)?.nombreMenu || "Selección Especial"}
                                 </h2>
                             </div>
@@ -254,8 +250,8 @@ export const RestaurantDetail = () => {
                                         </div>
                                         
                                         <div className="space-y-3">
-                                            <div className="flex items-start justify-between">
-                                                <h3 className="text-2xl font-black text-slate-950 tracking-tight group-hover:text-orange-600 transition-colors italic">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                <h3 className="text-2xl font-black text-slate-950 tracking-tight group-hover:text-orange-600 transition-colors italic break-words">
                                                     {plato.nombrePlato || plato.nombre}
                                                 </h3>
                                                 <span className="text-3xl font-black text-slate-950 tracking-tighter">
@@ -278,11 +274,11 @@ export const RestaurantDetail = () => {
                     </div>
 
                     {/* SIDEBAR: ROUNDED CARDS RESTORED ── */}
-                    <aside className="space-y-16">
+                    <aside className="space-y-16 min-w-0">
                         <div className="sticky top-40 space-y-16">
-                            <div className="bg-orange-500 p-12 text-white shadow-2xl shadow-orange-500/30 overflow-hidden relative group rounded-[4rem]">
+                            <div className="bg-orange-500 p-7 sm:p-10 lg:p-12 text-white shadow-2xl shadow-orange-500/30 overflow-hidden relative group rounded-[2rem] md:rounded-[4rem]">
                                 <div className="absolute top-0 right-0 h-64 w-64 bg-white/20 rounded-full -mr-32 -mt-32 blur-[80px]" />
-                                <h3 className="text-4xl font-black tracking-tighter mb-6 relative z-10 italic leading-tight">¿Prefieres visitarnos?</h3>
+                                <h3 className="text-3xl sm:text-4xl font-black tracking-tighter mb-6 relative z-10 italic leading-tight">¿Prefieres visitarnos?</h3>
                                 <p className="text-orange-100 font-medium mb-10 relative z-10 leading-relaxed text-lg italic">Asegura tu mesa en el santuario del sabor. Servicio VIP y ambiente inigualable.</p>
                                 <Link
                                     to={`/home/restaurants/${id}/reservar`}
@@ -316,13 +312,13 @@ export const RestaurantDetail = () => {
                 </div>
 
                 {/* ── REVIEWS SECTION ── */}
-                <section id="reviews" className="mt-48 grid lg:grid-cols-[450px_1fr] gap-32 border-t border-slate-100 pt-32">
+                <section id="reviews" className="mt-28 md:mt-48 grid lg:grid-cols-[minmax(0,450px)_minmax(0,1fr)] gap-12 lg:gap-32 border-t border-slate-100 pt-16 md:pt-32">
                     <div className="space-y-10">
                         <div className="sticky top-40">
                             <span className="text-orange-500 font-black uppercase tracking-[0.5em] text-[11px] mb-6 block italic">Comunidad</span>
-                            <h2 className="text-6xl font-black text-slate-950 tracking-tighter mb-8 leading-[0.9] italic">Críticas de Conocedores.</h2>
+                            <h2 className="text-4xl sm:text-6xl font-black text-slate-950 tracking-tighter mb-8 leading-[0.95] sm:leading-[0.9] italic">Críticas de Conocedores.</h2>
                             <p className="text-xl text-slate-500 font-medium mb-16 leading-relaxed italic opacity-80">Tu opinión es el sello de calidad que guía a nuestra comunidad hacia lo extraordinario.</p>
-                            <div className="p-12 bg-slate-50 border border-slate-100 shadow-2xl rounded-[4rem]">
+                            <div className="p-5 sm:p-8 lg:p-12 bg-slate-50 border border-slate-100 shadow-2xl rounded-[2rem] md:rounded-[4rem]">
                                 <ReviewForm 
                                     restaurantId={id} 
                                     initialData={reviewToEdit}

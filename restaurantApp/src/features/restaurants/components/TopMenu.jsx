@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../shared/constants/theme";
 
@@ -13,15 +13,19 @@ const items = [
 ];
 
 const TopMenu = ({ open, onToggle, onItemPress }) => {
+    const { width, height } = useWindowDimensions();
+    const drawerWidth = Math.min(256, Math.max(220, width - 24));
+    const drawerMaxHeight = Math.max(320, height - 96);
+
     return (
-        <View pointerEvents="box-none" style={styles.wrapper}>
+        <View pointerEvents="box-none" style={[styles.wrapper, { width }]}>
             <TouchableOpacity style={styles.toggle} onPress={onToggle} activeOpacity={0.85}>
                 <Ionicons name={open ? "close" : "menu"} size={22} color="#fff" />
             </TouchableOpacity>
 
             {open ? <Pressable style={styles.backdrop} onPress={onToggle} /> : null}
 
-            <View style={[styles.drawer, open && styles.drawerOpen]}>
+            <View style={[styles.drawer, { width: drawerWidth, maxHeight: drawerMaxHeight }, open && styles.drawerOpen]}>
                 <View style={styles.brandRow}>
                     <View style={styles.brandMark}>
                         <Ionicons name="restaurant" size={16} color="#fff" />
@@ -32,7 +36,11 @@ const TopMenu = ({ open, onToggle, onItemPress }) => {
                     </View>
                 </View>
 
-                <View style={styles.menuList}>
+                <ScrollView
+                    style={styles.menuScroll}
+                    contentContainerStyle={styles.menuList}
+                    showsVerticalScrollIndicator={false}
+                >
                     {items.map((item, index) => (
                         <TouchableOpacity
                             key={item.label}
@@ -44,7 +52,7 @@ const TopMenu = ({ open, onToggle, onItemPress }) => {
                             <Text style={styles.menuText}>{item.label}</Text>
                         </TouchableOpacity>
                     ))}
-                </View>
+                </ScrollView>
             </View>
         </View>
     );
@@ -55,6 +63,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 12,
         left: 12,
+        bottom: 0,
         zIndex: 50,
     },
     toggle: {
@@ -71,21 +80,23 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     backdrop: {
-        ...StyleSheet.absoluteFillObject,
+        position: "absolute",
+        top: -12,
+        left: -12,
+        right: 0,
+        bottom: 0,
         backgroundColor: "rgba(15, 23, 42, 0.28)",
         zIndex: -1,
     },
     drawer: {
         marginTop: 12,
-        width: 256,
-        maxWidth: "86%",
-        minHeight: 480,
         borderRadius: 26,
         backgroundColor: COLORS.primaryDark,
         padding: 16,
         gap: 16,
         transform: [{ translateX: -320 }],
         opacity: 0,
+        overflow: "hidden",
     },
     drawerOpen: {
         transform: [{ translateX: 0 }],
@@ -115,9 +126,13 @@ const styles = StyleSheet.create({
         fontSize: 11,
         marginTop: 2,
     },
+    menuScroll: {
+        flexGrow: 0,
+    },
     menuList: {
         gap: 10,
         marginTop: 8,
+        paddingBottom: 4,
     },
     menuItem: {
         minHeight: 50,

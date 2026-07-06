@@ -526,6 +526,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        flexWrap: "wrap",
         gap: 10,
         marginTop: 4,
     },
@@ -540,6 +541,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         flexShrink: 0,
+        minWidth: 118,
+        justifyContent: "center",
     },
     paginationButtonDisabled: {
         opacity: 0.5,
@@ -554,6 +557,7 @@ const styles = StyleSheet.create({
     },
     paginationInfo: {
         flex: 1,
+        minWidth: 120,
         alignItems: "center",
         justifyContent: "center",
         paddingHorizontal: 6,
@@ -600,6 +604,8 @@ const styles = StyleSheet.create({
         fontWeight: "900",
         fontStyle: "italic",
         color: COLORS.text,
+        flex: 1,
+        paddingRight: 12,
     },
     modalCloseButton: {
         width: 36,
@@ -647,7 +653,8 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "900",
         color: COLORS.textLight,
-        letterSpacing: 2,
+        letterSpacing: 1.4,
+        flexShrink: 1,
     },
     modalSectionCardOrange: {
         backgroundColor: "#fff7ed",
@@ -671,7 +678,7 @@ const styles = StyleSheet.create({
         borderColor: "#dcfce7",
     },
     modalHours: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "900",
         color: COLORS.text,
     },

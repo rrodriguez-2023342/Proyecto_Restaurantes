@@ -514,12 +514,14 @@ const styles = StyleSheet.create({
     },
     confirmActions: {
         flexDirection: "row",
+        flexWrap: "wrap",
         gap: 12,
         marginTop: 8,
         width: "100%",
     },
     confirmCancel: {
         flex: 1,
+        minWidth: 128,
         minHeight: 48,
         borderRadius: 14,
         backgroundColor: COLORS.surfaceMuted,
@@ -535,6 +537,7 @@ const styles = StyleSheet.create({
     },
     confirmAccept: {
         flex: 1,
+        minWidth: 128,
         minHeight: 48,
         borderRadius: 14,
         backgroundColor: COLORS.primary,

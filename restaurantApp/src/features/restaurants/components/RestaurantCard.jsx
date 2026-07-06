@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        flexWrap: "wrap",
         gap: 12,
         marginBottom: 8,
     },
@@ -228,6 +229,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 6,
         flex: 1,
+        minWidth: 130,
     },
     metaText: {
         color: COLORS.secondary,
@@ -258,11 +260,13 @@ const styles = StyleSheet.create({
     },
     secondaryActions: {
         flexDirection: "row",
+        flexWrap: "wrap",
         gap: 8,
         marginTop: 2,
     },
     secondaryButton: {
         flex: 1,
+        minWidth: 128,
         minHeight: 42,
         borderRadius: 12,
         borderWidth: 1,
@@ -276,6 +280,7 @@ const styles = StyleSheet.create({
     },
     secondaryButtonDark: {
         flex: 1,
+        minWidth: 128,
         minHeight: 42,
         borderRadius: 12,
         backgroundColor: COLORS.primaryDark,

@@ -444,10 +444,12 @@ const styles = StyleSheet.create({
     },
     paymentRow: {
         flexDirection: "row",
+        flexWrap: "wrap",
         gap: 12,
     },
     paymentCard: {
         flex: 1,
+        minWidth: 132,
         borderRadius: 16,
         borderWidth: 1.5,
         borderColor: COLORS.border,
@@ -592,6 +594,7 @@ const styles = StyleSheet.create({
     bottomBar: {
         flexDirection: "row",
         alignItems: "center",
+        flexWrap: "wrap",
         gap: 14,
         paddingHorizontal: 16,
         paddingTop: 12,
@@ -601,6 +604,7 @@ const styles = StyleSheet.create({
         borderTopColor: COLORS.border,
     },
     bottomTotal: {
+        minWidth: 92,
         justifyContent: "center",
     },
     bottomTotalLabel: {
@@ -617,6 +621,7 @@ const styles = StyleSheet.create({
     },
     confirmButton: {
         flex: 1,
+        minWidth: 190,
         minHeight: 56,
         borderRadius: 18,
         backgroundColor: COLORS.primary,
@@ -630,9 +635,10 @@ const styles = StyleSheet.create({
     },
     confirmButtonText: {
         color: "#fff",
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: "900",
         letterSpacing: 0.8,
+        textAlign: "center",
     },
     emptyState: {
         flex: 1,
