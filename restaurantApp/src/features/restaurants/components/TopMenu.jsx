@@ -5,7 +5,7 @@ import { COLORS } from "../../../shared/constants/theme";
 const items = [
     { label: "Restaurantes", icon: "storefront-outline" },
     { label: "Mis reservaciones", icon: "calendar-outline" },
-    { label: "Favoritos", icon: "heart-outline" },
+    { label: "Facturas", icon: "document-text-outline" },
     { label: "Pedidos", icon: "receipt-outline" },
     { label: "Perfil", icon: "person-outline" },
     { label: "Ayuda", icon: "help-circle-outline" },

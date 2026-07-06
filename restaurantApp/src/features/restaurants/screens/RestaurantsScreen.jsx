@@ -80,6 +80,8 @@ const RestaurantsScreen = ({ navigation }) => {
                             navigation.navigate("UserReservations");
                         } else if (label === "Pedidos") {
                             navigation.navigate("MyOrders");
+                        } else if (label === "Facturas") {
+                            navigation.navigate("Invoices");
                         } else if (label === "Restaurantes") {
                             navigation.navigate("RestaurantsHome");
                         }
