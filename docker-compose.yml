@@ -11,11 +11,11 @@ services:
     env_file: .env.docker
     environment:
       PORT: 3006
-      DB_HOST: host.docker.internal
-      DB_PORT: 15432
-      DB_NAME: postgres
-      DB_USERNAME: postgres
-      DB_PASSWORD: Robertoandre03072007@
+      DB_HOST: ep-summer-silence-a62pwr12.us-west-2.aws.neon.tech
+      DB_PORT: 5432
+      DB_NAME: neondb
+      DB_USERNAME: neondb_owner
+      DB_PASSWORD: npg_AUG7PuseNOx6
       DB_SQL_LOGGING: "false"
       DB_SSL: "true"
     ports:
