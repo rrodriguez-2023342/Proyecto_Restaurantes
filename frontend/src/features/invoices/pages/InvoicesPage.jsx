@@ -28,7 +28,8 @@ export const InvoicesPage = () => {
             const res = await getInvoices();
             const data = res.data?.data || res.data || [];
             setInvoices(data);
-        } catch {
+        } catch (err) {
+            console.error("[InvoicesPage] Error al obtener facturas:", err);
             setInvoices([]);
         } finally {
             setLoading(false);

@@ -41,14 +41,26 @@ export const getUserRolesFromAuthService = async ({ userId, token }) => {
     const timeout    = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-        const response = await fetch(getUserRolesUrl(userId), {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'x-token':     token,
-            },
-            signal: controller.signal,
-        });
+        let response;
+        try {
+            response = await fetch(getUserRolesUrl(userId), {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'x-token':     token,
+                },
+                signal: controller.signal,
+            });
+        } catch (fetchError) {
+            console.error(
+                `[auth-service] Error de conexión al consultar roles del usuario ${userId}:`,
+                fetchError.message,
+                `URL: ${getUserRolesUrl(userId)}`
+            );
+            throw new Error(
+                `[auth-service] No se pudo conectar con AuthService (${fetchError.message})`
+            );
+        }
 
         if (response.status === 404) {
             return { exists: false, roles: [] };
@@ -74,15 +86,23 @@ export const getUserRolesFromAuthService = async ({ userId, token }) => {
  * @returns {{ isValid: boolean, message?: string }}
  */
 export const validateRestaurantOwnerUser = async ({ ownerId, token }) => {
-    const { exists, roles } = await getUserRolesFromAuthService({ userId: ownerId, token });
+    try {
+        const { exists, roles } = await getUserRolesFromAuthService({ userId: ownerId, token });
 
-    if (!exists) {
-        return { isValid: false, message: 'El dueño no existe en AuthService' };
+        if (!exists) {
+            return { isValid: false, message: 'El dueño no existe en AuthService' };
+        }
+
+        if (!roles.includes(RESTAURANT_ADMIN_ROLE) && !roles.includes(ADMIN_ROLE)) {
+            return { isValid: false, message: 'El dueño debe tener rol ADMIN_RESTAURANT_ROLE o ADMIN_ROLE' };
+        }
+
+        return { isValid: true };
+    } catch (error) {
+        console.error(
+            `[auth-service] Error validando dueño ${ownerId}:`,
+            error.message
+        );
+        return { isValid: false, message: error.message };
     }
-
-    if (!roles.includes(RESTAURANT_ADMIN_ROLE) && !roles.includes(ADMIN_ROLE)) {
-        return { isValid: false, message: 'El dueño debe tener rol ADMIN_RESTAURANT_ROLE o ADMIN_ROLE' };
-    }
-
-    return { isValid: true };
 };
