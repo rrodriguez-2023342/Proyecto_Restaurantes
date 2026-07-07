@@ -1,26 +1,5 @@
 services:
 
-  # ─── Base de datos ───────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: kinaleats-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: restaurantesdb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    ports:
-      - "5436:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - kinaleats-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d restaurantesdb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # ─── Microservicios ──────────────────────────────────────────
 
   auth-service:
@@ -32,17 +11,15 @@ services:
     env_file: .env.docker
     environment:
       PORT: 3006
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: restaurantesdb
-      DB_USERNAME: admin
-      DB_PASSWORD: admin
+      DB_HOST: host.docker.internal
+      DB_PORT: 15432
+      DB_NAME: postgres
+      DB_USERNAME: postgres
+      DB_PASSWORD: Robertoandre03072007@
       DB_SQL_LOGGING: "false"
+      DB_SSL: "true"
     ports:
       - "3006:3006"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - kinaleats-net
 
@@ -128,10 +105,6 @@ services:
       - eventos-service
     networks:
       - kinaleats-net
-
-# ─── Volúmenes ──────────────────────────────────────────────
-volumes:
-  postgres_data:
 
 # ─── Red ────────────────────────────────────────────────────
 networks:
